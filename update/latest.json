@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.3.3",
-    "notes":  "Monkeyeffect 1.0.3.3 - Dev Log, interrupt Rose xN fire count, queue reuse (low delay), gift combo timing",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3.3-update.zip",
-    "sha256":  "2f7fda09a7051880e5ee5004f40302e78c03fdcd631dc9cafbfc6fc1f2a54630",
+    "version":  "1.0.3.4",
+    "notes":  "Monkeyeffect 1.0.3.4 - fix interrupt visible under LIVE Studio, queue race, lighter DevLog/video check",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3.4-update.zip",
+    "sha256":  "a31674f72d9422a04a1157d7028d2490ac43bb11d345c894281ad2cfe7157f00",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
