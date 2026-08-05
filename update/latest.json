@@ -1,8 +1,8 @@
-﻿{
-    "version":  "1.0.3",
-    "notes":  "Monkeyeffect 1.0.3 update (interrupt overlay, LIVE Studio chat cutout, TTS, video 9:16)",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3-update.zip",
-    "sha256":  "d662cbe92ea818a5de4639b33a23db465ddb39783b52503e7ed72fc3387788e0",
+{
+    "version":  "1.0.3.3",
+    "notes":  "Monkeyeffect 1.0.3.3 - Dev Log, interrupt Rose xN fire count, queue reuse (low delay), gift combo timing",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3.3-update.zip",
+    "sha256":  "2f7fda09a7051880e5ee5004f40302e78c03fdcd631dc9cafbfc6fc1f2a54630",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
