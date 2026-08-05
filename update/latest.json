@@ -1,6 +1,6 @@
 {
     "version":  "1.0.3.5",
-    "notes":  "Monkeyeffect 1.0.3.5 - fix interrupt stuck/black screen, burst test no alert, queue close, LIVE Studio cutout safety",
+    "notes":  "Monkeyeffect 1.0.3.5 - fix interrupt stuck/black screen + update feed cache bust hint",
     "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3.5-update.zip",
     "sha256":  "72b957b6bcfbba3c3ce9f75caeed5dc52e9458b129ff5ee0b31a2b6d3994cdc9",
     "mandatory":  false,
