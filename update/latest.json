@@ -1,10 +1,10 @@
 {
-    "version":  "1.0.3.9",
-    "notes":  "Monkeyeffect 1.0.3.9 - ship interrupt defaults pack (replace on update), combo full xN, close-all-games",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3.9-update.zip",
-    "sha256":  "4ac0f9f02661d66c3e7100f76a183efa1b588ef2d722dacfecd64577a81a8f92",
+    "version":  "1.0.3.10",
+    "notes":  "Monkeyeffect 1.0.3.10 - gift combo exact count (no missing/extra), interrupt queue keep-all, seq dedupe",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3.10-update.zip",
+    "sha256":  "bd99db903872c7ecd61ff7373d9e0d80a0928e1340f6796fca060767f614bf4b",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect",
-    "publishedAt":  "2026-08-08T08:50:34.2555276Z",
-    "feedRev":  "13565fd83ed5"
+    "publishedAt":  "2026-08-08T17:02:05.9726623Z",
+    "feedRev":  "1a982487dffd"
 }
