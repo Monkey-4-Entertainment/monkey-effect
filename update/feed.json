@@ -1,10 +1,10 @@
 {
-    "version":  "1.0.3.8",
-    "notes":  "Monkeyeffect 1.0.3.8 - fix update feed CDN cache (multi-source), interrupt combo full xN",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3.8-update.zip",
-    "sha256":  "b5f41638a4dac2a85ce2518f45d33f883ec451c54b31d4c19f705b8676e7979f",
+    "version":  "1.0.3.9",
+    "notes":  "Monkeyeffect 1.0.3.9 - ship interrupt defaults pack (replace on update), combo full xN, close-all-games",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3.9-update.zip",
+    "sha256":  "4ac0f9f02661d66c3e7100f76a183efa1b588ef2d722dacfecd64577a81a8f92",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect",
-    "publishedAt":  "2026-08-08T08:30:30.2931671Z",
-    "feedRev":  "034af51296b8"
+    "publishedAt":  "2026-08-08T08:50:34.2555276Z",
+    "feedRev":  "13565fd83ed5"
 }
