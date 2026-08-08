@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.3.6",
-    "notes":  "Monkeyeffect 1.0.3.6 - interrupt close-all-games mode, save interrupt defaults pack, bake uploaded clips",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3.6-update.zip",
-    "sha256":  "14bd398406cd477a7e4d42b0862b8fbada94f9a61349fc4476e579fd52c4d042",
+    "version":  "1.0.3.7",
+    "notes":  "Monkeyeffect 1.0.3.7 - interrupt combo uncapped full xN, faster queue, close-all-games, save defaults pack",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.3.7-update.zip",
+    "sha256":  "846bef58da2836f6b278f395d42319e3c6a9573ec3e4320a513a7ad36e64db29",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
