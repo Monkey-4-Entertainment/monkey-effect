@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.4.0",
-    "notes":  "Monkeyeffect 1.0.4.0 - roulette overlay+sound+little hippo defaults, temple gift pack restore, sticker pack C, webcast gift reader",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.0-update.zip",
-    "sha256":  "0239c4e9520a4752c69c6384cf3e128f63cc6435527f79107547ca4eaf8905f5",
+    "version":  "1.0.4.1",
+    "notes":  "Monkeyeffect 1.0.4.1 - fix update feed URL + zip extract/download mirrors",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.1-update.zip",
+    "sha256":  "3ca5b42d84fd5c71cd0f7af8fa402b2f7e4e330f7b171bb9f8b2169871fb6359",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
