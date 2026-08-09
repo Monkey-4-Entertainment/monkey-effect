@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.4.2",
-    "notes":  "Monkeyeffect 1.0.4.2 - fix gift rate (send combo once, stop mid-combo flood)",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.2-update.zip",
-    "sha256":  "d211afe59e339e37fad616690ad5c131a39ede9686e9aa4aadb21203c268dc77",
+    "version":  "1.0.4.3",
+    "notes":  "Monkeyeffect 1.0.4.3 - left sidebar UI, update menu, effects follow selected game",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.3-update.zip",
+    "sha256":  "787b5c26eea266f9e0eb691728d1c9f871bbcdc944137f82e8fb8a486885d7f5",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
