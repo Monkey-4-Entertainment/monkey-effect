@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.4.3",
-    "notes":  "Monkeyeffect 1.0.4.3 - left sidebar UI, update menu, effects follow selected game",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.3-update.zip",
-    "sha256":  "787b5c26eea266f9e0eb691728d1c9f871bbcdc944137f82e8fb8a486885d7f5",
+    "version":  "1.0.4.4",
+    "notes":  "Monkeyeffect 1.0.4.4 - dual-path: UI realtime + game finalize once (no gift flood)",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.4-update.zip",
+    "sha256":  "552e3a1b962099376a25a1264149df33ca2dee1a614efc464aaecc2c9515bf79",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

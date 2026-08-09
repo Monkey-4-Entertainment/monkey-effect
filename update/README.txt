@@ -1,4 +1,4 @@
-Monkeyeffect online update pack v1.0.4.3
+Monkeyeffect online update pack v1.0.4.4
 
 Repo: https://github.com/Monkey-4-Entertainment/monkey-effect
 
@@ -6,11 +6,11 @@ Feed URL (app default / update-feed.url):
 https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json
 
 Zip URL:
-https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.3-update.zip
+https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.4-update.zip
 
 Upload steps:
-1) git add update/latest.json update/Monkeyeffect-1.0.4.3-update.zip
-2) git commit -m "Publish update 1.0.4.3"
+1) git add update/latest.json update/Monkeyeffect-1.0.4.4-update.zip
+2) git commit -m "Publish update 1.0.4.4"
 3) git push origin main
 4) Open the feed URL in a browser to verify
 
@@ -18,5 +18,5 @@ Note: if the zip is too large for GitHub git (>100MB), use GitHub Releases and e
 
 Desktop files:
 - C:\Users\PC\Desktop\Monkeyeffect-Update\latest.json
-- C:\Users\PC\Desktop\Monkeyeffect-Update\Monkeyeffect-1.0.4.3-update.zip
-sha256=787b5c26eea266f9e0eb691728d1c9f871bbcdc944137f82e8fb8a486885d7f5
+- C:\Users\PC\Desktop\Monkeyeffect-Update\Monkeyeffect-1.0.4.4-update.zip
+sha256=552e3a1b962099376a25a1264149df33ca2dee1a614efc464aaecc2c9515bf79
