@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.4.1",
-    "notes":  "Monkeyeffect 1.0.4.1 - fix update feed URL + zip extract/download mirrors",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.1-update.zip",
-    "sha256":  "3ca5b42d84fd5c71cd0f7af8fa402b2f7e4e330f7b171bb9f8b2169871fb6359",
+    "version":  "1.0.4.2",
+    "notes":  "Monkeyeffect 1.0.4.2 - fix gift rate (send combo once, stop mid-combo flood)",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.2-update.zip",
+    "sha256":  "d211afe59e339e37fad616690ad5c131a39ede9686e9aa4aadb21203c268dc77",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
