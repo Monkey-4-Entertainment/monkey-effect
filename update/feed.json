@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.4.6",
-    "notes":  "Monkeyeffect 1.0.4.6 - interrupt exact xN on combo end (no mid-combo stack)",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.6-update.zip",
-    "sha256":  "4ca49f3d80613d708dbb0816b8b18b125436699c8a328c5cd43a5e76350de8f1",
+    "version":  "1.0.4.7",
+    "notes":  "Monkeyeffect 1.0.4.7 - roulette: real sender name, one spin = one game send",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.7-update.zip",
+    "sha256":  "ec8af53b0960e870432aeb5a22d9b0bde6c52b667fb0cdcb2c7403165a4c26de",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
