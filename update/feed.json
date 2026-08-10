@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.4.5",
-    "notes":  "Monkeyeffect 1.0.4.5 - fix live connect (username case + RoomId API), Chrome stays backup only",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.5-update.zip",
-    "sha256":  "d023aeacea1a5574b744f2fffd550a044f829f4d162c06a133d1c3bc5de2d6d6",
+    "version":  "1.0.4.6",
+    "notes":  "Monkeyeffect 1.0.4.6 - interrupt exact xN on combo end (no mid-combo stack)",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.6-update.zip",
+    "sha256":  "4ca49f3d80613d708dbb0816b8b18b125436699c8a328c5cd43a5e76350de8f1",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
