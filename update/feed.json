@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.4.4",
-    "notes":  "Monkeyeffect 1.0.4.4 - dual-path: UI realtime + game finalize once (no gift flood)",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.4-update.zip",
-    "sha256":  "552e3a1b962099376a25a1264149df33ca2dee1a614efc464aaecc2c9515bf79",
+    "version":  "1.0.4.5",
+    "notes":  "Monkeyeffect 1.0.4.5 - fix live connect (username case + RoomId API), Chrome stays backup only",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.5-update.zip",
+    "sha256":  "d023aeacea1a5574b744f2fffd550a044f829f4d162c06a133d1c3bc5de2d6d6",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
