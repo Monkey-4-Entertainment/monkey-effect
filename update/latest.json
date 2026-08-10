@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.4.7",
-    "notes":  "Monkeyeffect 1.0.4.7 - roulette: real sender name, one spin = one game send",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.7-update.zip",
-    "sha256":  "ec8af53b0960e870432aeb5a22d9b0bde6c52b667fb0cdcb2c7403165a4c26de",
+    "version":  "1.0.4.8",
+    "notes":  "Monkeyeffect 1.0.4.8 - fix gift/interrupt multiply on solo sends; faster interrupt; roulette hold/deliver",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.8-update.zip",
+    "sha256":  "15bc39e3c31e83cbbf6d5ed832d1018288dcdbdd56bda234af0d68f03e68d49d",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
