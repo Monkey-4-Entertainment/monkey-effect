@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.4.8",
-    "notes":  "Monkeyeffect 1.0.4.8 - fix gift/interrupt multiply on solo sends; faster interrupt; roulette hold/deliver",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.8-update.zip",
-    "sha256":  "15bc39e3c31e83cbbf6d5ed832d1018288dcdbdd56bda234af0d68f03e68d49d",
+    "version":  "1.0.4.9",
+    "notes":  "Monkeyeffect 1.0.4.9 - interrupt full-trim + combo catch-up; bundled trimmed interrupt defaults",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.4.9-update.zip",
+    "sha256":  "591039a0484d7071bc6697f38808742b78db25efdb69c8a438ee724720fcd138",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
