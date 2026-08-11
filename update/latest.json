@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.5",
-    "notes":  "Monkeyeffect 1.0.5 - fix interrupt repeats for all gifts (solo x1 coalesce + combo merge)",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.5-update.zip",
-    "sha256":  "6fc6c8685c175b150ca7733f2a6f841069b36314ef31811528bf3c26b6be10f0",
+    "version":  "1.0.5.2",
+    "notes":  "Monkeyeffect 1.0.5.2 - sequential interrupt (one-by-one) + TTS while minimized",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.5.2-update.zip",
+    "sha256":  "c857db8a8b6d4d309e8451e88e1fb362b8df132626f8fda38a5523a5f8b52d05",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
