@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.5.2",
-    "notes":  "Monkeyeffect 1.0.5.2 - sequential interrupt (one-by-one) + TTS while minimized",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.5.2-update.zip",
-    "sha256":  "c857db8a8b6d4d309e8451e88e1fb362b8df132626f8fda38a5523a5f8b52d05",
+    "version":  "1.0.5.9",
+    "notes":  "Monkeyeffect 1.0.5.9 - roulette respin gap, music minimized fix, interrupt coalesce, clear-log fanout",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.5.9-update.zip",
+    "sha256":  "8e357d77398df03b1db0ea17678ed1c927bd510bc94c4163bf5077bf2168530a",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
