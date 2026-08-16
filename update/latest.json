@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.6.2",
-    "notes":  "Monkeyeffect 1.0.6.2 - Lucky Monkey overlay, portable roulette userdata, interrupt stills, win defaults, Temple sticker sheets 01/02",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.2-update.zip",
-    "sha256":  "3ecd509fcb2db1975b955708567686c6f82f2b24edd8dda977f11a72dc6c3e37",
+    "version":  "1.0.6.3",
+    "notes":  "Monkeyeffect 1.0.6.3 - real PNG sticker sheets 01/02 (not JPEG renamed)",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.3-update.zip",
+    "sha256":  "0523d3802a165c8402105f821de221ab49d5382ac5a09bfa65b558028a60424f",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
