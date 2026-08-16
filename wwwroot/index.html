@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Monkeyeffect</title>
+    <link rel="icon" type="image/png" href="/logo.png?v=logo2" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/style.css?v=v1042" />
+  </head>
+  <body>
+    <div class="bg"></div>
+    <main class="shell">
+      <aside class="sidebar" aria-label="แถบเมนู">
+        <div class="sidebar-brand">
+          <img class="logo-img" src="/logo.png?v=logo2" alt="Monkeyeffect" width="44" height="44" />
+          <div class="sidebar-brand-text">
+            <div class="title-row">
+              <h1>Monkeyeffect</h1>
+              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.4.7</span>
+            </div>
+            <p>Gift relay → เกม</p>
+          </div>
+        </div>
+
+        <div id="liveBadge" class="badge offline sidebar-badge">
+          <span class="dot"></span>
+          <span class="badge-text">OFFLINE</span>
+        </div>
+
+        <nav class="side-nav" aria-label="เมนูหลัก">
+          <div class="nav-group">
+            <span class="nav-group-label">หลัก</span>
+            <button type="button" class="nav-btn active" data-panel="connect">
+              <span class="nav-ico" aria-hidden="true">◎</span>
+              <span class="nav-label">เชื่อมต่อ</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="effects">
+              <span class="nav-ico" aria-hidden="true">◆</span>
+              <span class="nav-label">เอฟเฟกต์เกม</span>
+            </button>
+          </div>
+
+          <div class="nav-group">
+            <span class="nav-group-label">ฟังก์ชัน</span>
+            <button type="button" class="nav-btn nav-btn-roulette" data-panel="roulette">
+              <span class="nav-ico" aria-hidden="true">✦</span>
+              <span class="nav-label">กล่องสุ่ม</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="music">
+              <span class="nav-ico" aria-hidden="true">♪</span>
+              <span class="nav-label">เพลง</span>
+            </button>
+            <button type="button" class="nav-btn nav-btn-video" data-panel="video">
+              <span class="nav-ico" aria-hidden="true">▷</span>
+              <span class="nav-label">วิดีโอใส</span>
+            </button>
+            <button type="button" class="nav-btn nav-btn-interrupt" data-panel="interrupt">
+              <span class="nav-ico" aria-hidden="true">⚡</span>
+              <span class="nav-label">ขัดขวางจอ</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="win">
+              <span class="nav-ico" aria-hidden="true">★</span>
+              <span class="nav-label">นับ Win</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="stickers">
+              <span class="nav-ico" aria-hidden="true">◈</span>
+              <span class="nav-label">สติกเกอร์</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="tts">
+              <span class="nav-ico" aria-hidden="true">🎙</span>
+              <span class="nav-label">อ่านเสียง AI</span>
+            </button>
+          </div>
+
+          <div class="nav-group">
+            <span class="nav-group-label">ระบบ</span>
+            <button type="button" class="nav-btn" data-panel="update">
+              <span class="nav-ico" aria-hidden="true">↻</span>
+              <span class="nav-label">อัปเดต</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="devlog">
+              <span class="nav-ico" aria-hidden="true">{ }</span>
+              <span class="nav-label">Dev Log</span>
+            </button>
+          </div>
+        </nav>
+      </aside>
+
+      <div class="workspace">
+      <header class="workspace-head">
+        <div>
+          <h2 class="workspace-title" id="workspaceTitle">เชื่อมต่อ</h2>
+          <p class="workspace-sub">อ่าน Gift / Like / Follow จาก TikTok LIVE แล้วส่งต่อให้เกมที่เลือก</p>
+        </div>
+      </header>
+
+      <div id="errorBanner" class="error-banner hidden" role="alert"></div>
+
+      <!-- ===== เชื่อมต่อ ===== -->
+      <div id="panel-connect" class="panel active">
+        <section class="card connect-card">
+          <div class="card-head">
+            <h2>เชื่อมต่อ TikTok LIVE</h2>
+            <span class="chip">TikTok reader → /livemsg 12922</span>
+          </div>
+
+          <label for="username">TikTok Username</label>
+          <div class="input-wrap">
+            <span class="prefix">@</span>
+            <input id="username" type="text" placeholder="your_tiktok_username" autocomplete="off" spellcheck="false" />
+          </div>
+
+          <label for="gameSelect">เลือกเกม</label>
+          <div class="game-select-row">
+            <select id="gameSelect"></select>
+            <button id="scanGamesBtn" class="btn ghost small" type="button">สแกนหน้าต่าง</button>
+          </div>
+          <div id="customGameFields" class="custom-game-fields hidden">
+            <label for="customGameProcess">ชื่อโปรเซส (ไม่ต้องใส่ .exe)</label>
+            <input id="customGameProcess" type="text" placeholder="เช่น MyGame-Win64-Shipping" autocomplete="off" spellcheck="false" />
+            <label for="customGameTitle">ชื่อหน้าต่างเกม (บางส่วนก็ได้)</label>
+            <input id="customGameTitle" type="text" placeholder="เช่น Temple_Escape" autocomplete="off" spellcheck="false" />
+          </div>
+          <div id="scanGamesPanel" class="scan-games-panel hidden">
+            <label for="scannedWindowSelect">เลือกจากหน้าต่างที่เปิดอยู่</label>
+            <select id="scannedWindowSelect"></select>
+            <button id="useScannedGameBtn" class="btn secondary small" type="button">ใช้หน้าต่างนี้</button>
+          </div>
+          <p class="hint">ใส่ username แล้วกด Connect — ต่อ TikTok LIVE ตรงๆ ไม่ต้องเปิด Chrome (ตัวพิมพ์เล็ก/ใหญ่ไม่สำคัญ ระบบแปลงให้อัตโนมัติ)</p>
+
+          <details class="advanced">
+            <summary>ตั้งค่าขั้นสูง</summary>
+            <label for="gamePort">Game WebSocket Port</label>
+            <input id="gamePort" type="number" value="15500" min="1024" max="65535" />
+            <p class="hint">โหมดสำรอง: เปิด Chrome ล็อกอิน/อ่านผ่านเบราว์เซอร์ (ตั้ง TEMPLEGIFT_USE_CHROME=1)</p>
+            <button id="loginChromeBtn" class="btn secondary" type="button">เปิด Chrome ล็อกอิน (สำรอง)</button>
+          </details>
+
+          <div class="actions">
+            <button id="connectBtn" class="btn primary">
+              <span class="btn-label">Connect</span>
+              <span class="spinner hidden"></span>
+            </button>
+            <button id="disconnectBtn" class="btn ghost" disabled>Disconnect</button>
+          </div>
+          <div id="tikTokError" class="tiktok-error hidden" role="status"></div>
+        </section>
+
+        <section class="stats">
+          <div class="stat-card">
+            <span class="stat-label">TikTok</span>
+            <strong id="tiktokStatus" class="stat-value">Disconnected</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Delivery</span>
+            <strong id="ycLiveStatus" class="stat-value">...</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">หน้าต่างเกม</span>
+            <strong id="gameWindowStatus" class="stat-value">ไม่พบ</strong>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">HTTP /livemsg</span>
+            <strong id="httpPort" class="stat-value">12922</strong>
+          </div>
+        </section>
+
+        <section class="card log-card">
+          <div class="card-head">
+            <h2>Gift Log</h2>
+            <button id="clearBtn" class="btn ghost small">Clear</button>
+          </div>
+          <div id="log" class="log"></div>
+        </section>
+      </div>
+
+      <!-- ===== ฟังก์ชันเอฟเฟกต์ ===== -->
+      <div id="panel-effects" class="panel">
+        <section class="card test-card">
+          <div class="card-head">
+            <h2>ทดสอบส่ง Gift / Like / Follow</h2>
+            <span class="chip" id="effectsGameChip">—</span>
+          </div>
+          <p class="hint" id="effectsTestHint">ส่งของทดสอบเข้าเกมที่เลือก — เข้ารหัส AES-GCM แล้วเสิร์ฟ GET /livemsg :12922 · ของขวัญตรงเข้าเกมส่งตามจำนวนที่รับมา</p>
+          <div class="gift-chips" id="giftChips">
+            <button type="button" class="chip-btn active" data-gift="Rose" data-type="SendGift">Rose</button>
+            <button type="button" class="chip-btn" data-gift="TikTok" data-type="SendGift">TikTok</button>
+            <button type="button" class="chip-btn" data-gift="GG" data-type="SendGift">GG</button>
+            <button type="button" class="chip-btn" data-gift="Like" data-type="SendLike">Like</button>
+            <button type="button" class="chip-btn" data-gift="Follow" data-type="SendFollow">Follow</button>
+          </div>
+          <div class="test-row">
+            <input id="testGift" type="text" value="Rose" placeholder="ชื่อ gift / Like / Follow" />
+            <input id="testCount" type="number" value="1" min="1" max="999" />
+            <input id="testType" type="hidden" value="SendGift" />
+            <button id="testBtn" class="btn secondary">Send Test</button>
+          </div>
+        </section>
+
+        <section class="card" id="giftActionOverviewCard">
+          <div class="card-head">
+            <h2>ของขวัญนี้ทำอะไร</h2>
+            <span class="chip" id="giftActionOverviewCount">0</span>
+          </div>
+          <p class="hint">รวมกฎทั้งหมด: เข้าเกม / กล่องสุ่ม / เพลง / วิดีโอ / ขัดจอ / นับ Win — ของที่ไม่มีกฎพิเศษจะเข้าเกมตามจำนวนที่รับมา</p>
+          <div id="giftActionOverview" class="rules-list"></div>
+        </section>
+          <div class="card-head">
+            <h2 id="effectsDefaultsTitle">ค่าตั้งต้น gift ในเกม</h2>
+            <span class="chip" id="templeDefaultsStatus">—</span>
+          </div>
+          <p class="hint" id="effectsDefaultsHint">
+            กดปุ่มด้านล่างเพื่อ<b>ทับ</b>ไฟล์เซฟเกมด้วยแพ็กที่มากับ Monkeyeffect · ปิดเกมก่อนกด · แล้วเปิดเกมใหม่
+          </p>
+          <div class="actions tight">
+            <button id="templeApplyDefaultsBtn" class="btn primary" type="button" data-temple-apply>ทับค่า gift ตามแพ็กในแอพ</button>
+            <button id="templeExportDefaultsBtn" class="btn ghost" type="button" data-temple-export>บันทึกเซฟเกมนี้เป็นแพ็กแอพ</button>
+          </div>
+        </section>
+
+        <section class="card hidden" id="effectsNoDefaultsCard">
+          <div class="card-head">
+            <h2>ค่าตั้งต้น gift</h2>
+            <span class="chip">ไม่มีแพ็ก</span>
+          </div>
+          <p class="hint" id="effectsNoDefaultsHint">เกมนี้ยังไม่มีแพ็กค่าตั้งต้นในแอพ — ใช้ Send Test เพื่อยิงของเข้าเกมผ่าน /livemsg ได้ตามปกติ</p>
+        </section>
+      </div>
+
+      <!-- ===== ฟังก์ชันกล่องสุ่ม ===== -->
+      <div id="panel-roulette" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>ฟังก์ชันกล่องสุ่มเอฟเฟกต์</h2>
+            <label class="toggle">
+              <input id="rouletteEnabled" type="checkbox" checked />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">
+            เมื่อเปิดใช้: ของขวัญต้นทางจะไม่เข้าเกม — หมุนใน Overlay แล้วค่อยส่งตัวที่หยุด ตามจำนวนคอมโบ (เช่น คอมโบ 2 ส่ง ×2)
+            · โหมดสุ่มตัวคูณ: หมุนของขวัญแล้วหมุน ×1–×5 ในหน้าต่างเดียวกัน แล้วส่งผลคูณเข้าเกม
+            · ปิดใช้แล้วของต้นทางเข้าเกมตามจำนวนที่รับมา (ห้ามเกินห้ามขาด)
+          </p>
+          <div class="actions tight">
+            <button id="rouletteOpenOverlayBtn" class="btn secondary" type="button">เปิด Overlay สุ่ม</button>
+            <button id="rouletteCloseOverlayBtn" class="btn ghost" type="button">ปิด Overlay</button>
+            <button id="rouletteRestoreDefaultsBtn" class="btn ghost" type="button">ใช้กฎเริ่มต้น (little hippo)</button>
+          </div>
+          <p class="hint">หมุนเฉพาะใน Overlay (มีเสียงติ๊ก) · ลากมุมหน้าต่างเพื่อย่อ/ขยายได้ · ค่าเริ่มต้น: <b>little hippo</b> → สุ่ม 14 ช่อง</p>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>เพิ่ม / แก้ไข กฎของขวัญ → สุ่ม</h2>
+            <span class="chip" id="rouletteRuleCount">0 กฎ</span>
+          </div>
+
+          <input id="rouletteEditId" type="hidden" value="" />
+          <label for="rouletteTriggerGift">ของขวัญต้นทาง (เช่น Baby Hippo)</label>
+          <input id="rouletteTriggerGift" class="field" type="text" placeholder="Baby Hippo" autocomplete="off" />
+          <label>โหมดสุ่ม</label>
+          <input id="rouletteRuleMode" type="hidden" value="gift" />
+          <div class="roulette-mode-picks" id="rouletteModePicks">
+            <button type="button" class="roulette-mode-card is-on" data-mode="gift">
+              <span class="mode-kicker">โหมดหีบสมบัติ</span>
+              <strong>สุ่มของขวัญ</strong>
+              <span>หมุนได้ชิ้นไหน ส่งเกมตามจำนวนคอมโบ · โทนทองเขียว</span>
+            </button>
+            <button type="button" class="roulette-mode-card mode-fate" data-mode="multiply">
+              <span class="mode-kicker">โหมดนำโชค</span>
+              <strong>สุ่มของขวัญ + ตัวคูณ</strong>
+              <span>หมุนของขวัญแล้วหมุนวงล้อชมพู ×1–×5 · คูณสูงออกยาก</span>
+              <div class="mode-odds" aria-hidden="true">
+                <i data-x="1">×1</i><i data-x="2">×2</i><i data-x="3">×3</i><i data-x="4">×4</i><i data-x="5">×5</i>
+              </div>
+            </button>
+          </div>
+
+          <div class="roulette-editor-head">
+            <label>รายการเอฟเฟกต์ (รูป + ชื่อกำกับ + ชื่อส่งเข้าเกม)</label>
+            <button id="rouletteAddOutcomeBtn" class="btn secondary small" type="button">+ เพิ่มช่อง</button>
+          </div>
+          <div id="rouletteOutcomeEditor" class="roulette-outcome-editor"></div>
+
+          <div class="actions tight">
+            <button id="rouletteSaveRuleBtn" class="btn primary" type="button">บันทึกกฎ</button>
+            <button id="rouletteCancelEditBtn" class="btn ghost" type="button">ยกเลิก</button>
+            <input id="rouletteTestCount" class="test-combo-input" type="number" min="1" max="99" value="1" title="คอมโบทดสอบ" />
+            <button id="rouletteTestBtn" class="btn secondary" type="button">ทดสอบหมุน</button>
+          </div>
+          <div id="rouletteRulesList" class="rules-list"></div>
+        </section>
+      </div>
+
+      <!-- ===== ฟังก์ชันเพลง ===== -->
+      <div id="panel-music" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>ฟังก์ชันเพลง</h2>
+            <label class="toggle">
+              <input id="musicEnabled" type="checkbox" checked />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">เมื่อได้รับของขวัญตามที่กำหนด โปรแกรมจะเปิดเพลงอัตโนมัติ — เพิ่มได้หลายเพลง แก้ไขได้ในหน้านี้</p>
+
+          <div class="form-grid">
+            <div>
+              <label for="musicVolume">ระดับเสียง</label>
+              <input id="musicVolume" class="field" type="range" min="0" max="100" value="80" />
+              <div class="range-value"><span id="musicVolumeLabel">80</span>%</div>
+            </div>
+            <div>
+              <label for="musicNowPlaying">กำลังเล่น</label>
+              <div id="musicNowPlaying" class="now-playing">—</div>
+            </div>
+          </div>
+          <div class="actions tight">
+            <button id="musicStopBtn" class="btn ghost" type="button">หยุดเพลง</button>
+            <button id="musicRestoreDefaultsBtn" class="btn secondary" type="button">ใช้ตั้งค่าเริ่มต้น</button>
+          </div>
+          <p class="hint">กด «ใช้ตั้งค่าเริ่มต้น» เพื่อโหลดกฎของขวัญ→เพลงที่มากับโปรแกรม (เช่น Confetti, Galaxy, …)</p>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>เพิ่ม / แก้ไข กฎของขวัญ → เพลง</h2>
+            <span class="chip" id="musicRuleMode">เพิ่มใหม่</span>
+          </div>
+
+          <input id="musicEditId" type="hidden" value="" />
+
+          <label for="musicGiftName">ชื่อของขวัญ (ต้องตรงกับ TikTok เช่น Rose)</label>
+          <input id="musicGiftName" class="field" type="text" placeholder="Rose" autocomplete="off" />
+
+          <label for="musicPlayMode">โหมดเล่นเมื่อได้ของขวัญ</label>
+          <select id="musicPlayMode" class="field select">
+            <option value="random">สุ่ม 1 เพลง</option>
+            <option value="sequence">เล่นทีละเพลงตามลำดับ</option>
+            <option value="all">เล่นทุกเพลงต่อกัน</option>
+          </select>
+
+          <div class="form-grid">
+            <div>
+              <label for="musicHookDefault">ตัดฮุกเริ่มต้น (ทุกเพลงในกฎนี้)</label>
+              <select id="musicHookDefault" class="field select">
+                <option value="full">ทั้งเพลง</option>
+                <option value="10">10 วิ</option>
+                <option value="15">15 วิ</option>
+                <option value="20" selected>20 วิ</option>
+                <option value="30">30 วิ</option>
+                <option value="custom">กำหนดเอง</option>
+              </select>
+            </div>
+            <div>
+              <label for="musicHookCustom">กำหนดเอง (วินาที)</label>
+              <input id="musicHookCustom" class="field" type="number" min="1" max="600" value="20" />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label for="musicHookStart">เริ่มฮุกที่วินาที</label>
+              <input id="musicHookStart" class="field" type="number" min="0" max="3600" value="0" step="0.5" />
+            </div>
+            <div>
+              <p class="hint" style="margin-top:28px">เช่น เริ่มที่ 30 วิ แล้วเล่น 20 วิ = ตัดช่วงฮุก</p>
+            </div>
+          </div>
+
+          <label>ไฟล์เพลง — เพิ่มแล้วกดฟัง/ตัดฮุกในโปรแกรมได้เลย</label>
+          <div class="file-row">
+            <input id="musicFiles" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" multiple />
+            <button id="musicAddFilesBtn" class="btn secondary" type="button">เพิ่มไฟล์</button>
+          </div>
+          <p class="hint">ลากแถบ <b>เริ่มตรง</b> / <b>จบตรง</b> เลือกช่วงในเพลงได้เลย หรือพิมพ์วินาที แล้วกด <b>🎧 ฟังฮุก</b> ทดสอบ</p>
+          <div id="musicPendingList" class="song-list"></div>
+
+          <div class="actions">
+            <button id="musicSaveRuleBtn" class="btn primary" type="button">บันทึกกฎ</button>
+            <button id="musicCancelEditBtn" class="btn ghost" type="button">ยกเลิกแก้ไข</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>รายการกฎเพลง</h2>
+            <span class="chip" id="musicRuleCount">0 กฎ</span>
+          </div>
+          <div id="musicRulesList" class="rules-list"></div>
+        </section>
+      </div>
+
+      <!-- ===== ฟังก์ชันเอฟเฟกต์วิดีโอ ===== -->
+      <div id="panel-video" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>ฟังก์ชันเอฟเฟกต์วิดีโอ</h2>
+            <label class="toggle">
+              <input id="videoEnabled" type="checkbox" checked />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">ภาพโชว์บนหน้าต่างเขียว · เสียงเล่นจากโปรแกรมหลัก (ตั้งระดับด้านบน) — ใน LIVE Studio อย่าปิดเสียงแอป Monkeyeffect / TempleGiftRelay</p>
+
+          <div class="form-grid">
+            <div>
+              <label for="videoVolume">ระดับเสียงวิดีโอ</label>
+              <input id="videoVolume" class="field" type="range" min="0" max="100" value="100" />
+              <div class="range-value"><span id="videoVolumeLabel">100</span>%</div>
+            </div>
+            <div>
+              <label for="videoNowPlaying">สถานะหน้าต่างวิดีโอ</label>
+              <div id="videoNowPlaying" class="now-playing">ยังไม่เปิดหน้าต่าง</div>
+            </div>
+          </div>
+
+          <label for="videoOverlayMode">โหมดหน้าต่าง</label>
+          <select id="videoOverlayMode" class="field select">
+            <option value="chroma" selected>พื้นเขียวเต็มจอ (แนะนำตอนไลฟ์ · คีย์ออก)</option>
+            <option value="clear">ใสทับจอ (ทดลอง · จับหน้าต่างอาจยังทึบ)</option>
+          </select>
+
+          <label class="toggle option-check">
+            <input id="videoFollowGame" type="checkbox" />
+            <span>ติดขนาดหน้าต่างเกม</span>
+          </label>
+          <label class="toggle option-check">
+            <input id="videoFullscreen" type="checkbox" />
+            <span>เปิดแบบเต็มจอ (ไม่ติ๊ก = ย้าย/ย่อได้)</span>
+          </label>
+          <label class="toggle option-check">
+            <input id="videoClickThrough" type="checkbox" />
+            <span>คลิกทะลุหน้าต่าง (ตอนไลฟ์)</span>
+          </label>
+
+          <ul class="info-list">
+            <li>กด <b>เปิดหน้าต่างวิดีโอ</b> → ลากย้าย / ย่อขยายขนาดได้</li>
+            <li><b>ห้ามกดย่อ/พับหน้าต่างเขียว</b> ตอนไลฟ์ — TikTok LIVE Studio จะจับภาพไม่ได้</li>
+            <li>ถ้าเกะกะ ให้ลากไปมุมจอ หรือจอสอง แต่ต้องเปิดทิ้งไว้</li>
+            <li>ใน LIVE Studio เพิ่มแหล่งหน้าต่าง → ตัวกรอง → <b>โครมาคีย์</b> ลบเขียว</li>
+          </ul>
+
+          <div class="actions tight">
+            <button id="videoOpenOverlayBtn" class="btn primary" type="button">เปิดหน้าต่างวิดีโอ</button>
+            <button id="videoCloseOverlayBtn" class="btn ghost" type="button">ปิดหน้าต่าง</button>
+            <button id="videoStopBtn" class="btn ghost" type="button">หยุดวิดีโอ</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>เพิ่ม / แก้ไข กฎของขวัญ → วิดีโอ</h2>
+            <span class="chip" id="videoRuleMode">เพิ่มใหม่</span>
+          </div>
+
+          <input id="videoEditId" type="hidden" value="" />
+
+          <label for="videoGiftName">ชื่อของขวัญ (ต้องตรงกับ TikTok เช่น Rose)</label>
+          <input id="videoGiftName" class="field" type="text" placeholder="Rose" autocomplete="off" />
+
+          <label for="videoPlayMode">โหมดเล่นเมื่อได้ของขวัญ</label>
+          <select id="videoPlayMode" class="field select">
+            <option value="random">สุ่ม 1 คลิป</option>
+            <option value="sequence">เล่นทีละคลิปตามลำดับ</option>
+            <option value="all">เล่นทุกคลิปต่อกัน</option>
+          </select>
+
+          <label>ไฟล์วิดีโอ (mp4 / webm / mov)</label>
+          <div class="file-row">
+            <input id="videoFiles" type="file" accept="video/*,.mp4,.webm,.mov,.mkv" multiple />
+            <button id="videoAddFilesBtn" class="btn secondary" type="button">เพิ่มไฟล์</button>
+          </div>
+          <div id="videoPendingList" class="song-list"></div>
+
+          <div class="actions">
+            <button id="videoSaveRuleBtn" class="btn primary" type="button">บันทึกกฎ</button>
+            <button id="videoCancelEditBtn" class="btn ghost" type="button">ยกเลิกแก้ไข</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>รายการกฎวิดีโอ</h2>
+            <span class="chip" id="videoRuleCount">0 กฎ</span>
+          </div>
+          <div id="videoRulesList" class="rules-list"></div>
+        </section>
+      </div>
+
+      <!-- ===== ขัดขวางหน้าจอ ===== -->
+      <div id="panel-interrupt" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>ขัดขวางหน้าจอ</h2>
+            <label class="toggle">
+              <input id="interruptEnabled" type="checkbox" />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">
+            ของขวัญเข้า → เลือกโหมด <b>วิดีโอเต็มจอ</b> · <b>Error ต้องกด OK</b> · หรือ <b>ปิดเกมทันที</b><br />
+            จอเดียว: ติ๊กตัวเลือกด้านบน → คลิปขัดขวางโชว์ทับจอเกม · เจาะช่องแผงแชท/คนดู LIVE Studio ให้คลิกได้
+          </p>
+
+          <div class="form-grid">
+            <div>
+              <label for="interruptVolume">ระดับเสียงวิดีโอ</label>
+              <input id="interruptVolume" class="field" type="range" min="0" max="100" value="100" />
+              <div class="range-value"><span id="interruptVolumeLabel">100</span>%</div>
+            </div>
+            <div>
+              <label for="interruptNowPlaying">สถานะ</label>
+              <div id="interruptNowPlaying" class="now-playing">ยังไม่เปิดใช้</div>
+            </div>
+          </div>
+
+          <label for="interruptScreen">จอที่ขัดขวาง</label>
+          <select id="interruptScreen" class="field select">
+            <option value="auto" selected>อัตโนมัติ — หลีกเลี่ยงจอ LIVE Studio</option>
+          </select>
+          <label class="toggle option-check">
+            <input id="interruptUnderStudio" type="checkbox" checked />
+            <span>คงช่องแชท + คนดู LIVE Studio ตอนขัดขวาง (จอเดียว)</span>
+          </label>
+          <label class="toggle option-check">
+            <input id="interruptAvoidStudio" type="checkbox" />
+            <span>หลีกเลี่ยงจอที่มี LIVE Studio (ใช้เมื่อมี 2 จอ)</span>
+          </label>
+          <p id="interruptScreenHint" class="hint">กำลังตรวจจอ...</p>
+
+          <div class="actions tight">
+            <button id="interruptRefreshScreensBtn" class="btn ghost" type="button">รีเฟรชรายการจอ</button>
+            <button id="interruptTestBtn" class="btn secondary" type="button">ทดสอบกฎที่เลือก / ล่าสุด</button>
+            <button id="interruptStopBtn" class="btn ghost" type="button">หยุด / ปิดจอ</button>
+            <button id="interruptRestoreDefaultsBtn" class="btn secondary" type="button">ใช้ตั้งค่าเริ่มต้น</button>
+            <button id="interruptSaveDefaultsBtn" class="btn primary" type="button">บันทึกเป็นค่าตั้งต้น</button>
+          </div>
+          <p class="hint">
+            «ใช้ตั้งค่าเริ่มต้น» = โหลดแพ็กที่มากับโปรแกรม ·
+            «บันทึกเป็นค่าตั้งต้น» = เขียนกฎ+คลิปที่ตัดไว้ตอนนี้เข้าแพ็กในโปรแกรม (เครื่องใหม่/ติดตั้งใหม่จะได้ค่านี้)
+          </p>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>เพิ่ม / แก้ไข กฎของขวัญ → ขัดขวาง</h2>
+            <span class="chip" id="interruptRuleMode">เพิ่มใหม่</span>
+          </div>
+
+          <input id="interruptEditId" type="hidden" value="" />
+
+          <label for="interruptTrigger">ทริกเกอร์จาก</label>
+          <select id="interruptTrigger" class="field select">
+            <option value="gift" selected>ของขวัญ (Gift)</option>
+            <option value="like">Like</option>
+            <option value="follow">ติดตาม (Follow)</option>
+          </select>
+
+          <div id="interruptGiftNameWrap">
+            <label for="interruptGiftName">ชื่อของขวัญ (ต้องตรงกับ TikTok เช่น Rose)</label>
+            <input id="interruptGiftName" class="field" type="text" placeholder="Rose" autocomplete="off" />
+          </div>
+
+          <label for="interruptKind">โหมดขัดขวาง</label>
+          <select id="interruptKind" class="field select">
+            <option value="video" selected>วิดีโอเต็มจอ</option>
+            <option value="error">ป๊อปอัป Error อย่างเดียว (ไม่เต็มจอ · กด OK ถึงหาย)</option>
+            <option value="close-game">ปิดเกมทันที — ทุกเกมที่เปิดอยู่ (ต้องเปิดเข้าใหม่เอง)</option>
+          </select>
+
+          <div id="interruptCloseGameFields" class="hidden">
+            <p class="hint">
+              ได้ของขวัญ/ทริกเกอร์ที่ตั้งไว้ → ปิดทุกเกมที่กำลังเปิดอยู่ทันที (ไม่ใช่แค่เกมที่เลือก)
+              ต้องเปิดเกมเข้าไปใหม่เอง · ไม่เล่นวิดีโอ / ไม่โชว์ Error
+            </p>
+          </div>
+
+          <div id="interruptVideoFields">
+            <label for="interruptPlayMode">โหมดเล่นวิดีโอ</label>
+            <select id="interruptPlayMode" class="field select">
+              <option value="random">สุ่ม 1 คลิป</option>
+              <option value="sequence">เล่นทีละคลิปตามลำดับ</option>
+              <option value="all">เล่นทุกคลิปต่อกัน</option>
+            </select>
+
+            <label>ไฟล์วิดีโอ (mp4 / webm / mov) — เพิ่มเองได้ · ตัดความยาวในโปรแกรมได้</label>
+            <div class="file-row">
+              <input id="interruptFiles" type="file" accept="video/*,.mp4,.webm,.mov,.mkv" multiple />
+              <button id="interruptAddFilesBtn" class="btn secondary" type="button">เพิ่มไฟล์</button>
+            </div>
+            <p class="hint">หลังเพิ่มคลิป ลาก “เริ่มตรง / จบตรง” เพื่อตัดช่วงที่จะเล่นตอนขัดขวาง · กดดูช่วงที่ตัดเพื่อเห็นภาพ</p>
+            <div id="interruptPendingList" class="song-list"></div>
+            <div id="interruptPreviewBox" class="interrupt-preview-box hidden">
+              <div class="interrupt-preview-head">
+                <span id="interruptPreviewLabel">พรีวิววิดีโอ</span>
+                <button type="button" class="btn ghost small" id="interruptPreviewCloseBtn">ปิดพรีวิว</button>
+              </div>
+              <video id="interruptPreviewPlayer" class="interrupt-preview-player" playsinline controls></video>
+            </div>
+          </div>
+
+          <div id="interruptErrorFields" class="hidden">
+            <label for="interruptErrTitle">หัวข้อหน้าต่าง Error</label>
+            <input id="interruptErrTitle" class="field" type="text" value="Windows" placeholder="Windows" />
+
+            <label for="interruptErrMessage">ข้อความ Error</label>
+            <textarea id="interruptErrMessage" class="field" rows="4" placeholder="An unexpected error has occurred.&#10;Please click OK to continue.">An unexpected error has occurred.
+Please click OK to continue.</textarea>
+
+            <label for="interruptErrCode">รหัส Error (ไม่บังคับ)</label>
+            <input id="interruptErrCode" class="field" type="text" placeholder="0xC0000005" />
+          </div>
+
+          <div class="actions">
+            <button id="interruptSaveRuleBtn" class="btn primary" type="button">บันทึกกฎ</button>
+            <button id="interruptCancelEditBtn" class="btn ghost" type="button">ยกเลิกแก้ไข</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>รายการกฎขัดขวาง</h2>
+            <span class="chip" id="interruptRuleCount">0 กฎ</span>
+          </div>
+          <div id="interruptRulesList" class="rules-list"></div>
+        </section>
+      </div>
+
+      <!-- ===== นับ Win ===== -->
+      <div id="panel-win" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>นับ Win</h2>
+            <label class="toggle">
+              <input id="winShowOverlay" type="checkbox" checked />
+              <span>โชว์ตัวเลข</span>
+            </label>
+          </div>
+          <p class="hint">กดชนะ/แพ้เองเมื่อเกมจบ · ของขวัญตั้งกฎ +/− win ได้ · ตัวเลขขวาเป็นเป้าแสดงเฉยๆ แก้ได้ · ใช้หน้าต่างเขียวแยกจากวิดีโอ</p>
+
+          <div class="win-score-box">
+            <div id="winScoreDisplay" class="win-score-display">0/5</div>
+            <div class="win-score-edit">
+              <label for="winScoreInput">คะแนนปัจจุบัน</label>
+              <input id="winScoreInput" class="field" type="number" value="0" step="1" />
+              <span class="win-slash">/</span>
+              <label for="winTargetInput">เป้า</label>
+              <input id="winTargetInput" class="field" type="number" value="5" min="1" step="1" />
+              <button id="winApplyNumbersBtn" class="btn secondary small" type="button">ใช้ตัวเลข</button>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="winWinBtn" class="btn primary" type="button">ชนะ (+1)</button>
+            <button id="winLoseBtn" class="btn secondary" type="button">แพ้ (−1)</button>
+            <button id="winResetBtn" class="btn ghost" type="button">รีเซ็ตเป็น 0</button>
+          </div>
+          <div class="actions" style="margin-top: 0.6rem">
+            <button id="winOpenOverlayBtn" class="btn secondary" type="button">เปิดหน้าต่าง Win (เขียว)</button>
+            <button id="winCloseOverlayBtn" class="btn ghost" type="button">ปิดหน้าต่าง Win</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>กฎของขวัญ → +/− Win</h2>
+            <span class="chip" id="winRuleMode">เพิ่มใหม่</span>
+          </div>
+          <input id="winEditId" type="hidden" value="" />
+          <label for="winGiftName">ชื่อของขวัญ (เช่น Rose, Galaxy)</label>
+          <input id="winGiftName" class="field" type="text" placeholder="Galaxy" autocomplete="off" />
+          <label for="winGiftDelta">เปลี่ยน Win</label>
+          <input id="winGiftDelta" class="field" type="number" value="1" step="1" />
+          <p class="hint">ใส่บวก เช่น <code>1</code> หรือลบ เช่น <code>-1</code> · ใช้ครั้งละ 1 ของขวัญที่ส่งเข้าเกมแล้ว (คอมโบส่งครั้งเดียว)</p>
+          <div class="actions">
+            <button id="winSaveRuleBtn" class="btn primary" type="button">บันทึกกฎ</button>
+            <button id="winCancelEditBtn" class="btn ghost" type="button">ยกเลิกแก้ไข</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>รายการกฎ Win</h2>
+            <span class="chip" id="winRuleCount">0 กฎ</span>
+          </div>
+          <div id="winRulesList" class="rules-list"></div>
+        </section>
+      </div>
+
+      <!-- ===== สติกเกอร์ Temple Escape ===== -->
+      <div id="panel-stickers" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>สติกเกอร์ Temple_Escape</h2>
+            <span class="chip" id="stickerCount">0 รูป</span>
+          </div>
+          <p class="hint">PNG สำหรับเกม Temple Escape — กดดาวน์โหลดทีละรูป หรือโหลดทั้งหมดเป็น ZIP (รวมใน Setup แล้ว)</p>
+          <div class="actions tight">
+            <a id="stickerDownloadAllBtn" class="btn primary" href="/api/stickers/temple-escape/zip">ดาวน์โหลดทั้งหมด (ZIP)</a>
+            <button id="stickerRefreshBtn" class="btn ghost" type="button">รีเฟรช</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>ค่าตั้งต้นเกม (礼物事件配置)</h2>
+            <span class="chip" id="templeDefaultsStatusStickers">—</span>
+          </div>
+          <p class="hint">
+            ทับเซฟเกมด้วยแพ็กในแอพ — ปุ่มเดียวกันกับในแท็บตั้งค่ากิจกรรม
+          </p>
+          <div class="actions tight">
+            <button class="btn primary" type="button" data-temple-apply>ทับค่า gift ตามแพ็กในแอพ</button>
+            <button class="btn ghost" type="button" data-temple-export>บันทึกเซฟเกมนี้เป็นแพ็กแอพ</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>ชีทต้นฉบับ</h2>
+          </div>
+          <div id="stickerSheets" class="sticker-grid sheets"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>คะแนนของขวัญ (+/−)</h2>
+            <span class="chip">score pack</span>
+          </div>
+          <div id="stickerScoreGrid" class="sticker-grid"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>แพ็ก A</h2>
+          </div>
+          <div id="stickerPackA" class="sticker-grid"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>แพ็ก B</h2>
+          </div>
+          <div id="stickerPackB" class="sticker-grid"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>แพ็ก C (มีม)</h2>
+          </div>
+          <div id="stickerPackC" class="sticker-grid"></div>
+        </section>
+      </div>
+
+      <!-- ===== อ่านออกเสียง AI ===== -->
+      <div id="panel-tts" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>อ่านออกเสียง AI</h2>
+            <label class="toggle">
+              <input id="ttsEnabled" type="checkbox" />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">เสียงพูด AI ภาษาไทยติดตั้งในโปรแกรมแล้ว — ไม่ต้องใช้เสียง Windows</p>
+
+          <div class="tts-options">
+            <label class="toggle option-check" title="ชื่อผู้ส่งของขวัญหรือข้อความ">
+              <input id="ttsReadName" type="checkbox" checked />
+              <span>อ่านชื่อ</span>
+            </label>
+            <label class="toggle option-check" title="ชื่อของขวัญที่ส่งมา เช่น Rose">
+              <input id="ttsReadGift" type="checkbox" checked />
+              <span>อ่านของขวัญ</span>
+            </label>
+            <label class="toggle option-check" title="ข้อความแชทที่พิมพ์เข้ามา">
+              <input id="ttsReadMessage" type="checkbox" checked />
+              <span>อ่านข้อความ</span>
+            </label>
+            <label class="toggle option-check" title="อิโมจิที่ส่งเข้ามา">
+              <input id="ttsReadEmoji" type="checkbox" />
+              <span>อ่านอิโมจิ</span>
+            </label>
+          </div>
+          <p class="hint">
+            ติ๊ก = เปิดอ่าน · ไม่ติ๊ก = ปิด<br />
+            <b>อ่านชื่อ</b> = ชื่อผู้ส่ง ·
+            <b>อ่านของขวัญ</b> = ชื่อของขวัญ ·
+            <b>อ่านข้อความ</b> = ข้อความที่พิมพ์ ·
+            <b>อ่านอิโมจิ</b> = อิโมจิที่ส่งมา<br />
+            ระหว่างอ่านเสียง เพลงจะถูกลดเสียงอัตโนมัติ แล้วกลับมาดังเมื่ออ่านจบ
+          </p>
+
+          <div class="form-grid">
+            <div>
+              <label for="ttsVoice">เสียงไทยในโปรแกรม</label>
+              <select id="ttsVoice" class="field select"></select>
+            </div>
+            <div>
+              <label for="ttsRate">ความเร็ว</label>
+              <input id="ttsRate" class="field" type="range" min="5" max="20" value="10" />
+              <div class="range-value"><span id="ttsRateLabel">1.0</span>x</div>
+            </div>
+          </div>
+          <p id="ttsVoiceHint" class="hint">สถานะเสียง AI: กำลังเชื่อมต่อ...</p>
+          <p id="ttsActivity" class="hint tts-activity">รออีเวนต์จากไลฟ์...</p>
+
+          <div class="actions">
+            <button id="ttsTestBtn" class="btn secondary" type="button">ทดสอบอ่านไทย</button>
+            <button id="ttsStopBtn" class="btn ghost" type="button">หยุดพูด</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ===== อัปเดต ===== -->
+      <div id="panel-update" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>อัปเดตออนไลน์</h2>
+            <span class="chip" id="updateStatusChip">v1.0.4.7</span>
+          </div>
+          <p class="hint">ค่าเริ่มต้นชี้ไปที่ GitHub Monkeyeffect — มีอัปเดตแล้วตัวเวอร์ชันมุมซ้ายจะมีจุดแดง กดที่เวอร์ชันเพื่อเปิดหน้านี้และติดตั้ง</p>
+          <label for="updateFeedUrl">URL ของ latest.json</label>
+          <input id="updateFeedUrl" class="field" type="url" placeholder="https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json" value="https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json" autocomplete="off" spellcheck="false" />
+          <div class="actions tight">
+            <button id="updateSaveFeedBtn" class="btn secondary" type="button">บันทึก URL</button>
+            <button id="updateCheckBtn" class="btn primary" type="button">ตรวจอัปเดต</button>
+            <button id="updateApplyBtn" class="btn ghost" type="button" disabled>ดาวน์โหลดแล้วติดตั้ง</button>
+          </div>
+          <p id="updateMessage" class="hint">—</p>
+        </section>
+      </div>
+
+      <!-- ===== Dev Log ===== -->
+      <div id="panel-devlog" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>Dev Log</h2>
+            <span class="chip" id="devLogCount">0</span>
+          </div>
+          <p class="hint">
+            บันทึกจังหวะสำคัญสำหรับไล่บั๊ก (ของขวัญ / ขัดขวาง / เพลง / วิดีโอ / TTS)<br />
+            ไฟล์: <code>%LOCALAPPDATA%\TempleGiftRelay\dev.log</code>
+          </p>
+          <div class="form-grid">
+            <div>
+              <label for="devLogScope">กรอง scope</label>
+              <select id="devLogScope" class="field select">
+                <option value="">ทั้งหมด</option>
+                <option value="gift">gift</option>
+                <option value="interrupt">interrupt</option>
+                <option value="music">music</option>
+                <option value="video">video</option>
+                <option value="tts">tts</option>
+                <option value="win">win</option>
+              </select>
+            </div>
+            <div>
+              <label class="toggle option-check" style="margin-top: 1.6rem">
+                <input id="devLogAutoRefresh" type="checkbox" checked />
+                <span>รีเฟรชอัตโนมัติ</span>
+              </label>
+            </div>
+          </div>
+          <div class="actions tight">
+            <button id="devLogRefreshBtn" class="btn secondary" type="button">รีเฟรช</button>
+            <button id="devLogClearBtn" class="btn ghost" type="button">ล้าง log</button>
+            <button id="devLogCopyBtn" class="btn ghost" type="button">คัดลอก</button>
+            <button id="devLogBurstTestBtn" class="btn primary" type="button">เทสขัดขวางรัวๆ (Rose x2 ×2)</button>
+          </div>
+          <pre id="devLogView" class="dev-log-view">ยังไม่มี log</pre>
+        </section>
+      </div>
+      </div>
+    </main>
+
+    <script src="/app.js?v=v1048"></script>
+  </body>
+</html>
