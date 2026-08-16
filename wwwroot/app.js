@@ -253,7 +253,7 @@ const WORKSPACE_META = {
   video: { title: "วิดีโอใส", sub: "เล่นวิดีโอโปร่งใสทับหน้าจอเกมเมื่อได้ของขวัญ" },
   interrupt: { title: "ขัดขวางจอ", sub: "แสดงภาพ/วิดีโอขัดจอเมื่อได้ของขวัญ Like หรือ Follow" },
   win: { title: "นับ Win", sub: "นับคะแนน Win บน Overlay แยกต่างหาก" },
-  stickers: { title: "สติกเกอร์", sub: "แพ็กสติกเกอร์สำหรับ overlay / ใช้ในไลฟ์" },
+  stickers: { title: "สติกเกอร์", sub: "ชุดรูปสำหรับเกมวิ่ง Temple — ทั้งแผ่นไม่แยกไอคอน" },
   tts: { title: "อ่านเสียง AI", sub: "อ่านชื่อและของขวัญด้วยเสียงไทยอัตโนมัติ" },
   update: { title: "อัปเดต", sub: "ตรวจและติดตั้งอัปเดตออนไลน์จาก GitHub Monkeyeffect" },
   devlog: { title: "Dev Log", sub: "ดู log ภายในสำหรับไล่บั๊กและจับจังหวะอีเวนต์" },
@@ -1995,6 +1995,15 @@ async function ensureVideoOnDisk(id) {
   if (!id) return false;
   if (videoOnDiskOk.has(id)) return true;
   try {
+    const still = await fetch(`/defaults/interrupt/files/${encodeURIComponent(id)}.png`, { method: "HEAD" });
+    if (still.ok) {
+      videoOnDiskOk.add(id);
+      return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
     // ขอแค่ไบต์แรก — ห้าม GET ทั้งไฟล์ (เคยทำให้แอปหน่วงหนักก่อนขัดขวาง)
     const head = await fetch(`/api/video-file/${encodeURIComponent(id)}`, {
       headers: { Range: "bytes=0-0" },
@@ -2651,7 +2660,10 @@ async function applyDefaultInterruptPack({ force = false } = {}) {
         const existing = await getAudioBlob(v.id);
         if (existing?.blob) continue;
       }
-      let blobRes = await fetch(`/defaults/interrupt/files/${encodeURIComponent(v.id)}.mp4`);
+      let blobRes = await fetch(`/defaults/interrupt/files/${encodeURIComponent(v.id)}.png`);
+      if (!blobRes.ok) {
+        blobRes = await fetch(`/defaults/interrupt/files/${encodeURIComponent(v.id)}.mp4`);
+      }
       if (!blobRes.ok) {
         blobRes = await fetch(`/defaults/interrupt/files/${encodeURIComponent(v.id)}.qt`);
       }
@@ -4026,6 +4038,7 @@ async function runInterruptDrainLoop() {
               type: "play",
               id: clip.id,
               name: clip.name,
+              still: /\.png$/i.test(String(clip.name || "")) || String(clip.id || "").startsWith("intimg_"),
               volume: interruptConfig.volume ?? 1,
               muted: false,
               startSec: start,
@@ -4263,13 +4276,24 @@ function handleGiftForInterrupt(parsed) {
 
 /* ========== Win counter ========== */
 const WIN_KEY = "tgr_win_config";
+const WIN_DEFAULTS_PACK_KEY = "tgr_win_defaults_pack_version";
 const WIN_CHANNEL = "tgr-win-overlay";
 const winChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(WIN_CHANNEL) : null;
 let winOverlayWin = null;
 let winConfig = loadWinConfig();
 
 function defaultWinConfig() {
-  return { score: 0, target: 5, showOverlay: true, rules: [] };
+  return { score: 0, target: 10, showOverlay: true, rules: [] };
+}
+
+function normalizeWinRules(rules) {
+  return (Array.isArray(rules) ? rules : [])
+    .filter((r) => r && r.gift)
+    .map((r) => ({
+      id: r.id || uid(),
+      gift: String(r.gift).trim(),
+      delta: Number.isFinite(Number(r.delta)) ? Number(r.delta) : 1,
+    }));
 }
 
 function loadWinConfig() {
@@ -4278,20 +4302,73 @@ function loadWinConfig() {
     if (!parsed || typeof parsed !== "object") return defaultWinConfig();
     return {
       score: Number.isFinite(Number(parsed.score)) ? Number(parsed.score) : 0,
-      target: Math.max(1, Number(parsed.target) || 5),
+      target: Math.max(1, Number(parsed.target) || 10),
       showOverlay: parsed.showOverlay !== false,
-      rules: Array.isArray(parsed.rules)
-        ? parsed.rules
-            .filter((r) => r && r.gift)
-            .map((r) => ({
-              id: r.id || uid(),
-              gift: String(r.gift).trim(),
-              delta: Number.isFinite(Number(r.delta)) ? Number(r.delta) : 1,
-            }))
-        : [],
+      rules: normalizeWinRules(parsed.rules),
     };
   } catch {
     return defaultWinConfig();
+  }
+}
+
+async function applyDefaultWinPack({ force = false } = {}) {
+  if (!force) {
+    try {
+      const raw = localStorage.getItem(WIN_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed?.rules) && parsed.rules.length > 0) {
+          return { ok: false, reason: "exists" };
+        }
+      }
+    } catch {
+      /* continue */
+    }
+    if (localStorage.getItem("tgr_win_defaults_seeded") === "1") {
+      return { ok: false, reason: "seeded" };
+    }
+  }
+  const res = await fetch(`/defaults/win/config.json?t=${Date.now()}`);
+  if (!res.ok) throw new Error("ไม่พบแพ็กนับ Win เริ่มต้น");
+  const pack = await res.json();
+  const rules = normalizeWinRules(pack?.rules);
+  if (!rules.length) throw new Error("แพ็กนับ Win ว่าง");
+  winConfig = {
+    score: Number.isFinite(Number(pack.score)) ? Number(pack.score) : 0,
+    target: Math.max(1, Number(pack.target) || 10),
+    showOverlay: pack.showOverlay !== false,
+    rules,
+  };
+  saveWinConfig();
+  localStorage.setItem("tgr_win_defaults_seeded", "1");
+  const packVer = String(pack.packVersion || pack.exportedAt || "");
+  if (packVer) localStorage.setItem(WIN_DEFAULTS_PACK_KEY, packVer);
+  return { ok: true, rules: rules.length, packVersion: packVer };
+}
+
+async function seedDefaultWinIfNeeded() {
+  try {
+    try {
+      const peek = await fetch(`/defaults/win/config.json?t=${Date.now()}`);
+      if (peek.ok) {
+        const pack = await peek.json();
+        const packVer = String(pack?.packVersion || "");
+        const applied = localStorage.getItem(WIN_DEFAULTS_PACK_KEY) || "";
+        if (pack?.replaceOnUpdate && packVer && packVer !== applied) {
+          const forced = await applyDefaultWinPack({ force: true });
+          if (forced.ok) {
+            console.info(`[win] replaced with pack ${packVer} (${forced.rules} rules)`);
+            return true;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[win] replaceOnUpdate peek failed", err);
+    }
+    const result = await applyDefaultWinPack({ force: false });
+    if (result.ok) console.info(`[win] seeded ${result.rules} default gift→win rules`);
+  } catch (err) {
+    console.warn("[win] seed defaults failed", err);
   }
 }
 
@@ -4798,6 +4875,7 @@ function renderGiftActionOverview() {
     const raw = String(name || "").trim();
     if (!raw) return;
     const key = normalizeInterruptGiftKey(raw) || raw.toLowerCase();
+    if (key === "doughnut" || key === "donut") return;
     if (!map.has(key)) map.set(key, { displayName: raw, actions: new Set() });
     const rec = map.get(key);
     rec.actions.add(action);
@@ -5373,9 +5451,6 @@ function renderRouletteUi() {
   }
   list.innerHTML = rouletteConfig.rules
     .map((r) => {
-      const outs = (r.outcomes || [])
-        .map((o) => o.label || o.giftName)
-        .join(", ");
       const thumbs = (r.outcomes || [])
         .map((o, idx) =>
           o.imageId
@@ -5386,7 +5461,6 @@ function renderRouletteUi() {
       return `<div class="rule-row${r.mode === "multiply" ? " is-fate" : ""}">
         <div>
           <strong>${escapeHtml(r.triggerGift || "")}</strong>
-          <div class="hint">${r.mode === "multiply" ? "โหมดนำโชค · สุ่มของขวัญแล้วสุ่มตัวคูณ ×1–×5" : "โหมดหีบสมบัติ · คอมโบ ×N"} → ${escapeHtml(outs)}</div>
           <div class="roulette-rule-thumbs">${thumbs}</div>
         </div>
         <div class="rule-actions">
@@ -6584,6 +6658,7 @@ renderWinUiState();
 syncWinScoreToOverlay();
 renderTtsUiState();
 seedRouletteDefaultsIfNeeded();
+seedDefaultWinIfNeeded();
 setInterval(refreshTtsStatus, 5000);
 setInterval(syncWinScoreToOverlay, 3000);
 
@@ -6694,80 +6769,9 @@ document.getElementById("winRulesList")?.addEventListener("click", (e) => {
   }
 });
 
-/* ========== Temple Escape Stickers ========== */
-const STICKER_BASE = "/stickers/temple-escape";
-let stickerManifest = null;
-
-function stickerCardHtml(item, { sheet = false } = {}) {
-  const file = item.file;
-  const url = `${STICKER_BASE}/${encodeURIComponent(file)}`;
-  const name = escapeHtml(item.name || item.id || file);
-  const score = item.score ? String(item.score) : "";
-  const scoreClass = score.startsWith("-") ? "minus" : score ? "plus" : "";
-  const scoreHtml = score
-    ? `<span class="sticker-score ${scoreClass}">${escapeHtml(score)}</span>`
-    : "";
-  return `<article class="sticker-card" data-id="${escapeHtml(item.id || file)}">
-    <img class="sticker-preview" src="${url}?v=2" alt="${name}" loading="lazy" />
-    <div class="sticker-name">${name}</div>
-    ${scoreHtml}
-    <a class="btn secondary small" href="${url}" download="${escapeHtml(file)}">ดาวน์โหลด PNG</a>
-  </article>`;
-}
-
-function renderStickerGrid(el, items, opts) {
-  if (!el) return;
-  if (!items?.length) {
-    el.innerHTML = `<p class="hint">ยังไม่มีไฟล์สติกเกอร์</p>`;
-    return;
-  }
-  el.innerHTML = items.map((it) => stickerCardHtml(it, opts)).join("");
-}
-
-async function loadTempleEscapeStickers() {
-  const countEl = document.getElementById("stickerCount");
-  try {
-    const res = await fetch(`${STICKER_BASE}/manifest.json?t=${Date.now()}`);
-    if (!res.ok) throw new Error("ไม่พบแพ็กสติกเกอร์");
-    stickerManifest = await res.json();
-    const stickers = Array.isArray(stickerManifest.stickers) ? stickerManifest.stickers : [];
-    const sheets = Array.isArray(stickerManifest.sheets) ? stickerManifest.sheets : [];
-    if (countEl) countEl.textContent = `${stickers.length} รูป`;
-    renderStickerGrid(document.getElementById("stickerSheets"), sheets, { sheet: true });
-    renderStickerGrid(
-      document.getElementById("stickerScoreGrid"),
-      stickers.filter((s) => s.pack === "score")
-    );
-    renderStickerGrid(
-      document.getElementById("stickerPackA"),
-      stickers.filter((s) => s.pack === "pack-a")
-    );
-    renderStickerGrid(
-      document.getElementById("stickerPackB"),
-      stickers.filter((s) => s.pack === "pack-b")
-    );
-    renderStickerGrid(
-      document.getElementById("stickerPackC"),
-      stickers.filter((s) => s.pack === "pack-c")
-    );
-  } catch (err) {
-    if (countEl) countEl.textContent = "0 รูป";
-    console.warn("[stickers]", err);
-  }
-}
-
-document.getElementById("stickerRefreshBtn")?.addEventListener("click", () => loadTempleEscapeStickers());
-document.querySelector('.nav-btn[data-panel="stickers"]')?.addEventListener("click", () => {
-  if (!stickerManifest) loadTempleEscapeStickers();
-  refreshTempleDefaultsStatus();
-});
-loadTempleEscapeStickers();
-
 function setTempleDefaultsStatusText(text) {
-  for (const id of ["templeDefaultsStatus", "templeDefaultsStatusStickers"]) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
-  }
+  const el = document.getElementById("templeDefaultsStatus");
+  if (el) el.textContent = text;
 }
 
 async function refreshTempleDefaultsStatus() {

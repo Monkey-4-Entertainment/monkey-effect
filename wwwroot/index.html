@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v1042" />
+    <link rel="stylesheet" href="/style.css?v=v1044" />
   </head>
   <body>
     <div class="bg"></div>
@@ -203,14 +203,7 @@
           </div>
         </section>
 
-        <section class="card" id="giftActionOverviewCard">
-          <div class="card-head">
-            <h2>ของขวัญนี้ทำอะไร</h2>
-            <span class="chip" id="giftActionOverviewCount">0</span>
-          </div>
-          <p class="hint">รวมกฎทั้งหมด: เข้าเกม / กล่องสุ่ม / เพลง / วิดีโอ / ขัดจอ / นับ Win — ของที่ไม่มีกฎพิเศษจะเข้าเกมตามจำนวนที่รับมา</p>
-          <div id="giftActionOverview" class="rules-list"></div>
-        </section>
+        <section class="card" id="effectsDefaultsCard">
           <div class="card-head">
             <h2 id="effectsDefaultsTitle">ค่าตั้งต้น gift ในเกม</h2>
             <span class="chip" id="templeDefaultsStatus">—</span>
@@ -253,7 +246,7 @@
             <button id="rouletteCloseOverlayBtn" class="btn ghost" type="button">ปิด Overlay</button>
             <button id="rouletteRestoreDefaultsBtn" class="btn ghost" type="button">ใช้กฎเริ่มต้น (little hippo)</button>
           </div>
-          <p class="hint">หมุนเฉพาะใน Overlay (มีเสียงติ๊ก) · ลากมุมหน้าต่างเพื่อย่อ/ขยายได้ · ค่าเริ่มต้น: <b>little hippo</b> → สุ่ม 14 ช่อง</p>
+          <p class="hint">หมุนเฉพาะใน Overlay (มีเสียงติ๊ก) · กฎและรูปเก็บในโฟลเดอร์ <b>userdata</b> คัดลอกทั้งโฟลเดอร์แอพไปเครื่องอื่นได้</p>
         </section>
 
         <section class="card">
@@ -694,68 +687,31 @@ Please click OK to continue.</textarea>
         </section>
       </div>
 
-      <!-- ===== สติกเกอร์ Temple Escape ===== -->
+      <!-- ===== สติกเกอร์ ===== -->
       <div id="panel-stickers" class="panel">
         <section class="card">
           <div class="card-head">
-            <h2>สติกเกอร์ Temple_Escape</h2>
-            <span class="chip" id="stickerCount">0 รูป</span>
+            <h2>สำหรับเกมวิ่ง</h2>
+            <span class="chip">Temple Escape</span>
           </div>
-          <p class="hint">PNG สำหรับเกม Temple Escape — กดดาวน์โหลดทีละรูป หรือโหลดทั้งหมดเป็น ZIP (รวมใน Setup แล้ว)</p>
+          <p class="hint">ชุดที่อัปไว้ทั้งแผ่น ไม่แยกไอคอน — ใช้กับเกมวิ่ง Temple</p>
           <div class="actions tight">
-            <a id="stickerDownloadAllBtn" class="btn primary" href="/api/stickers/temple-escape/zip">ดาวน์โหลดทั้งหมด (ZIP)</a>
-            <button id="stickerRefreshBtn" class="btn ghost" type="button">รีเฟรช</button>
+            <a class="btn primary" href="/api/stickers/temple-escape/zip">ดาวน์โหลดทั้งหมด (ZIP)</a>
           </div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <h2>ค่าตั้งต้นเกม (礼物事件配置)</h2>
-            <span class="chip" id="templeDefaultsStatusStickers">—</span>
+          <div class="temple-sheet-list">
+            <figure class="temple-sheet">
+              <img src="/stickers/temple-escape/01.png?v=2" alt="01" />
+              <figcaption>01</figcaption>
+            </figure>
+            <figure class="temple-sheet">
+              <img src="/stickers/temple-escape/02.png?v=2" alt="02" />
+              <figcaption>02</figcaption>
+            </figure>
+            <figure class="temple-sheet">
+              <img src="/stickers/temple-escape/sheet-score.png?v=1" alt="ชุดคะแนน" />
+              <figcaption>ชุดคะแนน +/−</figcaption>
+            </figure>
           </div>
-          <p class="hint">
-            ทับเซฟเกมด้วยแพ็กในแอพ — ปุ่มเดียวกันกับในแท็บตั้งค่ากิจกรรม
-          </p>
-          <div class="actions tight">
-            <button class="btn primary" type="button" data-temple-apply>ทับค่า gift ตามแพ็กในแอพ</button>
-            <button class="btn ghost" type="button" data-temple-export>บันทึกเซฟเกมนี้เป็นแพ็กแอพ</button>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <h2>ชีทต้นฉบับ</h2>
-          </div>
-          <div id="stickerSheets" class="sticker-grid sheets"></div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <h2>คะแนนของขวัญ (+/−)</h2>
-            <span class="chip">score pack</span>
-          </div>
-          <div id="stickerScoreGrid" class="sticker-grid"></div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <h2>แพ็ก A</h2>
-          </div>
-          <div id="stickerPackA" class="sticker-grid"></div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <h2>แพ็ก B</h2>
-          </div>
-          <div id="stickerPackB" class="sticker-grid"></div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <h2>แพ็ก C (มีม)</h2>
-          </div>
-          <div id="stickerPackC" class="sticker-grid"></div>
         </section>
       </div>
 
@@ -881,6 +837,6 @@ Please click OK to continue.</textarea>
       </div>
     </main>
 
-    <script src="/app.js?v=v1048"></script>
+    <script src="/app.js?v=v1056"></script>
   </body>
 </html>
