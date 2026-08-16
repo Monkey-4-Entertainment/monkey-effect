@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.6.4",
-    "notes":  "Monkeyeffect 1.0.6.4 - restore original interrupt video clips (not still images)",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.4-update.zip",
-    "sha256":  "bddbb0b31539ac4d806073ac82902f2b480eac44107c37947222ae0ea1af20c3",
+    "version":  "1.0.6.5",
+    "notes":  "Monkeyeffect 1.0.6.5 - roulette uses display name; wait for combo then spin xN",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.5-update.zip",
+    "sha256":  "8757ecbeae4155aca07038758592bbfc66c7ade51593e5504b87d392364f6e8d",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
