@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.6.7",
-    "notes":  "Monkeyeffect 1.0.6.7 - Lucky Monkey delivers exact gift units (no drop, no double-count)",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.7-update.zip",
-    "sha256":  "b86627649e9cd847bff3cf677c858e0198823183403d1d0498ddc0129d1a54fe",
+    "version":  "1.0.6.8",
+    "notes":  "Monkeyeffect 1.0.6.8 - modern Lucky Monkey overlay UI and fixed window size",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.8-update.zip",
+    "sha256":  "6241fede13261db90e46103f51acaa6160f04d5fb9cbaad54b24927d40b157a7",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

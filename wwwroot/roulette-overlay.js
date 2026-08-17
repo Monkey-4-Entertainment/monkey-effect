@@ -171,8 +171,8 @@
   }
 
   function pickItemWidth() {
-    const w = windowEl?.clientWidth || window.innerWidth || 640;
-    return Math.max(100, Math.min(148, Math.round(w / 4.4)));
+    const w = windowEl?.clientWidth || 640;
+    return Math.max(100, Math.min(136, Math.round(w / 4.8)));
   }
 
   function burstSparks(count = 14) {
