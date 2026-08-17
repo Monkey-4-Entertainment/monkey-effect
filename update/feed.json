@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.6.6",
-    "notes":  "Monkeyeffect 1.0.6.6 - Lucky Monkey queues next spins instead of dropping multi-taps",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.6-update.zip",
-    "sha256":  "f86479314cd5b97393a3028850575a5e58f31f9f90139b3cc0a7e37246d23842",
+    "version":  "1.0.6.7",
+    "notes":  "Monkeyeffect 1.0.6.7 - Lucky Monkey delivers exact gift units (no drop, no double-count)",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.7-update.zip",
+    "sha256":  "b86627649e9cd847bff3cf677c858e0198823183403d1d0498ddc0129d1a54fe",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
