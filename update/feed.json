@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.6.10",
-    "notes":  "Monkeyeffect 1.0.6.10 - launcher closes CMD window automatically",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.10-update.zip",
-    "sha256":  "029850f0eb10fc539a130a1d63ae4be123c91fb156d7a49147b51aebc4a4a566",
+    "version":  "1.0.6.11",
+    "notes":  "Monkeyeffect 1.0.6.11 - tighter Lucky Monkey overlay layout",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.11-update.zip",
+    "sha256":  "5ea03bf0ffcff4ac218c165ef4d100bd278ce253631cbe8c8c3e77710661c11a",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

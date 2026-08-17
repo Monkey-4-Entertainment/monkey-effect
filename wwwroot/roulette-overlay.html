@@ -14,7 +14,7 @@
       :root {
         --chroma: #00ff00;
         --overlay-w: 680px;
-        --overlay-h: 448px;
+        --overlay-h: 382px;
         --stage-w: 640px;
         --item-w: 128px;
         --frame-size: 88px;
@@ -197,26 +197,19 @@
       }
 
       .combo-banner[hidden] {
-        display: flex !important;
-        visibility: hidden;
-        opacity: 0;
-        transform: scale(0.92);
-        pointer-events: none;
+        display: none !important;
       }
       .combo-banner {
         position: relative;
         z-index: 2;
-        margin: 12px 8px 0;
-        min-height: 72px;
-        padding: 10px 16px 12px;
+        margin: 8px 6px 0;
+        padding: 8px 14px 10px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 0;
-        border-radius: 16px;
-        opacity: 1;
-        transform: scale(1);
+        border-radius: 14px;
         transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         background:
           radial-gradient(ellipse at 50% 0%, rgba(255, 233, 168, 0.28), transparent 62%),
@@ -609,15 +602,24 @@
         animation: sparkFly 0.85s ease-out both;
       }
 
+      .roulette-footer {
+        margin-top: 8px;
+        padding: 0 2px;
+      }
+
       .roulette-result {
         position: relative;
         z-index: 1;
-        margin-top: 14px;
-        min-height: 1.4em;
-        font-size: 1.12rem;
+        margin-top: 0;
+        min-height: 1.25em;
+        padding: 8px 10px;
+        font-size: 1rem;
         font-weight: 700;
+        line-height: 1.35;
         color: var(--leaf);
         text-shadow: 0 0 14px rgba(159, 216, 176, 0.25);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.12));
       }
       .roulette-result::before {
         content: "✦";
@@ -669,8 +671,11 @@
       }
 
       /* ===== Lucky Monkey — modern glass UI ===== */
-      #root.theme-fate {
-        font-family: "Outfit", "Noto Sans Thai", sans-serif;
+      #root.theme-fate .roulette-crest {
+        margin-bottom: 2px;
+      }
+      #root.theme-fate .label-row {
+        margin: 2px 0 8px;
       }
       #root.theme-fate .roulette-glow {
         inset: -22% -10%;
@@ -689,7 +694,7 @@
       }
       #root.theme-fate .roulette-card {
         border-radius: 24px;
-        padding: 18px 16px 14px;
+        padding: 14px 14px 10px;
         background:
           linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, transparent 42%),
           linear-gradient(165deg, rgba(22, 10, 28, 0.94) 0%, rgba(10, 6, 18, 0.97) 48%, rgba(18, 8, 32, 0.95) 100%);
@@ -814,10 +819,12 @@
       }
       #root.theme-fate .roulette-result {
         font-family: "Noto Sans Thai", sans-serif;
-        font-size: 1rem;
+        font-size: 0.94rem;
         font-weight: 700;
         color: #fbcfe8;
         text-shadow: 0 0 16px rgba(255, 77, 141, 0.35);
+        background: linear-gradient(180deg, rgba(255, 77, 141, 0.12), rgba(0, 0, 0, 0.18));
+        border: 1px solid rgba(255, 255, 255, 0.08);
       }
       #root.theme-fate .roulette-result::before,
       #root.theme-fate .roulette-result::after {
@@ -844,7 +851,7 @@
       }
       #root.theme-fate .combo-banner-n {
         font-family: "Outfit", sans-serif;
-        font-size: 3rem;
+        font-size: 2.6rem;
         background: linear-gradient(180deg, #fff 0%, #fbcfe8 100%);
         -webkit-background-clip: text;
         background-clip: text;
@@ -979,15 +986,17 @@
               <div class="roulette-sparks" id="sparks" aria-hidden="true"></div>
             </div>
           </div>
-          <div class="combo-banner" id="comboBanner" hidden>
-            <span class="combo-banner-kicker">COMBO</span>
-            <span class="combo-banner-n" id="comboBannerN">×2</span>
-            <span class="combo-banner-sub">ส่งเข้าเกม</span>
+          <div class="roulette-footer">
+            <div class="combo-banner" id="comboBanner" hidden>
+              <span class="combo-banner-kicker">COMBO</span>
+              <span class="combo-banner-n" id="comboBannerN">×2</span>
+              <span class="combo-banner-sub">ส่งเข้าเกม</span>
+            </div>
+            <div class="roulette-result" id="result">…</div>
           </div>
-          <div class="roulette-result" id="result">…</div>
         </div>
       </div>
     </div>
-    <script src="/roulette-overlay.js?v=16"></script>
+    <script src="/roulette-overlay.js?v=17"></script>
   </body>
 </html>
