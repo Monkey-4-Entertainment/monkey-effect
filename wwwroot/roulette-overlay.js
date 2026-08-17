@@ -166,7 +166,17 @@
       comboChipEl.classList.remove("is-on");
     }
     if (comboBannerNEl) comboBannerNEl.textContent = text;
-    if (comboBannerEl) comboBannerEl.hidden = !show;
+    if (comboBannerEl) {
+      if (show) {
+        comboBannerEl.hidden = false;
+        comboBannerEl.classList.remove("is-on");
+        void comboBannerEl.offsetWidth;
+        comboBannerEl.classList.add("is-on");
+      } else {
+        comboBannerEl.hidden = true;
+        comboBannerEl.classList.remove("is-on");
+      }
+    }
     root?.classList.toggle("combo-reveal", show);
   }
 

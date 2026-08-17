@@ -196,62 +196,73 @@
         box-shadow: 0 4px 14px rgba(255, 64, 129, 0.4);
       }
 
+      .roulette-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .roulette-row .roulette-window {
+        flex: 1;
+        min-width: 0;
+      }
+
       .combo-banner[hidden] {
         display: none !important;
       }
       .combo-banner {
+        flex: 0 0 96px;
         position: relative;
-        z-index: 2;
-        margin: 8px 6px 0;
-        padding: 8px 14px 10px;
+        z-index: 6;
+        margin: 0;
+        padding: 10px 8px 9px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 0;
+        gap: 2px;
         border-radius: 14px;
-        transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         background:
           radial-gradient(ellipse at 50% 0%, rgba(255, 233, 168, 0.28), transparent 62%),
           linear-gradient(180deg, rgba(62, 44, 14, 0.55), rgba(18, 16, 10, 0.35));
         border: 1px solid rgba(255, 233, 168, 0.55);
         box-shadow:
           0 0 0 1px rgba(184, 137, 45, 0.35),
-          0 12px 28px rgba(232, 196, 106, 0.18),
+          0 8px 22px rgba(232, 196, 106, 0.2),
           inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      }
+      .combo-banner.is-on {
+        animation: comboRowPop 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
       }
       .combo-banner-kicker {
         font-family: "Cinzel", serif;
-        font-size: 0.68rem;
+        font-size: 0.58rem;
         font-weight: 700;
-        letter-spacing: 0.38em;
-        text-indent: 0.38em;
+        letter-spacing: 0.22em;
+        text-indent: 0.22em;
         color: rgba(255, 233, 168, 0.78);
       }
       .combo-banner-n {
         font-family: "Cinzel", serif;
         font-weight: 800;
-        font-size: 3.4rem;
+        font-size: 2.45rem;
         line-height: 0.95;
         letter-spacing: -0.04em;
         color: #fff6d4;
         text-shadow:
           0 0 18px rgba(255, 233, 168, 0.75),
-          0 4px 0 rgba(110, 79, 26, 0.55);
+          0 3px 0 rgba(110, 79, 26, 0.55);
       }
       .combo-banner-sub {
         font-family: "Noto Serif Thai", serif;
-        font-size: 0.78rem;
+        font-size: 0.68rem;
         color: rgba(255, 233, 168, 0.72);
-        margin-top: 2px;
+        margin-top: 0;
+        line-height: 1.1;
       }
-      #root.combo-reveal .combo-banner:not([hidden]) {
-        animation: comboBannerIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
-      }
-      @keyframes comboBannerIn {
-        0% { opacity: 0; transform: scale(0.72) translateY(12px); }
-        60% { transform: scale(1.06) translateY(0); }
-        100% { opacity: 1; transform: scale(1) translateY(0); }
+      @keyframes comboRowPop {
+        0% { opacity: 0; transform: scale(0.5) translateX(-20px); }
+        55% { transform: scale(1.1) translateX(4px); }
+        100% { opacity: 1; transform: scale(1) translateX(0); }
       }
 
       .ornament {
@@ -851,7 +862,7 @@
       }
       #root.theme-fate .combo-banner-n {
         font-family: "Outfit", sans-serif;
-        font-size: 2.6rem;
+        font-size: 2.2rem;
         background: linear-gradient(180deg, #fff 0%, #fbcfe8 100%);
         -webkit-background-clip: text;
         background-clip: text;
@@ -979,24 +990,26 @@
             <div class="roulette-frame-corner tr"></div>
             <div class="roulette-frame-corner bl"></div>
             <div class="roulette-frame-corner br"></div>
-            <div class="roulette-window" id="window">
-              <div class="roulette-strip" id="strip"></div>
-              <div class="roulette-pointer"></div>
-              <div class="roulette-focus"></div>
-              <div class="roulette-sparks" id="sparks" aria-hidden="true"></div>
+            <div class="roulette-row">
+              <div class="combo-banner" id="comboBanner" hidden>
+                <span class="combo-banner-kicker">COMBO</span>
+                <span class="combo-banner-n" id="comboBannerN">×2</span>
+                <span class="combo-banner-sub">ส่งเข้าเกม</span>
+              </div>
+              <div class="roulette-window" id="window">
+                <div class="roulette-strip" id="strip"></div>
+                <div class="roulette-pointer"></div>
+                <div class="roulette-focus"></div>
+                <div class="roulette-sparks" id="sparks" aria-hidden="true"></div>
+              </div>
             </div>
           </div>
           <div class="roulette-footer">
-            <div class="combo-banner" id="comboBanner" hidden>
-              <span class="combo-banner-kicker">COMBO</span>
-              <span class="combo-banner-n" id="comboBannerN">×2</span>
-              <span class="combo-banner-sub">ส่งเข้าเกม</span>
-            </div>
             <div class="roulette-result" id="result">…</div>
           </div>
         </div>
       </div>
     </div>
-    <script src="/roulette-overlay.js?v=17"></script>
+    <script src="/roulette-overlay.js?v=18"></script>
   </body>
 </html>

@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.6.11",
-    "notes":  "Monkeyeffect 1.0.6.11 - tighter Lucky Monkey overlay layout",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.11-update.zip",
-    "sha256":  "5ea03bf0ffcff4ac218c165ef4d100bd278ce253631cbe8c8c3e77710661c11a",
+    "version":  "1.0.6.12",
+    "notes":  "Monkeyeffect 1.0.6.12 - combo banner pops beside roulette row",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.12-update.zip",
+    "sha256":  "f5ba8d9954e6b066deeac74bfa19d63b0c2a8bab024c6b978dbbe6bc46347ef7",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
