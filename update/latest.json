@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.6.12",
-    "notes":  "Monkeyeffect 1.0.6.12 - combo banner pops beside roulette row",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.6.12-update.zip",
-    "sha256":  "f5ba8d9954e6b066deeac74bfa19d63b0c2a8bab024c6b978dbbe6bc46347ef7",
+    "version":  "1.0.7",
+    "notes":  "Monkeyeffect 1.0.7 - Lucky Monkey combo banner beside roulette row",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7-update.zip",
+    "sha256":  "2e1c52bf9d955166eb4b3867421cd7e3475d7149c662deea287c13567c2df584",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
