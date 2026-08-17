@@ -4575,7 +4575,7 @@ function setTtsActivity(msg) {
 function defaultTtsConfig() {
   return {
     enabled: false,
-    voiceURI: "th-google",
+    voiceURI: "th-TH-PremwadeeNeural",
     rate: 1,
     readName: true,
     readGift: true,
@@ -4589,10 +4589,10 @@ function loadTtsConfig() {
     const raw = localStorage.getItem(TTS_KEY);
     if (!raw) return defaultTtsConfig();
     const parsed = JSON.parse(raw);
-    let voiceURI = parsed.voiceURI || "th-google";
-    // ย้ายจากเสียง Windows เก่า → เสียงในโปรแกรม
+    let voiceURI = parsed.voiceURI || "th-TH-PremwadeeNeural";
+    // ย้ายจากเสียง Windows / Google เก่า → Neural ในโปรแกรม
     if (!BUILTIN_TTS_VOICES.some((v) => v.id === voiceURI)) {
-      voiceURI = "th-google";
+      voiceURI = "th-TH-PremwadeeNeural";
     }
     return {
       enabled: !!parsed.enabled,
@@ -4713,24 +4713,28 @@ async function speakThaiNow(text) {
 
   const body = JSON.stringify({
     text: cleaned,
-    voice: ttsConfig.voiceURI || "th-google",
+    voice: ttsConfig.voiceURI || "th-TH-PremwadeeNeural",
     rate: ttsConfig.rate || 1,
   });
 
+  const useServerPlay = document.hidden || document.visibilityState === "hidden";
+
   try {
-  // Prefer server-side play so minimized / folded window still speaks.
-  try {
-    const playRes = await ttsFetch("/speak-play", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-    });
-    if (playRes.ok) {
-      const data = await playRes.json().catch(() => ({}));
-      if (data?.ok || data?.played) return;
+  if (useServerPlay) {
+    // Minimized / hidden → server plays via PowerShell (slower but works in background).
+    try {
+      const playRes = await ttsFetch("/speak-play", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+      });
+      if (playRes.ok) {
+        const data = await playRes.json().catch(() => ({}));
+        if (data?.ok || data?.played) return;
+      }
+    } catch (err) {
+      console.warn("tts speak-play failed, fallback to browser audio", err);
     }
-  } catch (err) {
-    console.warn("tts speak-play failed, fallback to browser audio", err);
   }
 
   const res = await ttsFetch("/speak", {
@@ -4803,8 +4807,8 @@ function speakThai(text) {
   const cleaned = String(text || "").trim();
   if (!cleaned) return Promise.resolve();
   ttsSpeakQueue.push(cleaned);
-  // จำกัดคิว ไม่ให้นานเกินไป
-  if (ttsSpeakQueue.length > 8) ttsSpeakQueue = ttsSpeakQueue.slice(-8);
+  // จำกัดคิว — เก็บล่าสุด 16 บรรทัด
+  if (ttsSpeakQueue.length > 16) ttsSpeakQueue = ttsSpeakQueue.slice(-16);
   return drainTtsQueue();
 }
 
