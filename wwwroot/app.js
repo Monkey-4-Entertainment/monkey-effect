@@ -2090,9 +2090,9 @@ async function openVideoOverlay() {
   }
 
   if (!openedNative) {
-    const url = `/overlay.html?mode=${encodeURIComponent(videoConfig.overlayMode)}&v=chroma4`;
+    const url = `/chroma-overlay.html?mode=${encodeURIComponent(videoConfig.overlayMode)}&v=chroma2`;
     if (!videoOverlayWin || videoOverlayWin.closed) {
-      videoOverlayWin = window.open(url, "monkeyeffect_video_overlay", "popup=yes,width=405,height=720");
+      videoOverlayWin = window.open(url, "monkeyeffect_chroma_overlay", "popup=yes,width=540,height=660");
     } else {
       videoOverlayWin.focus();
     }
@@ -4415,9 +4415,9 @@ async function openWinOverlay() {
   }
 
   if (!openedNative) {
-    const url = "/win-overlay.html?v=1";
+    const url = "/chroma-overlay.html?mode=chroma&v=chroma2";
     if (!winOverlayWin || winOverlayWin.closed) {
-      winOverlayWin = window.open(url, "monkeyeffect_win_overlay", "popup=yes,width=640,height=360");
+      winOverlayWin = window.open(url, "monkeyeffect_chroma_overlay", "popup=yes,width=540,height=660");
     } else {
       winOverlayWin.focus();
     }
@@ -5087,9 +5087,9 @@ async function openRouletteOverlay() {
     }
   }
   if (!openedNative) {
-    const url = "/roulette-overlay.html?mode=chroma&v=15";
+    const url = "/chroma-overlay.html?mode=chroma&v=chroma2";
     if (!rouletteOverlayWin || rouletteOverlayWin.closed) {
-      rouletteOverlayWin = window.open(url, "monkeyeffect_roulette_overlay", "popup=yes,width=720,height=400");
+      rouletteOverlayWin = window.open(url, "monkeyeffect_chroma_overlay", "popup=yes,width=540,height=660");
     }
   }
   const ready = await waitForRouletteOverlayReady(alreadyOpen ? 2500 : 8000);

@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Monkeyeffect Roulette Overlay</title>
+    <script>
+      if (new URLSearchParams(location.search).get("embedded") === "1") {
+        document.documentElement.classList.add("embedded");
+      }
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -42,6 +47,11 @@
         background-color: var(--chroma);
         user-select: none;
         font-family: "Noto Sans Thai", "Outfit", sans-serif;
+      }
+      html.embedded,
+      html.embedded body {
+        background: transparent !important;
+        background-color: transparent !important;
       }
 
       #root {

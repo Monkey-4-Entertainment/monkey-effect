@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monkeyeffect Overlay</title>
+    <style>
+      :root {
+        --chroma: #00ff00;
+        --win-h: 56px;
+        --roulette-native-w: 680px;
+        --roulette-native-h: 382px;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--chroma);
+        background-color: var(--chroma);
+        user-select: none;
+      }
+      html.mode-clear,
+      body.mode-clear {
+        background: transparent !important;
+        background-color: transparent !important;
+      }
+      iframe {
+        border: 0;
+        background: transparent;
+        pointer-events: none;
+      }
+      #videoLayer,
+      #winLayer,
+      #rouletteWrap {
+        display: none;
+      }
+      body.layer-video #videoLayer {
+        display: block;
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        background: transparent;
+      }
+      body.layer-win #winLayer {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: var(--win-h);
+        z-index: 5;
+      }
+      body.roulette-live #rouletteWrap {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        z-index: 4;
+        justify-content: center;
+        overflow: hidden;
+        pointer-events: none;
+        background: transparent;
+      }
+      body.layer-win.roulette-live #rouletteWrap {
+        top: var(--win-h);
+        height: calc(100% - var(--win-h));
+      }
+      #rouletteLayer {
+        width: var(--roulette-native-w);
+        height: var(--roulette-native-h);
+        flex-shrink: 0;
+        transform-origin: top center;
+        background: transparent !important;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe id="videoLayer" title="Video" allow="autoplay; encrypted-media"></iframe>
+    <iframe id="winLayer" title="Win" src="/win-overlay.html?compact=1&v=chroma4"></iframe>
+    <div id="rouletteWrap">
+      <iframe id="rouletteLayer" title="Roulette"></iframe>
+    </div>
+    <script>
+      (() => {
+        const params = new URLSearchParams(location.search);
+        const mode = (params.get("mode") || "chroma").toLowerCase() === "clear" ? "clear" : "chroma";
+        document.documentElement.classList.add(mode === "clear" ? "mode-clear" : "mode-chroma");
+        document.body.classList.add(mode === "clear" ? "mode-clear" : "mode-chroma");
+
+        const video = document.getElementById("videoLayer");
+        const roulette = document.getElementById("rouletteLayer");
+        const videoSrc = `/overlay.html?mode=${encodeURIComponent(mode)}&embedded=1&v=chroma5`;
+        const rouletteSrc = `/roulette-overlay.html?mode=${encodeURIComponent(mode)}&embedded=1&v=20`;
+        const ROULETTE_NATIVE_W = 680;
+        const ROULETTE_FIT = 0.45;
+
+        function fitRoulette() {
+          if (!roulette) return;
+          const boxW = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+          const scale = (boxW * ROULETTE_FIT) / ROULETTE_NATIVE_W;
+          roulette.style.transform = `scale(${scale})`;
+        }
+
+        let layers = { video: false, win: false, roulette: false };
+        let rouletteLive = false;
+
+        function blank(el) {
+          if (!el) return;
+          const cur = el.getAttribute("src") || "";
+          if (cur && cur !== "about:blank") el.src = "about:blank";
+        }
+
+        function load(el, src) {
+          if (!el || !src) return;
+          const cur = el.getAttribute("src") || "";
+          if (cur !== src) el.src = src;
+        }
+
+        function rouletteVisibleFromStatus(st) {
+          if (!st || typeof st !== "object") return false;
+          if (st.state === "spinning") return true;
+          if (st.type === "roulette-done") return true;
+          return false;
+        }
+
+        function parseStatus(raw) {
+          if (!raw) return null;
+          if (typeof raw === "object") return raw;
+          try {
+            return JSON.parse(raw);
+          } catch {
+            return null;
+          }
+        }
+
+        function apply() {
+          const videoOn = !!layers.video;
+          const winOn = !!layers.win;
+          const rouletteOn = !!layers.roulette;
+          const live = rouletteOn && rouletteLive;
+          document.body.classList.toggle("layer-video", videoOn);
+          document.body.classList.toggle("layer-win", winOn);
+          document.body.classList.toggle("layer-roulette", rouletteOn);
+          document.body.classList.toggle("roulette-live", live);
+          if (videoOn) load(video, videoSrc);
+          else blank(video);
+          if (rouletteOn) load(roulette, rouletteSrc);
+          fitRoulette();
+        }
+
+        async function poll() {
+          try {
+            const [layerRes, rouletteRes] = await Promise.all([
+              fetch(`/api/chroma-overlay/layers?t=${Date.now()}`),
+              fetch(`/api/roulette-overlay/status?t=${Date.now()}`),
+            ]);
+            if (layerRes.ok) layers = await layerRes.json();
+            if (rouletteRes.ok) {
+              const data = await rouletteRes.json();
+              rouletteLive = rouletteVisibleFromStatus(parseStatus(data.lastStatus));
+            }
+            apply();
+          } catch {
+            /* ignore */
+          }
+        }
+
+        try {
+          const ch = new BroadcastChannel("tgr-roulette-overlay");
+          ch.addEventListener("message", (ev) => {
+            const d = ev?.data;
+            if (!d || typeof d !== "object") return;
+            if (d.state === "spinning" || d.type === "roulette-done") rouletteLive = true;
+            else if (d.state === "ready" || d.type === "roulette-hide") rouletteLive = false;
+            apply();
+          });
+        } catch {
+          /* ignore */
+        }
+
+        window.addEventListener("resize", fitRoulette);
+        fitRoulette();
+        poll();
+        setInterval(poll, 120);
+      })();
+    </script>
+  </body>
+</html>

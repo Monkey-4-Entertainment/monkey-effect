@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monkeyeffect Win Overlay</title>
+    <script>
+      if (new URLSearchParams(location.search).get("compact") === "1") {
+        document.documentElement.classList.add("compact");
+      }
+    </script>
+    <style>
+      :root {
+        --chroma: #00ff00;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--chroma);
+        background-color: var(--chroma);
+        user-select: none;
+      }
+      #winHud {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Segoe UI Black", "Arial Black", Impact, sans-serif;
+        font-size: clamp(64px, 18vw, 160px);
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        color: #fff;
+        -webkit-text-stroke: 4px #111;
+        text-shadow:
+          0 0 2px #000,
+          4px 4px 0 #000,
+          -2px -2px 0 #000;
+        pointer-events: none;
+        line-height: 1;
+      }
+      #winHud.negative {
+        color: #ff4d4d;
+      }
+      #winHud.hidden {
+        display: none;
+      }
+      html.compact #winHud {
+        font-size: 40px;
+        -webkit-text-stroke: 3px #111;
+        letter-spacing: 0.04em;
+        text-shadow:
+          0 0 2px #000,
+          3px 3px 0 #000,
+          -2px -2px 0 #000;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="winHud" aria-live="polite">0/5</div>
+    <script src="/win-overlay.js?v=chroma1"></script>
+  </body>
+</html>
