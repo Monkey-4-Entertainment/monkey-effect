@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>นับ Win</title>
+    <style>
+      :root {
+        --bg: #12141c;
+        --card: #1c2030;
+        --ink: #f4f6fb;
+        --muted: #9aa3b8;
+        --win: #e11d48;
+        --lose: #7c5cbf;
+        --ghost: #2a3144;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Segoe UI", "Noto Sans Thai", sans-serif;
+        user-select: none;
+      }
+      body {
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .score {
+        text-align: center;
+        font-size: 52px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        line-height: 1;
+        padding: 10px 0 4px;
+      }
+      .score.neg { color: #fb7185; }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      button {
+        border: 0;
+        border-radius: 16px;
+        color: #fff;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .hit {
+        min-height: 92px;
+        font-size: 28px;
+      }
+      .win { background: var(--win); }
+      .lose { background: var(--lose); }
+      .ghost {
+        background: var(--ghost);
+        color: var(--ink);
+        min-height: 44px;
+        font-size: 15px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      input {
+        width: 100%;
+        height: 44px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--card);
+        color: var(--ink);
+        font-size: 20px;
+        font-weight: 700;
+        text-align: center;
+      }
+      .hint {
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="score" class="score">0/10</div>
+    <div class="row">
+      <button class="hit win" id="plus" type="button">ชนะ +1</button>
+      <button class="hit lose" id="minus" type="button">แพ้ −1</button>
+    </div>
+    <div class="row">
+      <div>
+        <label for="scoreIn">คะแนน</label>
+        <input id="scoreIn" type="number" step="1" value="0" />
+      </div>
+      <div>
+        <label for="targetIn">เป้า</label>
+        <input id="targetIn" type="number" min="1" step="1" value="10" />
+      </div>
+    </div>
+    <button class="ghost" id="apply" type="button">ใช้ตัวเลข</button>
+    <button class="ghost" id="reset" type="button">รีเซ็ตเป็น 0</button>
+    <p class="hint">กด + / − บนคีย์บอร์ดก็ได้ · หน้าต่างนี้ลอยบนสุด</p>
+    <script src="/win-pad.js?v=1"></script>
+  </body>
+</html>

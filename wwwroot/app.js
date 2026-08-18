@@ -4278,8 +4278,11 @@ function handleGiftForInterrupt(parsed) {
 const WIN_KEY = "tgr_win_config";
 const WIN_DEFAULTS_PACK_KEY = "tgr_win_defaults_pack_version";
 const WIN_CHANNEL = "tgr-win-overlay";
+const WIN_CONTROL_CHANNEL = "tgr-win-control";
 const winChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(WIN_CHANNEL) : null;
+const winControlChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(WIN_CONTROL_CHANNEL) : null;
 let winOverlayWin = null;
+let winPadWin = null;
 let winConfig = loadWinConfig();
 
 function defaultWinConfig() {
@@ -4443,6 +4446,43 @@ async function closeWinOverlay() {
   winOverlayWin = null;
 }
 
+async function openWinPad() {
+  let openedNative = false;
+  try {
+    const res = await fetch("/api/win-pad/open", { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      openedNative = !!data.open || data.ok;
+    }
+  } catch {
+    openedNative = false;
+  }
+  if (!openedNative) {
+    const url = "/win-pad.html?v=1";
+    if (!winPadWin || winPadWin.closed) {
+      winPadWin = window.open(url, "monkeyeffect_win_pad", "popup=yes,width=340,height=540");
+    } else {
+      winPadWin.focus();
+    }
+  }
+}
+
+async function closeWinPad() {
+  try {
+    await fetch("/api/win-pad/close", { method: "POST" });
+  } catch {
+    /* ignore */
+  }
+  if (winPadWin && !winPadWin.closed) {
+    try {
+      winPadWin.close();
+    } catch {
+      /* ignore */
+    }
+  }
+  winPadWin = null;
+}
+
 winChannel?.addEventListener("message", (ev) => {
   if (ev.data?.type === "win-overlay-status" && ev.data.state === "ready") {
     syncWinScoreToOverlay();
@@ -4457,6 +4497,27 @@ window.addEventListener("storage", (ev) => {
   } catch {
     /* ignore */
   }
+});
+
+window.addEventListener("storage", (ev) => {
+  if (ev.key !== WIN_KEY || !ev.newValue) return;
+  try {
+    winConfig = loadWinConfig();
+    renderWinUiState();
+    syncWinScoreToOverlay();
+    renderGiftActionOverview();
+  } catch {
+    /* ignore */
+  }
+});
+
+winControlChannel?.addEventListener("message", (ev) => {
+  const d = ev?.data;
+  if (!d || d.type !== "win-control") return;
+  if (Number.isFinite(Number(d.score))) winConfig.score = Number(d.score);
+  if (Number.isFinite(Number(d.target)) && Number(d.target) > 0) winConfig.target = Number(d.target);
+  renderWinUiState();
+  renderGiftActionOverview();
 });
 
 function adjustWinScore(delta, reason) {
@@ -6731,6 +6792,8 @@ document.getElementById("winShowOverlay")?.addEventListener("change", (e) => {
 });
 document.getElementById("winOpenOverlayBtn")?.addEventListener("click", () => openWinOverlay());
 document.getElementById("winCloseOverlayBtn")?.addEventListener("click", () => closeWinOverlay());
+document.getElementById("winOpenPadBtn")?.addEventListener("click", () => openWinPad());
+document.getElementById("winClosePadBtn")?.addEventListener("click", () => closeWinPad());
 document.getElementById("winSaveRuleBtn")?.addEventListener("click", () => {
   const gift = (document.getElementById("winGiftName")?.value || "").trim();
   const delta = Number(document.getElementById("winGiftDelta")?.value);
