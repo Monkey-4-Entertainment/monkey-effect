@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.2",
-    "notes":  "Monkeyeffect 1.0.7.2 - compact Win pad window for +1/-1",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.2-update.zip",
-    "sha256":  "5e39beef2d9b8eb5e70821b86015f5ff472df9b271194d42c553ddb210ef0a8d",
+    "version":  "1.0.7.3",
+    "notes":  "Monkeyeffect 1.0.7.3 - roulette defaults rule pack 02 (little hippo 16, Game Controller, Balloon Gift Box)",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.3-update.zip",
+    "sha256":  "3b604466b4f0dda1776c3503b83311d8691ec4d09d0425ba2384025f652f18f6",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

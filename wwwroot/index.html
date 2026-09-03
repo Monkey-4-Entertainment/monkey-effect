@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v1044" />
+    <link rel="stylesheet" href="/style.css?v=v1046" />
   </head>
   <body>
     <div class="bg"></div>
@@ -22,7 +22,7 @@
           <div class="sidebar-brand-text">
             <div class="title-row">
               <h1>Monkeyeffect</h1>
-              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.4.7</span>
+              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.7.2</span>
             </div>
             <p>Gift relay → เกม</p>
           </div>
@@ -67,6 +67,14 @@
             <button type="button" class="nav-btn" data-panel="win">
               <span class="nav-ico" aria-hidden="true">★</span>
               <span class="nav-label">นับ Win</span>
+            </button>
+            <button type="button" class="nav-btn nav-btn-jar" data-panel="jar">
+              <span class="nav-ico" aria-hidden="true">◌</span>
+              <span class="nav-label">โหลแก้ว</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="agency">
+              <span class="nav-ico" aria-hidden="true">▣</span>
+              <span class="nav-label">ครีเอเตอร์</span>
             </button>
             <button type="button" class="nav-btn" data-panel="stickers">
               <span class="nav-ico" aria-hidden="true">◈</span>
@@ -245,7 +253,7 @@
           <div class="actions tight">
             <button id="rouletteOpenOverlayBtn" class="btn secondary" type="button">เปิด Overlay สุ่ม</button>
             <button id="rouletteCloseOverlayBtn" class="btn ghost" type="button">ปิด Overlay</button>
-            <button id="rouletteRestoreDefaultsBtn" class="btn ghost" type="button">ใช้กฎเริ่มต้น (little hippo)</button>
+            <button id="rouletteRestoreDefaultsBtn" class="btn ghost" type="button">ใช้กฎเริ่มต้น (กฎ 02)</button>
           </div>
           <p class="hint">หมุนเฉพาะใน Overlay (มีเสียงติ๊ก) · กฎและรูปเก็บในโฟลเดอร์ <b>userdata</b> คัดลอกทั้งโฟลเดอร์แอพไปเครื่องอื่นได้</p>
         </section>
@@ -289,6 +297,7 @@
             <input id="rouletteTestCount" class="test-combo-input" type="number" min="1" max="99" value="1" title="คอมโบทดสอบ" />
             <button id="rouletteTestBtn" class="btn secondary" type="button">ทดสอบหมุน</button>
           </div>
+          <p class="hint">กด «ปิด» ที่กฎที่ตั้งไว้เพื่อพักกล่องนั้น — ของต้นทางจะเข้าเกมตามปกติจนกว่าจะกด «เปิด» กลับ</p>
           <div id="rouletteRulesList" class="rules-list"></div>
         </section>
       </div>
@@ -693,6 +702,74 @@ Please click OK to continue.</textarea>
         </section>
       </div>
 
+      <!-- ===== โหลแก้วสะสมของขวัญ ===== -->
+      <div id="panel-jar" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>โหลแก้วสะสมของขวัญ</h2>
+            <label class="toggle">
+              <input id="jarEnabled" type="checkbox" checked />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">
+            Overlay แยกโชว์โหลแก้ว 2D ตั้ง สมส่วน · ของขวัญตกจากด้านบนตามแรงโน้มถ่วง กองในโหล ~500 ชิ้น
+            แล้วล้นออกปากซ้าย–ขวา ไหลลงข้างโหลไปกองบนพื้น · Overlay จุได้ 5000 ชิ้น · ของเก่าไม่ถูกลบ · รีเซ็ตเมื่อเริ่มไลฟ์ใหม่
+          </p>
+          <p class="hint">
+            TikTok LIVE Studio: ใส่ลิงก์ Overlay เป็น Browser Source (อย่าแคปหน้าต่าง) แล้วคีย์สีเขียว
+            <strong>#00FF00</strong> · Similarity ปานกลาง · Smoothness ต่ำ ถ้าเปิดสูงขอบโหลจะขาดๆ
+          </p>
+          <label for="jarOverlayUrl">ลิงก์ Overlay</label>
+          <div class="actions">
+            <input id="jarOverlayUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/jar-overlay.html?v=jar43" />
+            <button id="jarCopyOverlayUrlBtn" class="btn ghost" type="button">คัดลอก</button>
+          </div>
+          <div class="win-score-box">
+            <div id="jarCountDisplay" class="win-score-display">0 ชิ้น</div>
+          </div>
+          <div class="actions">
+            <button id="jarOpenOverlayBtn" class="btn primary" type="button">เปิด Overlay โหลแก้ว</button>
+            <button id="jarCloseOverlayBtn" class="btn ghost" type="button">ปิด Overlay</button>
+            <button id="jarResetBtn" class="btn secondary" type="button">รีเซ็ตโหล</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>ทดสอบตกโหล</h2>
+            <span class="chip" id="jarCatalogCount">0 รูป</span>
+          </div>
+          <label for="jarTestGift">ชื่อของขวัญ</label>
+          <input id="jarTestGift" class="field" type="text" list="jarGiftList" value="Rose" placeholder="Rose" autocomplete="off" />
+          <datalist id="jarGiftList"></datalist>
+          <label for="jarTestCount">จำนวน (1:1)</label>
+          <input id="jarTestCount" class="field" type="number" min="1" max="9999" value="10" />
+          <div class="actions">
+            <button id="jarTestBtn" class="btn secondary" type="button">ทดสอบตกโหล</button>
+          </div>
+          <p class="hint">รูปของขวัญแปลงเก็บจาก streamtoearn.io/th/gifts ไว้ในฟังก์ชันแล้ว ไม่โหลดจากเว็บตอนไลฟ์</p>
+        </section>
+      </div>
+
+      <!-- ===== Agency creators ===== -->
+      <div id="panel-agency" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>Creator Dashboard</h2>
+            <span class="chip">LIVE Backstage</span>
+          </div>
+          <p class="hint">
+            หน้าต่างแยกแสดงครีเอเตอร์ทั้งหมด · เวลารวมรายเดือน · เวลารายวัน (วันนี้ รวมที่ไลฟ์ไป+กำลังไลฟ์) · เพชรวันนี้/เรียลไทม์ · เพชรรวมเดือน
+            · ข้อมูลดึงจาก TikTok LIVE Backstage แล้วเก็บ snapshot ในเครื่อง
+          </p>
+          <div class="actions tight">
+            <button id="agencyOpenDashboardBtn" class="btn primary" type="button">เปิดหน้าต่าง Dashboard</button>
+            <button id="agencyCloseDashboardBtn" class="btn ghost" type="button">ปิดหน้าต่าง</button>
+          </div>
+        </section>
+      </div>
+
       <!-- ===== สติกเกอร์ ===== -->
       <div id="panel-stickers" class="panel">
         <section class="card">
@@ -787,7 +864,7 @@ Please click OK to continue.</textarea>
         <section class="card">
           <div class="card-head">
             <h2>อัปเดตออนไลน์</h2>
-            <span class="chip" id="updateStatusChip">v1.0.4.7</span>
+            <span class="chip" id="updateStatusChip">v1.0.7.2</span>
           </div>
           <p class="hint">ค่าเริ่มต้นชี้ไปที่ GitHub Monkeyeffect — มีอัปเดตแล้วตัวเวอร์ชันมุมซ้ายจะมีจุดแดง กดที่เวอร์ชันเพื่อเปิดหน้านี้และติดตั้ง</p>
           <label for="updateFeedUrl">URL ของ latest.json</label>
@@ -844,6 +921,6 @@ Please click OK to continue.</textarea>
       </div>
     </main>
 
-    <script src="/app.js?v=v1057"></script>
+    <script src="/app.js?v=v1076"></script>
   </body>
 </html>

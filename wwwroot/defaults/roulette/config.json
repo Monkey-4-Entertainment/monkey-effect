@@ -1,0 +1,59 @@
+{
+  "packVersion": "02",
+  "replaceOnUpdate": true,
+  "exportedAt": "2026-09-03T06:33:00Z",
+  "title": "Roulette defaults กฎ 02",
+  "enabled": true,
+  "rules": [
+    {
+      "id": "rl_mslj6y7g_nw034",
+      "triggerGift": "little hippo",
+      "enabled": true,
+      "mode": "gift",
+      "outcomes": [
+        { "giftName": "Rose", "label": "หมัด", "imageId": "rlimg_mslivxu1_qm0bg" },
+        { "giftName": "TikTok", "label": "ลา", "imageId": "rlimg_msliwqq4_6bsa4" },
+        { "giftName": "Journey Pass", "label": "รถถัง", "imageId": "rlimg_mslizei1_z7nri" },
+        { "giftName": "Rosa", "label": "ดาบ", "imageId": "rlimg_mslizsvo_0m4yx" },
+        { "giftName": "Kudos for My Star", "label": "ซาสึเกะ", "imageId": "rlimg_mslj07bw_e2z5s" },
+        { "giftName": "Confetti", "label": "สิงโต", "imageId": "rlimg_mslj375n_bmm6j" },
+        { "giftName": "GG", "label": "ตีน", "imageId": "rlimg_mslj43m1_fhzbw" },
+        { "giftName": "Ice Cream Cone", "label": "วัว", "imageId": "rlimg_mslj4hzl_gserb" },
+        { "giftName": "Slow motion", "label": "เฮลิคอปเตอร์", "imageId": "rlimg_mslj4vf4_gp2yu" },
+        { "giftName": "I love you", "label": "ปืนใหญ่", "imageId": "rlimg_mslj5aiu_ustgq" },
+        { "giftName": "Flower Garland", "label": "นารูโตะ", "imageId": "rlimg_mslj5ofz_hmjbd" },
+        { "giftName": "Hand Heart", "label": "เสือ", "imageId": "rlimg_mslj6ajo_wjxsr" },
+        { "giftName": "Cake Slice", "label": "หัวหมุน", "imageId": "rlimg_mtl3d7ui_7krvm" },
+        { "giftName": "Glow Stick", "label": "ตีน", "imageId": "rlimg_mtl3d9ab_evsh1" },
+        { "giftName": "Perfume", "label": "ลูกไฟ", "imageId": "rlimg_mtl3datj_pm8zv" },
+        { "giftName": "G.O.A.T. Busker", "label": "ลูกน้ำแข็ง", "imageId": "rlimg_mtl3dcqt_kb8rl" }
+      ]
+    },
+    {
+      "id": "rl_msukgy4e_drjhk",
+      "triggerGift": "Game Controller",
+      "enabled": true,
+      "mode": "multiply",
+      "outcomes": [
+        { "giftName": "Kudos for My Star", "label": "ซาซึเกะ", "imageId": "rlimg_msuk8lt8_ekfoj" },
+        { "giftName": "Confetti", "label": "สิงโต", "imageId": "rlimg_msuk8q1c_6dxfk" },
+        { "giftName": "Fruit Friends", "label": "ฟินิก", "imageId": "rlimg_msuk8uw8_ts230" },
+        { "giftName": "Perfume", "label": "ลูกไฟ", "imageId": "rlimg_mtl3gyn8_tssd0" },
+        { "giftName": "Love Glasses", "label": "กระบอง", "imageId": "rlimg_mtl3k9e0_bwn43" }
+      ]
+    },
+    {
+      "id": "rl_mtl3rl7j_xgglm",
+      "triggerGift": "Balloon Gift Box",
+      "enabled": true,
+      "mode": "multiply",
+      "outcomes": [
+        { "giftName": "Flower Garland", "label": "นารูโต๊ะ", "imageId": "rlimg_mtl3mz3t_d5nmd" },
+        { "giftName": "Hand Heart", "label": "เสือขาว", "imageId": "rlimg_mtl3n0sv_99lck" },
+        { "giftName": "Corgi", "label": "มังกร", "imageId": "rlimg_mtl3n3f2_ueesp" },
+        { "giftName": "G.O.A.T. Busker", "label": "ลูกน้ำแข็ง", "imageId": "rlimg_mtl3nf2m_ahfwx" },
+        { "giftName": "Groove Clarinet", "label": "ฝ่ามือยูไล", "imageId": "rlimg_mtl3nhac_5wwfx" }
+      ]
+    }
+  ]
+}

@@ -253,6 +253,7 @@ const WORKSPACE_META = {
   video: { title: "วิดีโอใส", sub: "เล่นวิดีโอโปร่งใสทับหน้าจอเกมเมื่อได้ของขวัญ" },
   interrupt: { title: "ขัดขวางจอ", sub: "แสดงภาพ/วิดีโอขัดจอเมื่อได้ของขวัญ Like หรือ Follow" },
   win: { title: "นับ Win", sub: "นับคะแนน Win บน Overlay แยกต่างหาก" },
+  jar: { title: "โหลแก้วสะสมของขวัญ", sub: "โหล 2D ตั้ง สมส่วน · ของขวัญตกตามแรงโน้มถ่วง ล้นออกข้างเมื่อเต็ม · รีเซ็ตเมื่อเริ่มไลฟ์ใหม่" },
   stickers: { title: "สติกเกอร์", sub: "ชุดรูปสำหรับเกมวิ่ง Temple — ทั้งแผ่นไม่แยกไอคอน" },
   tts: { title: "อ่านเสียง AI", sub: "อ่านชื่อและของขวัญด้วยเสียงไทยอัตโนมัติ" },
   update: { title: "อัปเดต", sub: "ตรวจและติดตั้งอัปเดตออนไลน์จาก GitHub Monkeyeffect" },
@@ -4603,6 +4604,190 @@ function handleGiftForWin(parsed) {
   adjustWinScore(rule.delta, `gift ${parsed.giftName}`);
 }
 
+/* ========== Gift jar (โหลแก้วสะสมของขวัญ) ========== */
+const JAR_KEY = "tgr_jar_config";
+const JAR_CHANNEL = "tgr-jar-overlay";
+const JAR_CMD_KEY = "tgr_jar_overlay_cmd";
+const JAR_STATUS_KEY = "tgr_jar_overlay_status";
+const JAR_OVERLAY_CAP = 5000;
+const jarChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(JAR_CHANNEL) : null;
+let jarOverlayWin = null;
+let jarConfig = loadJarConfig();
+let jarPieces = [];
+let jarTotalCount = 0;
+let jarSessionLive = false;
+let jarLiveKnown = false;
+let jarCatalogNames = [];
+
+function defaultJarConfig() {
+  return { enabled: true };
+}
+
+function loadJarConfig() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(JAR_KEY) || "null");
+    if (!parsed || typeof parsed !== "object") return defaultJarConfig();
+    return { enabled: parsed.enabled !== false };
+  } catch {
+    return defaultJarConfig();
+  }
+}
+
+function saveJarConfig() {
+  localStorage.setItem(JAR_KEY, JSON.stringify(jarConfig));
+  renderJarUiState();
+}
+
+function renderJarUiState() {
+  const enabledEl = document.getElementById("jarEnabled");
+  const countEl = document.getElementById("jarCountDisplay");
+  const catalogEl = document.getElementById("jarCatalogCount");
+  if (enabledEl) enabledEl.checked = !!jarConfig.enabled;
+  if (countEl) {
+    countEl.textContent =
+      jarTotalCount >= JAR_OVERLAY_CAP ? `${JAR_OVERLAY_CAP} ชิ้น · Overlay เต็ม` : `${jarTotalCount} ชิ้น`;
+  }
+  if (catalogEl) catalogEl.textContent = `${jarCatalogNames.length} รูป`;
+}
+
+function postJarOverlayCommand(cmd) {
+  const payload = { ...cmd, at: Date.now() };
+  try {
+    localStorage.setItem(JAR_CMD_KEY, JSON.stringify(payload));
+  } catch {
+    /* ignore */
+  }
+  jarChannel?.postMessage(payload);
+}
+
+function syncJarToOverlay() {
+  let left = JAR_OVERLAY_CAP;
+  const pieces = [];
+  for (const p of jarPieces) {
+    if (left <= 0) break;
+    const c = Math.min(p.count, left);
+    pieces.push({ giftName: p.giftName, count: c });
+    left -= c;
+  }
+  postJarOverlayCommand({ type: "jar-sync", pieces });
+}
+
+async function openJarOverlay() {
+  let openedNative = false;
+  try {
+    const res = await fetch("/api/jar-overlay/open", { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      openedNative = !!data.open || data.ok;
+    }
+  } catch {
+    openedNative = false;
+  }
+  if (!openedNative) {
+    const url = "/jar-overlay.html?v=jar43";
+    if (!jarOverlayWin || jarOverlayWin.closed) {
+      jarOverlayWin = window.open(
+        url,
+        "monkeyeffect_jar_overlay",
+        "popup=yes,width=580,height=760,toolbar=0,location=0,menubar=0,status=0,scrollbars=0"
+      );
+    } else {
+      jarOverlayWin.focus();
+    }
+  }
+}
+
+async function closeJarOverlay() {
+  try {
+    await fetch("/api/jar-overlay/close", { method: "POST" });
+  } catch {
+    /* ignore */
+  }
+  if (jarOverlayWin && !jarOverlayWin.closed) {
+    try {
+      jarOverlayWin.close();
+    } catch {
+      /* ignore */
+    }
+  }
+  jarOverlayWin = null;
+}
+
+function resetJarForNewLive() {
+  jarPieces = [];
+  jarTotalCount = 0;
+  postJarOverlayCommand({ type: "jar-reset" });
+  renderJarUiState();
+  devLog("jar", "reset for new live");
+}
+
+function dropGiftsIntoJar(giftName, count, { test = false } = {}) {
+  const name = String(giftName || "").trim();
+  const requested = Math.max(0, Math.floor(Number(count) || 0));
+  if (!name || !requested) return;
+  if (!test && !jarConfig.enabled) return;
+  const n = Math.min(requested, Math.max(0, JAR_OVERLAY_CAP - jarTotalCount));
+  if (!n) {
+    renderJarUiState();
+    return;
+  }
+  jarPieces.push({ giftName: name, count: n });
+  jarTotalCount += n;
+  postJarOverlayCommand({ type: "jar-drop", giftName: name, count: n });
+  renderJarUiState();
+}
+
+function handleGiftForJar(parsed) {
+  if (!parsed || parsed.kind !== "gift") return;
+  if (!parsed.giftName) return;
+  dropGiftsIntoJar(parsed.giftName, parsed.count || 1);
+}
+
+function noteJarLiveStatus({ live, reconnecting }) {
+  if (reconnecting) return;
+  if (live) {
+    if (jarLiveKnown && !jarSessionLive) resetJarForNewLive();
+    jarSessionLive = true;
+  } else {
+    jarSessionLive = false;
+  }
+  jarLiveKnown = true;
+}
+
+async function loadJarCatalogUi() {
+  try {
+    const res = await fetch(`/gifts/jar/catalog.json?t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) return;
+    const pack = await res.json();
+    jarCatalogNames = (pack.gifts || []).map((g) => g.name).filter(Boolean);
+    const list = document.getElementById("jarGiftList");
+    if (list) {
+      list.innerHTML = jarCatalogNames
+        .slice(0, 400)
+        .map((name) => `<option value="${escapeHtml(name)}"></option>`)
+        .join("");
+    }
+    renderJarUiState();
+  } catch (err) {
+    console.warn("[jar] catalog load failed", err);
+  }
+}
+
+jarChannel?.addEventListener("message", (ev) => {
+  if (ev.data?.type === "jar-overlay-status" && ev.data.state === "ready") {
+    syncJarToOverlay();
+  }
+});
+window.addEventListener("storage", (ev) => {
+  if (ev.key !== JAR_STATUS_KEY || !ev.newValue) return;
+  try {
+    const d = JSON.parse(ev.newValue);
+    if (d?.type === "jar-overlay-status" && d.state === "ready") syncJarToOverlay();
+  } catch {
+    /* ignore */
+  }
+});
+
 /* ========== TTS config (built-in AI voice via app proxy) ========== */
 const TTS_KEY = "tgr_tts_config";
 const TTS_API = "/api/tts";
@@ -4983,6 +5168,7 @@ function renderGiftActionOverview() {
 
 /* ========== Roulette (กล่องสุ่มเอฟเฟกต์เกม) ========== */
 const ROULETTE_KEY = "tgr_roulette_config";
+const ROULETTE_DEFAULTS_PACK_KEY = "tgr_roulette_defaults_pack_version";
 const ROULETTE_ITEM_W = 128;
 const ROULETTE_OVERLAY_CHANNEL = "tgr-roulette-overlay";
 const ROULETTE_OVERLAY_CMD_KEY = "tgr_roulette_overlay_cmd";
@@ -5376,26 +5562,42 @@ async function applyRouletteDefaultsPack(force = false) {
     rules: normalizeRouletteRules(pack.rules),
   };
   if (!force && rouletteConfig.rules.length) {
-    localStorage.setItem("tgr_roulette_defaults_pack_version", String(pack.packVersion || "1"));
+    localStorage.setItem(ROULETTE_DEFAULTS_PACK_KEY, String(pack.packVersion || "1"));
     return { applied: false, reason: "already-has-rules", pack };
   }
   rouletteConfig = next;
   await saveRouletteConfigToServer();
-  localStorage.setItem("tgr_roulette_defaults_pack_version", String(pack.packVersion || "1"));
+  localStorage.setItem(ROULETTE_DEFAULTS_PACK_KEY, String(pack.packVersion || "1"));
   return { applied: true, pack };
 }
 
 async function seedRouletteDefaultsIfNeeded() {
   try {
     await syncRouletteConfigFromServer();
-    if (rouletteConfig.rules.length) {
-      // Still hydrate bundled images so Overlay can load them on any PC.
+    try {
       const peek = await fetch(`/defaults/roulette/config.json?t=${Date.now()}`);
-      if (peek.ok) await ensureRouletteDefaultImages(await peek.json());
-      return;
+      if (peek.ok) {
+        const pack = await peek.json();
+        const packVer = String(pack?.packVersion || "");
+        const applied = localStorage.getItem(ROULETTE_DEFAULTS_PACK_KEY) || "";
+        if (pack?.replaceOnUpdate && packVer && packVer !== applied) {
+          const forced = await applyRouletteDefaultsPack(true);
+          if (forced.applied) {
+            console.info(`[roulette] replaced with pack ${packVer}`);
+            return;
+          }
+        }
+        if (rouletteConfig.rules.length) {
+          await ensureRouletteDefaultImages(pack);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("[roulette] replaceOnUpdate peek failed", err);
     }
+    if (rouletteConfig.rules.length) return;
     const result = await applyRouletteDefaultsPack(true);
-    if (result.applied) console.info("[roulette] seeded little hippo defaults");
+    if (result.applied) console.info("[roulette] seeded กฎ 02 defaults");
   } catch (err) {
     console.warn("[roulette] seed defaults failed", err);
   }
@@ -5523,12 +5725,19 @@ function renderRouletteUi() {
             : `<span class="thumb-fallback">${escapeHtml((o.label || o.giftName || "?").slice(0, 2))}</span>`
         )
         .join("");
-      return `<div class="rule-row${r.mode === "multiply" ? " is-fate" : ""}">
+      const modeLabel = r.mode === "multiply" ? "สุ่ม+คูณ" : "สุ่มของขวัญ";
+      const disabled = r.enabled === false;
+      return `<div class="rule-row${r.mode === "multiply" ? " is-fate" : ""}${disabled ? " disabled" : ""}">
         <div>
-          <strong>${escapeHtml(r.triggerGift || "")}</strong>
+          <div class="rule-title">
+            <strong>${escapeHtml(r.triggerGift || "")}</strong>
+            <span class="chip">${modeLabel}</span>
+            ${disabled ? '<span class="chip warn">ปิดอยู่</span>' : ""}
+          </div>
           <div class="roulette-rule-thumbs">${thumbs}</div>
         </div>
         <div class="rule-actions">
+          <button type="button" class="btn ghost small" data-roulette-toggle="${escapeHtml(r.id)}">${disabled ? "เปิด" : "ปิด"}</button>
           <button type="button" class="btn ghost small" data-roulette-edit="${escapeHtml(r.id)}">แก้ไข</button>
           <input class="test-combo-input" type="number" min="1" max="99" value="1" data-roulette-test-count="${escapeHtml(r.id)}" title="คอมโบทดสอบ" aria-label="คอมโบทดสอบ" />
           <button type="button" class="btn ghost small" data-roulette-test="${escapeHtml(r.id)}">ทดสอบ</button>
@@ -5537,6 +5746,9 @@ function renderRouletteUi() {
       </div>`;
     })
     .join("");
+  list.querySelectorAll("[data-roulette-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => toggleRouletteRule(btn.dataset.rouletteToggle));
+  });
   list.querySelectorAll("[data-roulette-edit]").forEach((btn) => {
     btn.addEventListener("click", () => editRouletteRule(btn.dataset.rouletteEdit));
   });
@@ -5629,7 +5841,7 @@ async function saveRouletteRuleFromForm() {
     if (rule) {
       rule.triggerGift = triggerGift;
       rule.outcomes = outcomes;
-      rule.enabled = true;
+      rule.enabled = rule.enabled !== false;
       rule.mode = mode;
     }
   } else {
@@ -5643,6 +5855,13 @@ async function saveRouletteRuleFromForm() {
   }
   await saveRouletteConfigToServer();
   clearRouletteEditor();
+}
+
+async function toggleRouletteRule(id) {
+  const rule = rouletteConfig.rules.find((r) => r.id === id);
+  if (!rule) return;
+  rule.enabled = rule.enabled === false;
+  await saveRouletteConfigToServer();
 }
 
 async function deleteRouletteRule(id) {
@@ -5877,6 +6096,7 @@ function fanOutUiFunctions(parsed) {
     if (claimUiFeature("video", triggerParsed)) handleGiftForVideo(triggerParsed);
     if (claimUiFeature("win", triggerParsed)) handleGiftForWin(triggerParsed);
     if (claimUiFeature("tts", triggerParsed)) handleGiftForTts(triggerParsed);
+    if (claimUiFeature("jar", triggerParsed)) handleGiftForJar(triggerParsed);
     if (claimUiFeature("roulette", parsed)) handleGiftForRoulette(parsed);
     return;
   }
@@ -5885,6 +6105,7 @@ function fanOutUiFunctions(parsed) {
   if (claimUiFeature("video", parsed)) handleGiftForVideo(parsed);
   if (claimUiFeature("win", parsed)) handleGiftForWin(parsed);
   if (claimUiFeature("tts", parsed)) handleGiftForTts(parsed);
+  if (claimUiFeature("jar", parsed)) handleGiftForJar(parsed);
 }
 
 function processNewGifts(items) {
@@ -6030,6 +6251,12 @@ function updateStatus(data) {
   connectBtn.disabled = isConnecting || tikTokConnected;
   disconnectBtn.disabled = isConnecting || !tikTokConnected;
   usernameInput.disabled = isConnecting || tikTokConnected;
+
+  noteJarLiveStatus({
+    connected: !!tikTokConnected,
+    live: !!live,
+    reconnecting: !!tikTokReconnecting,
+  });
 
   if (Array.isArray(data.giftLog)) {
     processNewGifts(data.giftLog);
@@ -6557,10 +6784,10 @@ document.getElementById("rouletteCloseOverlayBtn")?.addEventListener("click", ()
   closeRouletteOverlay().catch(() => {});
 });
 document.getElementById("rouletteRestoreDefaultsBtn")?.addEventListener("click", async () => {
-  if (!confirm("ใช้กฎเริ่มต้น little hippo (14 ช่อง) แทนกฎปัจจุบัน?\nจะทับกฎกล่องสุ่มในแอพ")) return;
+  if (!confirm("ใช้กฎเริ่มต้น กฎ 02 (little hippo 16 ช่อง + Game Controller + Balloon Gift Box) แทนกฎปัจจุบัน?\nจะทับกฎกล่องสุ่มในแอพ")) return;
   try {
     await applyRouletteDefaultsPack(true);
-    alert("ใส่กฎเริ่มต้น little hippo แล้ว");
+    alert("ใส่กฎเริ่มต้น กฎ 02 แล้ว");
   } catch (err) {
     alert(err.message || String(err));
   }
@@ -6794,6 +7021,52 @@ document.getElementById("winOpenOverlayBtn")?.addEventListener("click", () => op
 document.getElementById("winCloseOverlayBtn")?.addEventListener("click", () => closeWinOverlay());
 document.getElementById("winOpenPadBtn")?.addEventListener("click", () => openWinPad());
 document.getElementById("winClosePadBtn")?.addEventListener("click", () => closeWinPad());
+
+document.getElementById("jarEnabled")?.addEventListener("change", (e) => {
+  jarConfig.enabled = !!e.target.checked;
+  saveJarConfig();
+});
+document.getElementById("jarCopyOverlayUrlBtn")?.addEventListener("click", async () => {
+  const el = document.getElementById("jarOverlayUrl");
+  const text = el?.value || "http://127.0.0.1:3847/jar-overlay.html";
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    el?.select();
+  }
+});
+document.getElementById("jarOpenOverlayBtn")?.addEventListener("click", () => {
+  openJarOverlay().catch((err) => alert(err.message || String(err)));
+});
+document.getElementById("jarCloseOverlayBtn")?.addEventListener("click", () => closeJarOverlay());
+document.getElementById("jarResetBtn")?.addEventListener("click", () => resetJarForNewLive());
+document.getElementById("jarTestBtn")?.addEventListener("click", () => {
+  const name = document.getElementById("jarTestGift")?.value.trim() || "Rose";
+  const n = Number(document.getElementById("jarTestCount")?.value) || 1;
+  dropGiftsIntoJar(name, n, { test: true });
+});
+loadJarCatalogUi();
+renderJarUiState();
+
+async function openAgencyDashboard() {
+  try {
+    const res = await fetch("/api/agency/dashboard/open", { method: "POST" });
+    if (!res.ok) throw new Error("เปิด Dashboard ไม่สำเร็จ");
+  } catch (err) {
+    alert(err.message || String(err));
+  }
+}
+
+async function closeAgencyDashboard() {
+  try {
+    await fetch("/api/agency/dashboard/close", { method: "POST" });
+  } catch {
+    /* ignore */
+  }
+}
+
+document.getElementById("agencyOpenDashboardBtn")?.addEventListener("click", () => openAgencyDashboard());
+document.getElementById("agencyCloseDashboardBtn")?.addEventListener("click", () => closeAgencyDashboard());
 document.getElementById("winSaveRuleBtn")?.addEventListener("click", () => {
   const gift = (document.getElementById("winGiftName")?.value || "").trim();
   const delta = Number(document.getElementById("winGiftDelta")?.value);
@@ -7011,7 +7284,7 @@ async function loadUpdateUi() {
     const res = await fetch(`/api/version?t=${Date.now()}`);
     if (!res.ok) return;
     const data = await res.json();
-    const ver = data.version || "1.0.4.1";
+    const ver = data.version || "1.0.7.2";
     const label = document.getElementById("appVersionLabel");
     const chip = document.getElementById("updateStatusChip");
     if (label) label.textContent = `v${ver}`;
