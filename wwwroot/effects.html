@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <title>เอฟเฟกต์เกม — Monkeyeffect</title>
+    <link rel="icon" type="image/png" href="/logo.png?v=logo2" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/style.css?v=v1042" />
+    <style>
+      body { min-height: 100vh; }
+      .effects-shell {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 22px 20px 40px;
+      }
+      .effects-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .effects-top h1 {
+        margin: 0;
+        font-size: 1.35rem;
+        letter-spacing: -0.02em;
+      }
+      .effects-top p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .effects-msg {
+        min-height: 1.2em;
+        margin: 8px 0 0;
+        color: #c4b5fd;
+        font-size: 0.85rem;
+      }
+      .effects-msg.err { color: #fda4af; }
+    </style>
+  </head>
+  <body>
+    <div class="bg"></div>
+    <main class="effects-shell">
+      <header class="effects-top">
+        <div>
+          <h1 id="winTitle">เอฟเฟกต์เกม</h1>
+          <p id="winSub">ทดสอบส่งของเข้าเกมที่เลือก</p>
+        </div>
+        <span class="chip" id="winGameChip">—</span>
+      </header>
+
+      <section class="card test-card">
+        <div class="card-head">
+          <h2>ทดสอบส่ง Gift / Like / Follow</h2>
+          <span class="chip ok">direct /livemsg</span>
+        </div>
+        <p class="hint" id="winTestHint">ส่งของทดสอบเข้าเกม — GET /livemsg :12922</p>
+        <div class="gift-chips" id="giftChips">
+          <button type="button" class="chip-btn active" data-gift="Rose" data-type="SendGift">Rose</button>
+          <button type="button" class="chip-btn" data-gift="TikTok" data-type="SendGift">TikTok</button>
+          <button type="button" class="chip-btn" data-gift="GG" data-type="SendGift">GG</button>
+          <button type="button" class="chip-btn" data-gift="Like" data-type="SendLike">Like</button>
+          <button type="button" class="chip-btn" data-gift="Follow" data-type="SendFollow">Follow</button>
+        </div>
+        <div class="test-row">
+          <input id="testGift" type="text" value="Rose" placeholder="ชื่อ gift / Like / Follow" />
+          <input id="testCount" type="number" value="1" min="1" max="999" />
+          <input id="testType" type="hidden" value="SendGift" />
+          <button id="testBtn" class="btn secondary" type="button">Send Test</button>
+        </div>
+        <p class="effects-msg" id="winMsg"></p>
+      </section>
+
+      <section class="card" id="defaultsCard">
+        <div class="card-head">
+          <h2 id="defaultsTitle">ค่าตั้งต้น gift ในเกม</h2>
+          <span class="chip" id="defaultsStatus">—</span>
+        </div>
+        <p class="hint" id="defaultsHint">ทับไฟล์เซฟเกมด้วยแพ็กในแอพ · ปิดเกมก่อนกด · แล้วเปิดเกมใหม่</p>
+        <div class="actions tight">
+          <button id="applyDefaultsBtn" class="btn primary" type="button">ทับค่า gift ตามแพ็กในแอพ</button>
+          <button id="exportDefaultsBtn" class="btn ghost" type="button">บันทึกเซฟเกมนี้เป็นแพ็กแอพ</button>
+        </div>
+      </section>
+
+      <section class="card hidden" id="noDefaultsCard">
+        <div class="card-head">
+          <h2>ค่าตั้งต้น gift</h2>
+          <span class="chip">ไม่มีแพ็ก</span>
+        </div>
+        <p class="hint" id="noDefaultsHint">เกมนี้ยังไม่มีแพ็กค่าตั้งต้นในแอพ — ใช้ Send Test ได้ตามปกติ</p>
+      </section>
+
+      <section class="card hidden" id="keymapCard">
+        <div class="card-head">
+          <h2>🎮 Keyboard Mapping</h2>
+          <span class="chip" id="keymapStatus">—</span>
+        </div>
+        <p class="hint">ของขวัญ → กดคีย์ไปที่หน้าต่างเกมโดยตรง (SendInput)</p>
+        <div id="keymapTable" style="margin-top:.5rem"></div>
+        <div class="actions tight" style="margin-top:.75rem">
+          <button id="keymapReloadBtn" class="btn ghost" type="button">โหลด Mapping ใหม่</button>
+        </div>
+      </section>
+    </main>
+    <script src="/effects-window.js?v=v1042"></script>
+  </body>
+</html>

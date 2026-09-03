@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "comment": "THE RIDER gift → key mapping (based on gift.png guide). Virtual-key codes: https://learn.microsoft.com/windows/win32/inputdev/virtual-key-codes",
+  "rules": [
+    { "giftName": "Rose",        "key": "G", "vk": 71, "label": "หมา",              "holdMs": 100 },
+    { "giftName": "Perfume",     "key": "H", "vk": 72, "label": "ยายสปีด",          "holdMs": 100 },
+    { "giftName": "Phuang Malai","key": "J", "vk": 74, "label": "ควาย",             "holdMs": 100 },
+    { "giftName": "GG",          "key": "N", "vk": 78, "label": "ถัง NOS",          "holdMs": 100 },
+    { "giftName": "Super GG",    "key": "B", "vk": 66, "label": "บวกเงิน",          "holdMs": 100 },
+    { "giftName": "Ice Cream Cone","key":"M","vk": 77, "label": "หักเงิน",          "holdMs": 100 },
+    { "giftName": "TikTok",      "key": "K", "vk": 75, "label": "ผีซ้อนท้าย",      "holdMs": 100 },
+    { "giftName": "Corgi",       "key": "R", "vk": 82, "label": "อมตะ",             "holdMs": 100 },
+    { "giftName": "Doughnut",    "key": "T", "vk": 84, "label": "พายุหมุน",         "holdMs": 100 },
+    { "giftName": "Money Gun",   "key": "Y", "vk": 89, "label": "ฟ้าผ่า ลบ 1",     "holdMs": 100 },
+    { "giftName": "Rosa",        "key": "U", "vk": 85, "label": "จุ๋ม (สุ่ม)",      "holdMs": 100 },
+    { "giftName": "Hand Heart",  "key": "F", "vk": 70, "label": "ฝนอาหาร บวก 1 วิน","holdMs": 100 }
+  ]
+}
