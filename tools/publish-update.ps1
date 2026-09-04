@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.7.6",
-  [string]$Notes = "Monkeyeffect 1.0.7.6 - THE RIDER Actions+Events from TikFinity preset v2",
+  [string]$Ver = "1.0.7.7",
+  [string]$Notes = "Monkeyeffect 1.0.7.7 - หน้าเอฟเฟกต์เกมมีปุ่มนำเข้าพรีเซ็ตได้ทุกเกม",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 

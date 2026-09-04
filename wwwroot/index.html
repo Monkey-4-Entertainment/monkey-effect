@@ -22,7 +22,7 @@
           <div class="sidebar-brand-text">
             <div class="title-row">
               <h1>Monkeyeffect</h1>
-              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.7.6</span>
+              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.7.7</span>
             </div>
             <p>Gift relay → เกม</p>
           </div>
@@ -234,21 +234,25 @@
             <h2>ค่าตั้งต้น gift</h2>
             <span class="chip">ไม่มีแพ็ก</span>
           </div>
-          <p class="hint" id="effectsNoDefaultsHint">เกมนี้ยังไม่มีแพ็กค่าตั้งต้นในแอพ — ใช้ Send Test เพื่อยิงของเข้าเกมผ่าน /livemsg ได้ตามปกติ</p>
+          <p class="hint" id="effectsNoDefaultsHint">เกมนี้ยังไม่มีแพ็กค่าตั้งต้นในแอพ — นำเข้าพรีเซ็ต หรือใช้ Send Test เพื่อยิงของเข้าเกมผ่าน /livemsg ได้ตามปกติ</p>
+          <div class="actions tight" style="margin-top:.75rem">
+            <button id="effectsNoDefaultsImportBtn" class="btn primary" type="button">นำเข้าพรีเซ็ต</button>
+            <button id="effectsNoDefaultsDefaultBtn" class="btn ghost" type="button">ใช้พรีเซ็ต THE RIDER v2</button>
+          </div>
         </section>
 
-        <section class="card hidden" id="effectsImportCard">
+        <section class="card" id="effectsImportCard">
           <div class="card-head">
-            <h2>Import / Export Settings</h2>
+            <h2>นำเข้า / ส่งออกพรีเซ็ต</h2>
             <span class="chip" id="effectsImportStatus">preset</span>
           </div>
           <p class="hint">
-            ส่งออกพรีเซ็ต Actions + Events เป็นไฟล์ .json เพื่อแชร์หรือย้ายเครื่อง
-            · นำเข้าไฟล์ .json ของ Monkeyeffect หรือ .tfc ของ TikFinity ได้เลย
+            นำเข้าพรีเซ็ต Actions + Events จากไฟล์ .json ของ Monkeyeffect หรือ .tfc ของ TikFinity
+            · ส่งออกเพื่อแชร์หรือย้ายเครื่อง
           </p>
           <div class="actions tight" style="margin-top:.75rem">
-            <button id="effectsExportBtn" class="btn primary" type="button">Export Settings to file</button>
-            <button id="effectsImportBtn" class="btn secondary" type="button">Import Settings from file</button>
+            <button id="effectsImportBtn" class="btn primary" type="button">นำเข้าพรีเซ็ต</button>
+            <button id="effectsExportBtn" class="btn secondary" type="button">ส่งออกพรีเซ็ต</button>
             <button id="effectsImportDefaultBtn" class="btn ghost" type="button">ใช้พรีเซ็ต THE RIDER v2</button>
             <input id="effectsImportFile" type="file" accept=".json,.mfx,.tfc,.txt,application/json" hidden />
           </div>
@@ -999,7 +1003,7 @@ Facebook Fanpage</textarea>
         <section class="card">
           <div class="card-head">
             <h2>อัปเดตออนไลน์</h2>
-            <span class="chip" id="updateStatusChip">v1.0.7.6</span>
+            <span class="chip" id="updateStatusChip">v1.0.7.7</span>
           </div>
           <p class="hint">ค่าเริ่มต้นชี้ไปที่ GitHub Monkeyeffect — มีอัปเดตแล้วตัวเวอร์ชันมุมซ้ายจะมีจุดแดง กดที่เวอร์ชันเพื่อเปิดหน้านี้และติดตั้ง</p>
           <label for="updateFeedUrl">URL ของ latest.json</label>
@@ -1056,6 +1060,6 @@ Facebook Fanpage</textarea>
       </div>
     </main>
 
-    <script src="/app.js?v=v1092-rider-events"></script>
+    <script src="/app.js?v=v1093-import-preset"></script>
   </body>
 </html>

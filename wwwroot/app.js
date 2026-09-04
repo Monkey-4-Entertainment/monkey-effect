@@ -6418,11 +6418,11 @@ document.getElementById("effectsEventAddBtn")?.addEventListener("click", () => {
 });
 document.getElementById("effectsEventSaveBtn")?.addEventListener("click", saveEffectsKeymap);
 document.getElementById("effectsExportBtn")?.addEventListener("click", exportEffectsKeymap);
-document.getElementById("effectsImportBtn")?.addEventListener("click", () => {
-  document.getElementById("effectsImportFile")?.click();
-});
+document.getElementById("effectsImportBtn")?.addEventListener("click", openEffectsPresetPicker);
+document.getElementById("effectsNoDefaultsImportBtn")?.addEventListener("click", openEffectsPresetPicker);
 document.getElementById("effectsImportFile")?.addEventListener("change", importEffectsKeymapFile);
 document.getElementById("effectsImportDefaultBtn")?.addEventListener("click", importEffectsKeymapDefault);
+document.getElementById("effectsNoDefaultsDefaultBtn")?.addEventListener("click", importEffectsKeymapDefault);
 clearBtn.addEventListener("click", () => {
   renderLog([]);
   seenGiftKeys = new Set();
@@ -6500,12 +6500,17 @@ function syncEffectsPanelForGame(game) {
   const importCard = document.getElementById("effectsImportCard");
   const keymapTitle = document.getElementById("effectsKeymapTitle");
   const hasKeymap = isRiderKeymapGame(currentSelectedGame);
+  if (effectsPanelGameId && effectsPanelGameId !== currentSelectedGame.id && !hasKeymap) {
+    effectsKeymapUiForced = false;
+  }
+  effectsPanelGameId = currentSelectedGame.id;
+  const showKeymap = hasKeymap || effectsKeymapUiForced;
   defaultsCard?.classList.toggle("hidden", !isTemple);
-  noDefaultsCard?.classList.toggle("hidden", isTemple || hasKeymap);
-  keymapCard?.classList.toggle("hidden", !hasKeymap);
-  eventsCard?.classList.toggle("hidden", !hasKeymap);
-  importCard?.classList.toggle("hidden", !hasKeymap);
-  syncGiftChipsForGame(hasKeymap);
+  noDefaultsCard?.classList.toggle("hidden", isTemple || showKeymap);
+  keymapCard?.classList.toggle("hidden", !showKeymap);
+  eventsCard?.classList.toggle("hidden", !showKeymap);
+  importCard?.classList.remove("hidden");
+  syncGiftChipsForGame(hasKeymap || effectsKeymapUiForced);
   if (keymapTitle) keymapTitle.textContent = `Actions — ${name}`;
   if (isTemple) {
     if (defaultsTitle) defaultsTitle.textContent = `ค่าตั้งต้น gift ใน ${name}`;
@@ -6518,8 +6523,12 @@ function syncEffectsPanelForGame(game) {
       testHint.textContent = `ส่งของทดสอบเข้า ${name} — กดคีย์ตาม Keyboard Mapping เข้าหน้าต่างเกม`;
     }
     loadEffectsKeymapUI();
+  } else if (effectsKeymapUiForced) {
+    if (testHint) {
+      testHint.textContent = `ส่งของทดสอบเข้า ${name} — พรีเซ็ตที่นำเข้าจะยิงคีย์เมื่อเกมรองรับ Keyboard Mapping`;
+    }
   } else if (noDefaultsHint) {
-    noDefaultsHint.textContent = `${name} ยังไม่มีแพ็กค่าตั้งต้นในแอพ — ใช้ Send Test เพื่อยิงของเข้าเกมผ่าน /livemsg ได้ตามปกติ`;
+    noDefaultsHint.textContent = `${name} ยังไม่มีแพ็กค่าตั้งต้นในแอพ — นำเข้าพรีเซ็ต หรือใช้ Send Test เพื่อยิงของเข้าเกมผ่าน /livemsg ได้ตามปกติ`;
   }
 }
 
@@ -6581,6 +6590,21 @@ function syncGiftChipsForGame(hasKeymap) {
 
 let keymapDraftRules = [];
 let keymapDraftEvents = [];
+let effectsKeymapUiForced = false;
+let effectsPanelGameId = "";
+
+function openEffectsPresetPicker() {
+  document.getElementById("effectsImportFile")?.click();
+}
+
+function revealEffectsKeymapCards() {
+  effectsKeymapUiForced = true;
+  document.getElementById("effectsKeymapCard")?.classList.remove("hidden");
+  document.getElementById("effectsEventsCard")?.classList.remove("hidden");
+  document.getElementById("effectsNoDefaultsCard")?.classList.add("hidden");
+  document.getElementById("effectsImportCard")?.classList.remove("hidden");
+  syncGiftChipsForGame(true);
+}
 
 function setKeymapMsg(text, isErr = false) {
   const el = document.getElementById("effectsKeymapMsg");
@@ -6813,6 +6837,46 @@ async function exportEffectsKeymap() {
   }
 }
 
+function parseImportedKeymapText(text) {
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && Array.isArray(parsed.rules) && parsed.rules.length) {
+      return { rules: parsed.rules, events: Array.isArray(parsed.events) ? parsed.events : [] };
+    }
+  } catch {
+    /* TikFinity / encrypted — server already converted */
+  }
+  return null;
+}
+
+async function applyImportedEffectsPreset(data, rawText) {
+  revealEffectsKeymapCards();
+  const local = rawText ? parseImportedKeymapText(rawText) : null;
+  if (local) {
+    renderEffectsKeymapTable(local.rules, true);
+    renderEffectsEventsTable(local.events);
+  } else if (isRiderKeymapGame(currentSelectedGame)) {
+    await loadEffectsKeymapUI();
+  } else {
+    await activateRiderForImportedPreset();
+  }
+  const filled = (keymapDraftRules || []).filter((r) => r.key).length;
+  const total = data.rules || keymapDraftRules.length || 0;
+  const empty = Math.max(0, total - filled);
+  const nEvents = data.events || keymapDraftEvents.length || 0;
+  return { filled, empty, nEvents, total };
+}
+
+async function activateRiderForImportedPreset() {
+  const riderOpt = [...(gameSelect?.options || [])].find((o) => o.value === "the-rider");
+  if (!riderOpt || !gameSelect) {
+    await loadEffectsKeymapUI();
+    return;
+  }
+  gameSelect.value = "the-rider";
+  await saveSelectedGame({ id: "the-rider", displayName: riderOpt.textContent || "THE RIDER" });
+}
+
 async function importEffectsKeymapFile(ev) {
   const file = ev.target?.files?.[0];
   ev.target.value = "";
@@ -6830,14 +6894,11 @@ async function importEffectsKeymapFile(ev) {
       setImportMsg(data.error || "นำเข้าไม่สำเร็จ", true);
       return;
     }
-    await loadEffectsKeymapUI();
-    const filled = (keymapDraftRules || []).filter((r) => r.key).length;
-    const empty = Math.max(0, (data.rules || 0) - filled);
-    const nEvents = data.events || 0;
+    const info = await applyImportedEffectsPreset(data, text);
     setImportMsg(
-      empty
-        ? `นำเข้าแล้ว ${data.rules} แอคชัน · ${nEvents} อีเวนต์ · คีย์มี ${filled} แถว ที่ว่าง ${empty} แถว ให้คลิกช่องคีย์แล้วกดปุ่มตาม TikFinity`
-        : `นำเข้าแล้ว ${data.rules} แอคชัน · ${nEvents} อีเวนต์ · คีย์ครบ ${filled} แถว — ใช้ตอนไลฟ์ได้เลย`
+      info.empty
+        ? `นำเข้าแล้ว ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ · คีย์มี ${info.filled} แถว ที่ว่าง ${info.empty} แถว ให้คลิกช่องคีย์แล้วกดปุ่มตาม TikFinity`
+        : `นำเข้าแล้ว ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ · คีย์ครบ ${info.filled} แถว — ใช้ตอนไลฟ์ได้เลย`
     );
   } catch (e) {
     setImportMsg(e.message || "นำเข้าไม่สำเร็จ", true);
@@ -6853,13 +6914,18 @@ async function importEffectsKeymapDefault() {
       setImportMsg(data.error || "โหลดพรีเซ็ตไม่สำเร็จ", true);
       return;
     }
-    await loadEffectsKeymapUI();
-    const filled = (keymapDraftRules || []).filter((r) => r.key).length;
-    const empty = Math.max(0, (data.rules || 0) - filled);
+    let rawText = "";
+    try {
+      const pack = await fetch("/defaults/rider-v2.json");
+      if (pack.ok) rawText = await pack.text();
+    } catch {
+      /* UI will fall back to /api/keymap */
+    }
+    const info = await applyImportedEffectsPreset(data, rawText);
     setImportMsg(
-      empty
-        ? `ใช้พรีเซ็ตแล้ว ${data.rules || 0} แอคชัน · ${data.events || 0} อีเวนต์ · คีย์มี ${filled} แถว ที่ว่าง ${empty} แถว ให้คลิกช่องคีย์แล้วกดปุ่มตามตาราง Actions ของ TikFinity`
-        : `ใช้พรีเซ็ตแล้ว ${data.rules || 0} แอคชัน · ${data.events || 0} อีเวนต์ · คีย์ครบ — ใช้ตอนไลฟ์ได้เลย`
+      info.empty
+        ? `ใช้พรีเซ็ตแล้ว ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ · คีย์มี ${info.filled} แถว ที่ว่าง ${info.empty} แถว ให้คลิกช่องคีย์แล้วกดปุ่มตามตาราง Actions ของ TikFinity`
+        : `ใช้พรีเซ็ตแล้ว ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ · คีย์ครบ — ใช้ตอนไลฟ์ได้เลย`
     );
   } catch (e) {
     setImportMsg(e.message || "โหลดพรีเซ็ตไม่สำเร็จ", true);

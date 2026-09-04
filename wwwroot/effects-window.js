@@ -59,8 +59,8 @@ function applyGame(game) {
 
   const isTemple = currentGame.id === TEMPLE_ID;
   const keymapCard = document.getElementById("keymapCard");
-  const gameName = (currentGame.displayName || "").toUpperCase();
-  const hasKeymap = currentGame.id === "the-rider" || gameName.includes("THE RIDER");
+  const hasKeymap = isRiderKeymapGame(currentGame);
+  syncGiftChipsForGame(hasKeymap);
 
   defaultsCard?.classList.toggle("hidden", !isTemple);
   noDefaultsCard?.classList.toggle("hidden", isTemple || hasKeymap);
@@ -78,6 +78,54 @@ function applyGame(game) {
   } else if (noDefaultsHint) {
     noDefaultsHint.textContent = `${name} ยังไม่มีแพ็กค่าตั้งต้นในแอพ — ใช้ Send Test เพื่อยิงของเข้าเกมผ่าน /livemsg ได้ตามปกติ`;
   }
+}
+
+function isRiderKeymapGame(game) {
+  const id = (game?.id || "").toLowerCase();
+  if (id === "the-rider") return true;
+  if (id !== "custom" && id !== "auto") return false;
+  const blob = `${game?.displayName || ""} ${game?.customProcess || ""} ${game?.customTitle || ""}`.toUpperCase();
+  return blob.includes("RIDER");
+}
+
+const TEMPLE_GIFT_CHIPS = [
+  { gift: "Rose", type: "SendGift", label: "Rose" },
+  { gift: "TikTok", type: "SendGift", label: "TikTok" },
+  { gift: "GG", type: "SendGift", label: "GG" },
+  { gift: "Like", type: "SendLike", label: "Like" },
+  { gift: "Follow", type: "SendFollow", label: "Follow" },
+];
+
+const RIDER_GIFT_CHIPS = [
+  { gift: "Rose", type: "SendGift", label: "Rose · หมา" },
+  { gift: "Perfume", type: "SendGift", label: "Perfume · ยายสปีด" },
+  { gift: "Flower Garland", type: "SendGift", label: "Flower Garland · ควาย" },
+  { gift: "The Lucky 9", type: "SendGift", label: "The Lucky 9 · ไนตรัส" },
+  { gift: "GG", type: "SendGift", label: "GG · +เงิน" },
+  { gift: "Ice Cream Cone", type: "SendGift", label: "Ice Cream · -เงิน" },
+  { gift: "Friendship Necklace", type: "SendGift", label: "Necklace · ผีซ้อนท้าย" },
+  { gift: "Baby Hippo", type: "SendGift", label: "Baby Hippo · อมตะ" },
+  { gift: "Doughnut", type: "SendGift", label: "Doughnut · พายุ" },
+  { gift: "Lots of Bread", type: "SendGift", label: "Lots of Bread · -1" },
+  { gift: "Rosa", type: "SendGift", label: "Rosa · สุ่ม" },
+  { gift: "Night Star", type: "SendGift", label: "Night Star · สุ่ม" },
+  { gift: "Heart Me", type: "SendGift", label: "Heart Me · +1" },
+  { gift: "Like", type: "SendLike", label: "Like" },
+  { gift: "Follow", type: "SendFollow", label: "Follow" },
+];
+
+function syncGiftChipsForGame(hasKeymap) {
+  const host = document.getElementById("giftChips");
+  if (!host) return;
+  const chips = hasKeymap ? RIDER_GIFT_CHIPS : TEMPLE_GIFT_CHIPS;
+  const signature = chips.map((c) => c.gift).join("|");
+  if (host.dataset.chipSet === signature) return;
+  host.dataset.chipSet = signature;
+  host.innerHTML = chips.map((c, i) =>
+    `<button type="button" class="chip-btn${i === 0 ? " active" : ""}" data-gift="${c.gift}" data-type="${c.type}">${c.label}</button>`
+  ).join("");
+  if (testGift) testGift.value = chips[0].gift;
+  if (testType) testType.value = chips[0].type;
 }
 
 async function loadKeymapUI() {
@@ -208,13 +256,13 @@ async function exportDefaults() {
   }
 }
 
-document.querySelectorAll(".chip-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".chip-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    testGift.value = btn.dataset.gift || "";
-    testType.value = btn.dataset.type || "SendGift";
-  });
+document.getElementById("giftChips")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".chip-btn");
+  if (!btn) return;
+  document.getElementById("giftChips")?.querySelectorAll(".chip-btn").forEach((b) => b.classList.remove("active"));
+  btn.classList.add("active");
+  testGift.value = btn.dataset.gift || "";
+  testType.value = btn.dataset.type || "SendGift";
 });
 testBtn?.addEventListener("click", sendTest);
 document.getElementById("applyDefaultsBtn")?.addEventListener("click", applyDefaults);
