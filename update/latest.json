@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.4",
-    "notes":  "Monkeyeffect 1.0.7.4 - OBS overlay gallery, live gift stats, Matter.js gift jar that settles",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.4-update.zip",
-    "sha256":  "0ae90f2002ae6cda1c36ef09f7244580c7702b49e7ff5540e0641fcfb507ba5f",
+    "version":  "1.0.7.5",
+    "notes":  "Monkeyeffect 1.0.7.5 - mason jar overlay art, overflow physics, coin HUD",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.5-update.zip",
+    "sha256":  "3385ff6701283b8c9fca7d02510fffbf3b8c6bb9c4a7cf80195f290b96cef787",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

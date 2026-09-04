@@ -4,10 +4,18 @@
   const STATUS_KEY = "tgr_jar_overlay_status";
   const ICONS = "/gifts/jar/icons/";
   const UNKNOWN = ICONS + "_unknown.svg";
+  const JAR_ART_URL = "/gifts/jar/art/mason.png?v=jar50";
+  const JAR_ART_W = 293;
+  const JAR_ART_H = 384;
+  const JAR_ART_ASPECT = JAR_ART_H / JAR_ART_W;
   const JAR_FILL = 500;
   const OVERLAY_CAP = 2000;
 
-  const { Engine, World, Bodies, Body, Composite, Runner } = Matter;
+  const { Engine, World, Bodies, Body, Composite, Runner, Sleeping, Events } = Matter;
+  const CAT_INNER = 0x0001;
+  const CAT_OUTER = 0x0002;
+  const CAT_GIFT = 0x0004;
+  const CAT_GROUND = 0x0008;
 
   const canvas = document.getElementById("fx");
   const ctx = canvas.getContext("2d", { alpha: false });
@@ -28,6 +36,10 @@
   let lastCmdAt = 0;
   let lastHud = -1;
   let wallBodies = [];
+  const jarArt = new Image();
+  jarArt.decoding = "async";
+  jarArt.src = JAR_ART_URL;
+  jarArt.onload = () => resize();
 
   const engine = Engine.create({
     enableSleeping: true,
@@ -39,14 +51,21 @@
   const runner = Runner.create({ delta: 1000 / 60, isFixed: true });
   Runner.run(runner, engine);
 
+  function spillCount() {
+    let n = 0;
+    for (const b of giftBodies()) if (b.plugin && b.plugin.spilled) n += 1;
+    return n;
+  }
+
   function postStatus(state, extra = {}) {
     const gifts = giftBodies();
+    const spilled = spillCount();
     const payload = {
       type: "jar-overlay-status",
       state,
       count: gifts.length,
-      inJar: gifts.length,
-      spill: 0,
+      inJar: gifts.length - spilled,
+      spill: spilled,
       queued: queuedCount(),
       ...extra,
       at: Date.now(),
@@ -132,9 +151,12 @@
   }
 
   function masonHalf(t) {
-    if (t < 0.045) return 0.485;
-    if (t < 0.12) return lerp(0.485, 0.5, smooth((t - 0.045) / 0.075));
-    return 0.5;
+    if (t < 0.06) return lerp(0.328, 0.345, t / 0.06);
+    if (t < 0.18) return lerp(0.345, 0.355, (t - 0.06) / 0.12);
+    if (t < 0.28) return lerp(0.355, 0.412, smooth((t - 0.18) / 0.1));
+    if (t < 0.82) return lerp(0.412, 0.418, (t - 0.28) / 0.54);
+    if (t < 0.93) return lerp(0.418, 0.33, smooth((t - 0.82) / 0.11));
+    return lerp(0.33, 0.18, smooth(Math.min(1, (t - 0.93) / 0.07)));
   }
 
   function sampleJar(cx, top, jarW, jarH, mouthY, pad) {
@@ -186,40 +208,99 @@
     });
   }
 
-  function segmentBody(wall, thick) {
+  function segmentBody(wall, thick, filter, friction) {
     const mx = (wall.ax + wall.bx) / 2;
     const my = (wall.ay + wall.by) / 2;
     const angle = Math.atan2(wall.by - wall.ay, wall.bx - wall.ax);
     return Bodies.rectangle(mx, my, wall.len, thick, {
       isStatic: true,
       angle,
-      friction: 0.92,
-      frictionStatic: 1,
+      friction: friction == null ? 0.92 : friction,
+      frictionStatic: friction == null ? 1 : Math.min(1, friction + 0.15),
       restitution: 0,
       slop: 0.02,
       chamfer: { radius: Math.min(3, thick * 0.25) },
+      collisionFilter: filter,
     });
   }
 
   function rebuildWalls() {
     if (wallBodies.length) Composite.remove(engine.world, wallBodies);
     wallBodies = [];
-    const thick = Math.max(10, geom.wallT * 1.15);
-    for (const wall of innerWalls) wallBodies.push(segmentBody(wall, thick));
+    const innerF = { category: CAT_INNER, mask: CAT_GIFT };
+    const outerF = { category: CAT_OUTER, mask: CAT_GIFT };
+    const groundF = { category: CAT_GROUND, mask: CAT_GIFT };
+    const lipSkip = geom.pieceR * 1.05;
+    const innerT = Math.max(8, geom.wallT * 0.95);
+    const outerT = Math.max(8, geom.wallT * 1.05);
+    for (const wall of innerWalls) {
+      if (Math.min(wall.ay, wall.by) < geom.mouthY + lipSkip) continue;
+      wallBodies.push(segmentBody(wall, innerT, innerF, 0.88));
+    }
+    for (const wall of outerWalls) {
+      if (Math.min(wall.ay, wall.by) < geom.mouthY + lipSkip * 0.55) continue;
+      wallBodies.push(segmentBody(wall, outerT, outerF, 0.18));
+    }
+    const lipR = Math.max(5, geom.wallT * 0.62);
+    for (const x of [geom.mouthL, geom.mouthR]) {
+      wallBodies.push(
+        Bodies.circle(x, geom.mouthY + lipR * 0.15, lipR, {
+          isStatic: true,
+          friction: 0.2,
+          frictionStatic: 0.25,
+          restitution: 0,
+          collisionFilter: innerF,
+        })
+      );
+    }
+    const floorY = geom.innerBottom + geom.wallT * 0.85;
+    wallBodies.push(
+      Bodies.rectangle(geom.w * 0.5, floorY + 22, geom.w + 240, 44, {
+        isStatic: true,
+        friction: 0.78,
+        frictionStatic: 0.9,
+        restitution: 0.02,
+        collisionFilter: groundF,
+      })
+    );
+    const wallH = Math.max(80, geom.h);
+    wallBodies.push(
+      Bodies.rectangle(geom.stageL - 16, geom.h * 0.5, 32, wallH * 2, {
+        isStatic: true,
+        friction: 0.4,
+        restitution: 0,
+        collisionFilter: groundF,
+      })
+    );
+    wallBodies.push(
+      Bodies.rectangle(geom.stageR + 16, geom.h * 0.5, 32, wallH * 2, {
+        isStatic: true,
+        friction: 0.4,
+        restitution: 0,
+        collisionFilter: groundF,
+      })
+    );
     Composite.add(engine.world, wallBodies);
   }
 
   function layoutJar(w, h) {
     const margin = 10;
-    const dropRoom = Math.max(40, h * 0.09);
-    const sideRoom = Math.max(96, Math.min(150, w * 0.22));
-    const jarW = Math.max(140, Math.min(w - margin * 2 - sideRoom * 2, (h * 0.7) / 1.7, 300));
-    const jarH = Math.max(220, Math.min(h - margin * 2 - dropRoom, jarW * 1.7, 540));
+    const dropRoom = Math.max(36, h * 0.07);
+    const hudRoom = 56;
+    const sideRoom = Math.max(88, Math.min(140, w * 0.2));
+    const maxW = Math.max(160, w - margin * 2 - sideRoom * 2);
+    const maxH = Math.max(200, h - margin * 2 - dropRoom - hudRoom);
+    let jarW = Math.min(maxW, maxH / JAR_ART_ASPECT, 360);
+    let jarH = jarW * JAR_ART_ASPECT;
+    if (jarH > maxH) {
+      jarH = maxH;
+      jarW = jarH / JAR_ART_ASPECT;
+    }
     const cx = w * 0.5;
-    const bottom = h - margin - 56;
+    const bottom = h - margin - hudRoom;
     const top = Math.max(margin + dropRoom, bottom - jarH);
-    const wallT = Math.max(7, jarW * 0.052);
-    const mouthY = top;
+    const wallT = Math.max(8, jarW * 0.055);
+    const mouthY = top + jarH * 0.055;
     const inner = sampleJar(cx, top, jarW, jarH, mouthY, 0);
     const outer = sampleJar(cx, top, jarW, jarH, mouthY, wallT);
     outer[0][0] -= wallT * 0.22;
@@ -246,6 +327,8 @@
       h,
       jarW,
       jarH,
+      artX: cx - jarW / 2,
+      artY: top,
       cx,
       top,
       bottom,
@@ -342,9 +425,10 @@
         slop: 0.04,
         sleepThreshold: 18,
         angle: (Math.random() - 0.5) * 0.4,
+        collisionFilter: { category: CAT_GIFT, mask: CAT_INNER | CAT_GIFT | CAT_GROUND },
       });
       Body.setVelocity(body, { x: (Math.random() * 2 - 1) * 0.6, y: 1.2 });
-      body.plugin = { kind: "gift", img: item.img, giftName: item.giftName, r };
+      body.plugin = { kind: "gift", img: item.img, giftName: item.giftName, r, spilled: false };
       Composite.add(engine.world, body);
       item.left -= 1;
       budget -= 1;
@@ -352,6 +436,76 @@
     }
     spawnWait = queued <= 16 ? 0.08 : queued <= 80 ? 0.04 : 0.02;
   }
+
+  function markSpill(b, dir) {
+    if (!b || !b.plugin || b.plugin.spilled) return;
+    b.plugin.spilled = true;
+    b.collisionFilter.mask = CAT_OUTER | CAT_GIFT | CAT_GROUND;
+    b.friction = 0.22;
+    b.frictionStatic = 0.28;
+    b.frictionAir = 0.01;
+    b.sleepThreshold = 22;
+    Sleeping.set(b, false);
+    const d = dir || (b.position.x < geom.cx ? -1 : 1);
+    Body.setVelocity(b, {
+      x: d * (2.1 + Math.random() * 1.1),
+      y: Math.min(Math.abs(b.velocity.y), 1.8) + 0.35,
+    });
+  }
+
+  function nudgeOverflow() {
+    if (!geom) return;
+    const brim = geom.mouthY + geom.pieceR * 2.8;
+    const gifts = giftBodies();
+    let brimN = 0;
+    for (const b of gifts) {
+      if (!b.plugin.spilled && b.position.y < brim) brimN += 1;
+    }
+    const packed = brimN >= 7;
+    for (const b of gifts) {
+      if (b.plugin.spilled) {
+        if (b.position.y > geom.h + 30) {
+          const d = b.position.x < geom.cx ? -1 : 1;
+          const r = b.circleRadius || 12;
+          const x = geom.cx + d * (geom.jarW * 0.5 + geom.wallT * 2 + r * 2);
+          Body.setPosition(b, { x, y: geom.innerBottom - r - 2 });
+          Body.setVelocity(b, { x: d * 0.8, y: 0 });
+        }
+        continue;
+      }
+      if (b.position.y > geom.h + 30) {
+        markSpill(b, b.position.x < geom.cx ? -1 : 1);
+        continue;
+      }
+      const r = b.circleRadius || 12;
+      const x = b.position.x;
+      const y = b.position.y;
+      if (y < geom.mouthY - r * 2.4) continue;
+      const nearBrim = y < brim;
+      if (nearBrim) {
+        Sleeping.set(b, false);
+        b.sleepThreshold = Infinity;
+      }
+      if (x < geom.mouthL + r * 0.28) {
+        markSpill(b, -1);
+        continue;
+      }
+      if (x > geom.mouthR - r * 0.28) {
+        markSpill(b, 1);
+        continue;
+      }
+      if (!packed || !nearBrim) continue;
+      const dir = x < geom.cx ? -1 : 1;
+      const nearEdge = Math.abs(x - geom.cx) > geom.mouthW * 0.22;
+      const aboveLip = y < geom.mouthY + r * 0.7;
+      if (nearEdge || aboveLip) {
+        Body.applyForce(b, b.position, { x: dir * 0.0042, y: -0.00015 });
+        if (aboveLip && nearEdge) markSpill(b, dir);
+      }
+    }
+  }
+
+  Events.on(engine, "beforeUpdate", nudgeOverflow);
 
   function strokePoly(poly, close) {
     if (!poly.length) return;
@@ -380,8 +534,22 @@
     ctx.restore();
   }
 
+  function jarArtReady() {
+    return !!(jarArt && jarArt.complete && jarArt.naturalWidth);
+  }
+
+  function drawJarImage() {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(jarArt, geom.artX, geom.artY, geom.jarW, geom.jarH);
+  }
+
   function drawJarBack() {
     if (!geom || !outerPoly.length || !jarPoly.length) return;
+    if (jarArtReady()) {
+      drawJarImage();
+      return;
+    }
     const { cx, jarW, jarH, top, wallT, mouthY, mouthL, mouthR, neckY0, neckY1 } = geom;
     ctx.save();
     ctx.imageSmoothingEnabled = true;
@@ -439,6 +607,20 @@
 
   function drawJarFront() {
     if (!geom || !outerPoly.length || !jarPoly.length) return;
+    if (jarArtReady()) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(outerPoly[0][0], outerPoly[0][1]);
+      for (let i = 1; i < outerPoly.length; i++) ctx.lineTo(outerPoly[i][0], outerPoly[i][1]);
+      ctx.closePath();
+      ctx.moveTo(jarPoly[0][0], jarPoly[0][1]);
+      for (let i = 1; i < jarPoly.length; i++) ctx.lineTo(jarPoly[i][0], jarPoly[i][1]);
+      ctx.closePath();
+      ctx.clip("evenodd");
+      drawJarImage();
+      ctx.restore();
+      return;
+    }
     const { cx, jarW, jarH, top, wallT } = geom;
     ctx.save();
     ctx.imageSmoothingEnabled = true;
@@ -476,13 +658,10 @@
   }
 
   function snapChroma() {
-    const padX = Math.max(24, geom.jarW * 0.55);
-    const x0 = Math.max(0, (geom.cx - geom.jarW * 0.5 - padX) | 0);
-    const y0 = Math.max(0, (geom.stageT - 4) | 0);
-    const x1 = Math.min(canvas.width, (geom.cx + geom.jarW * 0.5 + padX) | 0);
-    const y1 = Math.min(canvas.height, (geom.stageB + 4) | 0);
-    const w = x1 - x0;
-    const h = y1 - y0;
+    const x0 = 0;
+    const y0 = 0;
+    const w = canvas.width;
+    const h = canvas.height;
     if (w < 2 || h < 2) return;
     const img = ctx.getImageData(x0, y0, w, h);
     const d = img.data;
@@ -496,7 +675,7 @@
         d[i + 2] = 0;
       }
     }
-    ctx.putImageData(img, x0, y0);
+    ctx.putImageData(img, 0, 0);
   }
 
   function draw() {
@@ -506,6 +685,7 @@
     drawJarBack();
     const gifts = giftBodies();
     for (const b of gifts) {
+      if (b.plugin && b.plugin.spilled) continue;
       if (b.position.y + (b.circleRadius || 12) < geom.mouthY) drawOne(b);
     }
     ctx.save();
@@ -514,10 +694,14 @@
       ctx.clip();
     }
     for (const b of gifts) {
+      if (b.plugin && b.plugin.spilled) continue;
       if (b.position.y + (b.circleRadius || 12) >= geom.mouthY) drawOne(b);
     }
     ctx.restore();
     drawJarFront();
+    for (const b of gifts) {
+      if (b.plugin && b.plugin.spilled) drawOne(b);
+    }
     snapChroma();
     if (gifts.length !== lastHud && hudCount) {
       lastHud = gifts.length;
@@ -567,17 +751,19 @@
   window.__jarStats = () => {
     const gifts = giftBodies();
     let sleep = 0;
+    let spilled = 0;
     let yMin = 1e9;
     let yMax = -1e9;
     for (const b of gifts) {
       if (b.isSleeping) sleep += 1;
+      if (b.plugin && b.plugin.spilled) spilled += 1;
       if (b.position.y < yMin) yMin = b.position.y;
       if (b.position.y > yMax) yMax = b.position.y;
     }
     return {
       n: gifts.length,
-      inJar: gifts.length,
-      spill: 0,
+      inJar: gifts.length - spilled,
+      spill: spilled,
       sleep,
       q: queuedCount(),
       r: geom && geom.pieceR,

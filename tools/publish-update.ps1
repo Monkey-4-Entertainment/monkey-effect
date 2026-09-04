@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.7.4",
-  [string]$Notes = "Monkeyeffect 1.0.7.4 - OBS overlay gallery, live gift stats, Matter.js gift jar that settles",
+  [string]$Ver = "1.0.7.5",
+  [string]$Notes = "Monkeyeffect 1.0.7.5 - mason jar overlay art, overflow physics, coin HUD",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 

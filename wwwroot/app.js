@@ -4685,7 +4685,7 @@ async function openJarOverlay() {
     openedNative = false;
   }
   if (!openedNative) {
-    const url = "/jar-overlay.html?v=jar47";
+    const url = "/jar-overlay.html?v=jar50";
     if (!jarOverlayWin || jarOverlayWin.closed) {
       jarOverlayWin = window.open(
         url,
@@ -7544,7 +7544,7 @@ const OVERLAY_GALLERY = [
   { id: "songs", name: "Song Requests", cat: "ยูทิลิตี้", w: 520, h: 240 },
   { id: "buddies", name: "Stream Buddies", cat: "ตัวละคร", w: 1280, h: 720, fx: 1 },
   { id: "tiny", name: "Tiny Diny", cat: "ตัวละคร", w: 360, h: 360 },
-  { id: "jar", name: "โหลแก้ว (ฟิสิกส์)", cat: "พิเศษ", w: 720, h: 1080, url: "http://127.0.0.1:3847/jar-overlay.html?v=jar47" },
+  { id: "jar", name: "โหลแก้ว (ฟิสิกส์)", cat: "พิเศษ", w: 720, h: 1080, url: "http://127.0.0.1:3847/jar-overlay.html?v=jar50" },
   { id: "roulette", name: "กล่องสุ่มเกม", cat: "พิเศษ", w: 720, h: 720, url: "http://127.0.0.1:3847/roulette-overlay.html" },
 ];
 
@@ -7957,7 +7957,7 @@ async function loadUpdateUi() {
     const res = await fetch(`/api/version?t=${Date.now()}`);
     if (!res.ok) return;
     const data = await res.json();
-    const ver = data.version || "1.0.7.4";
+    const ver = data.version || "1.0.7.5";
     const label = document.getElementById("appVersionLabel");
     const chip = document.getElementById("updateStatusChip");
     if (label) label.textContent = `v${ver}`;
