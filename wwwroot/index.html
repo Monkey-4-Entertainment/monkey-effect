@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v1046" />
+    <link rel="stylesheet" href="/style.css?v=v1049" />
   </head>
   <body>
     <div class="bg"></div>
@@ -22,7 +22,7 @@
           <div class="sidebar-brand-text">
             <div class="title-row">
               <h1>Monkeyeffect</h1>
-              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.7.2</span>
+              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.7.4</span>
             </div>
             <p>Gift relay → เกม</p>
           </div>
@@ -71,6 +71,10 @@
             <button type="button" class="nav-btn nav-btn-jar" data-panel="jar">
               <span class="nav-ico" aria-hidden="true">◌</span>
               <span class="nav-label">โหลแก้ว</span>
+            </button>
+            <button type="button" class="nav-btn nav-btn-live" data-panel="live">
+              <span class="nav-ico" aria-hidden="true">◉</span>
+              <span class="nav-label">Overlay Gallery</span>
             </button>
             <button type="button" class="nav-btn" data-panel="agency">
               <span class="nav-ico" aria-hidden="true">▣</span>
@@ -231,6 +235,59 @@
             <span class="chip">ไม่มีแพ็ก</span>
           </div>
           <p class="hint" id="effectsNoDefaultsHint">เกมนี้ยังไม่มีแพ็กค่าตั้งต้นในแอพ — ใช้ Send Test เพื่อยิงของเข้าเกมผ่าน /livemsg ได้ตามปกติ</p>
+        </section>
+
+        <section class="card hidden" id="effectsImportCard">
+          <div class="card-head">
+            <h2>Import / Export Settings</h2>
+            <span class="chip" id="effectsImportStatus">preset</span>
+          </div>
+          <p class="hint">
+            ส่งออกพรีเซ็ต Actions + Events เป็นไฟล์ .json เพื่อแชร์หรือย้ายเครื่อง
+            · นำเข้าไฟล์ .json ของ Monkeyeffect หรือ .tfc ของ TikFinity ได้เลย
+          </p>
+          <div class="actions tight" style="margin-top:.75rem">
+            <button id="effectsExportBtn" class="btn primary" type="button">Export Settings to file</button>
+            <button id="effectsImportBtn" class="btn secondary" type="button">Import Settings from file</button>
+            <button id="effectsImportDefaultBtn" class="btn ghost" type="button">ใช้พรีเซ็ต THE RIDER v2</button>
+            <input id="effectsImportFile" type="file" accept=".json,.mfx,.tfc,.txt,application/json" hidden />
+          </div>
+          <p class="hint" id="effectsImportMsg" style="margin-top:.5rem;min-height:1.2em"></p>
+        </section>
+
+        <section class="card hidden" id="effectsKeymapCard">
+          <div class="card-head">
+            <h2 id="effectsKeymapTitle">Actions</h2>
+            <span class="chip" id="effectsKeymapStatus">keymap</span>
+          </div>
+          <p class="hint">
+            แอคชัน = ชื่อเอฟเฟกต์ + ปุ่มคีย์บอร์ด · คลิกช่องคีย์แล้วกดปุ่มเพื่อจับ
+            · Import ใส่คีย์ที่รู้แล้ว (หมา G · ยาย B · ควาย C · พายุ T · สุ่ม P) แถวที่ขึ้นว่า «ว่าง» ยังไม่มีในไฟล์
+          </p>
+          <div id="effectsKeymapTable" style="margin-top:.5rem;overflow:auto"></div>
+          <div class="actions tight" style="margin-top:.75rem">
+            <button id="effectsKeymapAddBtn" class="btn primary" type="button">เพิ่ม Action</button>
+            <button id="effectsKeymapSaveBtn" class="btn secondary" type="button">บันทึก</button>
+            <button id="effectsKeymapReloadBtn" class="btn ghost" type="button">โหลดใหม่</button>
+          </div>
+          <p class="hint" id="effectsKeymapMsg" style="margin-top:.5rem;min-height:1.2em"></p>
+        </section>
+
+        <section class="card hidden" id="effectsEventsCard">
+          <div class="card-head">
+            <h2>Events — อะไรจะทริกเกอร์แอคชัน</h2>
+            <span class="chip" id="effectsEventsStatus">events</span>
+          </div>
+          <p class="hint">
+            แบบ TikFinity Events: ของขวัญ / ไลค์ / ฟอลโลว์ ตอนไลฟ์ไปยิงแอคชันด้านบน
+            · กด <b>+ สร้าง Event</b> เพื่อเพิ่ม · ดินสอคือแก้ในแถวนี้เลย
+          </p>
+          <div id="effectsEventsTable" style="margin-top:.5rem;overflow:auto"></div>
+          <div class="actions tight" style="margin-top:.75rem">
+            <button id="effectsEventAddBtn" class="btn primary" type="button">+ สร้าง Event</button>
+            <button id="effectsEventSaveBtn" class="btn secondary" type="button">บันทึก Events</button>
+          </div>
+          <p class="hint" id="effectsEventsMsg" style="margin-top:.5rem;min-height:1.2em"></p>
         </section>
       </div>
 
@@ -722,7 +779,7 @@ Please click OK to continue.</textarea>
           </p>
           <label for="jarOverlayUrl">ลิงก์ Overlay</label>
           <div class="actions">
-            <input id="jarOverlayUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/jar-overlay.html?v=jar43" />
+            <input id="jarOverlayUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/jar-overlay.html?v=jar47" />
             <button id="jarCopyOverlayUrlBtn" class="btn ghost" type="button">คัดลอก</button>
           </div>
           <div class="win-score-box">
@@ -749,6 +806,84 @@ Please click OK to continue.</textarea>
             <button id="jarTestBtn" class="btn secondary" type="button">ทดสอบตกโหล</button>
           </div>
           <p class="hint">รูปของขวัญแปลงเก็บจาก streamtoearn.io/th/gifts ไว้ในฟังก์ชันแล้ว ไม่โหลดจากเว็บตอนไลฟ์</p>
+        </section>
+      </div>
+
+      <!-- ===== Overlay Gallery ===== -->
+      <div id="panel-live" class="panel">
+        <section class="card og-hero">
+          <div class="card-head">
+            <h2>Overlay Gallery</h2>
+            <span class="chip">Browser Source · พื้นหลังโปร่งใส</span>
+          </div>
+          <p class="hint">
+            คัดลอกลิงก์ใส่ OBS เป็น Browser Source — ไม่ต้องแคปหน้าต่าง · พื้นหลังโปร่งใส
+            · อยากคีย์เขียวต่อท้าย <strong>&chroma=1</strong> · ทดสอบด้วยปุ่มส่งของขวัญในหน้าเชื่อมต่อ
+          </p>
+          <div class="live-stats-preview">
+            <div class="live-stat-box">
+              <div class="live-stat-label">เพชรไลฟ์นี้</div>
+              <div id="liveCoinsDisplay" class="win-score-display">0</div>
+            </div>
+            <div class="live-stat-box">
+              <div class="live-stat-label">คนดูตอนนี้</div>
+              <div id="liveViewersDisplay" class="win-score-display">—</div>
+            </div>
+            <div class="live-stat-box">
+              <div class="live-stat-label">ไลค์สะสม</div>
+              <div id="liveLikesDisplay" class="win-score-display">0</div>
+            </div>
+          </div>
+          <div id="liveGiftersPreview" class="live-gifters-preview">ยังไม่มีคนส่งของขวัญ</div>
+          <div class="actions">
+            <button id="liveResetCoinsBtn" class="btn secondary" type="button">รีเซ็ตเพชร</button>
+            <button id="liveResetGiftersBtn" class="btn ghost" type="button">ล้างรายชื่อ</button>
+            <button id="liveResetAllBtn" class="btn ghost" type="button">รีเซ็ตทั้งหมด</button>
+          </div>
+        </section>
+
+        <div id="overlayGallery" class="og-gallery"></div>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>ตั้งค่า Overlay</h2>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label for="liveLastCount">Last gifter ที่โชว์</label>
+              <input id="liveLastCount" class="field" type="number" min="3" max="15" value="8" />
+            </div>
+            <div>
+              <label for="liveGoal">เป้าเพชร (Coin Match / Slider / Jar)</label>
+              <input id="liveGoal" class="field" type="number" min="1" max="10000000" value="1000" />
+            </div>
+            <div>
+              <label for="liveTimerSeconds">Timer (วินาที)</label>
+              <input id="liveTimerSeconds" class="field" type="number" min="5" max="86400" value="300" />
+            </div>
+            <div>
+              <label for="liveStreamer">ชื่อสตรีมเมอร์ / Tiny Diny</label>
+              <input id="liveStreamer" class="field" type="text" placeholder="ชื่อที่จะโชว์" />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="liveTimerStartBtn" class="btn primary" type="button">เริ่ม Timer</button>
+            <button id="liveTimerStopBtn" class="btn ghost" type="button">หยุด</button>
+            <button id="liveTimerResetBtn" class="btn ghost" type="button">รีเซ็ตเวลา</button>
+          </div>
+          <label for="liveSong">Song Requests / กำลังเล่น</label>
+          <input id="liveSong" class="field" type="text" placeholder="ชื่อเพลงที่โชว์บน overlay" />
+          <label for="liveSocials">Social Media Rotator (บรรทัดละ 1 อัน)</label>
+          <textarea id="liveSocials" class="field og-area" rows="3">TikTok @yourname
+Instagram @yourname
+Facebook Fanpage</textarea>
+          <label for="liveCommands">Command Info (บรรทัดละ 1 คำสั่ง)</label>
+          <textarea id="liveCommands" class="field og-area" rows="3">!gift ส่งของขวัญเข้าเกม
+!song ขอเพลง
+!rank ดูอันดับ</textarea>
+          <div class="actions">
+            <button id="liveSaveSettingsBtn" class="btn primary" type="button">บันทึกตั้งค่า</button>
+          </div>
         </section>
       </div>
 
@@ -864,7 +999,7 @@ Please click OK to continue.</textarea>
         <section class="card">
           <div class="card-head">
             <h2>อัปเดตออนไลน์</h2>
-            <span class="chip" id="updateStatusChip">v1.0.7.2</span>
+            <span class="chip" id="updateStatusChip">v1.0.7.4</span>
           </div>
           <p class="hint">ค่าเริ่มต้นชี้ไปที่ GitHub Monkeyeffect — มีอัปเดตแล้วตัวเวอร์ชันมุมซ้ายจะมีจุดแดง กดที่เวอร์ชันเพื่อเปิดหน้านี้และติดตั้ง</p>
           <label for="updateFeedUrl">URL ของ latest.json</label>
@@ -921,6 +1056,6 @@ Please click OK to continue.</textarea>
       </div>
     </main>
 
-    <script src="/app.js?v=v1076"></script>
+    <script src="/app.js?v=v1090-174"></script>
   </body>
 </html>

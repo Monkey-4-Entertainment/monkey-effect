@@ -254,6 +254,7 @@ const WORKSPACE_META = {
   interrupt: { title: "ขัดขวางจอ", sub: "แสดงภาพ/วิดีโอขัดจอเมื่อได้ของขวัญ Like หรือ Follow" },
   win: { title: "นับ Win", sub: "นับคะแนน Win บน Overlay แยกต่างหาก" },
   jar: { title: "โหลแก้วสะสมของขวัญ", sub: "โหล 2D ตั้ง สมส่วน · ของขวัญตกตามแรงโน้มถ่วง ล้นออกข้างเมื่อเต็ม · รีเซ็ตเมื่อเริ่มไลฟ์ใหม่" },
+  live: { title: "Overlay Gallery", sub: "เลือก overlay ใส่ OBS เป็น Browser Source — พื้นหลังโปร่งใส พร้อมเอฟเฟกต์และอันดับจากไลฟ์จริง" },
   stickers: { title: "สติกเกอร์", sub: "ชุดรูปสำหรับเกมวิ่ง Temple — ทั้งแผ่นไม่แยกไอคอน" },
   tts: { title: "อ่านเสียง AI", sub: "อ่านชื่อและของขวัญด้วยเสียงไทยอัตโนมัติ" },
   update: { title: "อัปเดต", sub: "ตรวจและติดตั้งอัปเดตออนไลน์จาก GitHub Monkeyeffect" },
@@ -4684,7 +4685,7 @@ async function openJarOverlay() {
     openedNative = false;
   }
   if (!openedNative) {
-    const url = "/jar-overlay.html?v=jar43";
+    const url = "/jar-overlay.html?v=jar47";
     if (!jarOverlayWin || jarOverlayWin.closed) {
       jarOverlayWin = window.open(
         url,
@@ -4740,7 +4741,17 @@ function dropGiftsIntoJar(giftName, count, { test = false } = {}) {
 function handleGiftForJar(parsed) {
   if (!parsed || parsed.kind !== "gift") return;
   if (!parsed.giftName) return;
-  dropGiftsIntoJar(parsed.giftName, parsed.count || 1);
+  const name = String(parsed.giftName).trim();
+  const requested = Math.max(0, Math.floor(Number(parsed.count) || 1));
+  if (!name || !requested || !jarConfig.enabled) return;
+  const n = Math.min(requested, Math.max(0, JAR_OVERLAY_CAP - jarTotalCount));
+  if (!n) {
+    renderJarUiState();
+    return;
+  }
+  jarPieces.push({ giftName: name, count: n });
+  jarTotalCount += n;
+  renderJarUiState();
 }
 
 function noteJarLiveStatus({ live, reconnecting }) {
@@ -6278,6 +6289,7 @@ async function fetchStatus() {
   } catch {
     // ignore transient poll errors
   }
+  refreshLiveStatsPreview();
 }
 
 async function openLoginChrome() {
@@ -6384,6 +6396,33 @@ connectBtn.addEventListener("click", connect);
 disconnectBtn.addEventListener("click", disconnect);
 if (loginChromeBtn) loginChromeBtn.addEventListener("click", openLoginChrome);
 testBtn.addEventListener("click", sendTestGift);
+document.getElementById("effectsKeymapReloadBtn")?.addEventListener("click", async () => {
+  try {
+    await fetch("/api/keymap/reload", { method: "POST" });
+  } catch {
+    /* ignore */
+  }
+  loadEffectsKeymapUI();
+});
+document.getElementById("effectsKeymapAddBtn")?.addEventListener("click", () => {
+  keymapDraftRules.push({ giftName: "", key: "", vk: 0, label: "", holdMs: 80, enabled: true });
+  renderEffectsKeymapTable(keymapDraftRules, true);
+  setKeymapMsg("เพิ่มแอคชันแล้ว — ใส่ชื่อกับคีย์ แล้วบันทึก");
+});
+document.getElementById("effectsKeymapSaveBtn")?.addEventListener("click", saveEffectsKeymap);
+document.getElementById("effectsEventAddBtn")?.addEventListener("click", () => {
+  const first = (readKeymapRowsFromDom()[0] || keymapDraftRules[0] || {}).label || "";
+  keymapDraftEvents.push({ trigger: "gift", giftName: "", action: first, enabled: true });
+  renderEffectsEventsTable(keymapDraftEvents);
+  setEventsMsg("เพิ่ม Event แล้ว — เลือกทริกเกอร์กับแอคชัน แล้วบันทึก");
+});
+document.getElementById("effectsEventSaveBtn")?.addEventListener("click", saveEffectsKeymap);
+document.getElementById("effectsExportBtn")?.addEventListener("click", exportEffectsKeymap);
+document.getElementById("effectsImportBtn")?.addEventListener("click", () => {
+  document.getElementById("effectsImportFile")?.click();
+});
+document.getElementById("effectsImportFile")?.addEventListener("change", importEffectsKeymapFile);
+document.getElementById("effectsImportDefaultBtn")?.addEventListener("click", importEffectsKeymapDefault);
 clearBtn.addEventListener("click", () => {
   renderLog([]);
   seenGiftKeys = new Set();
@@ -6456,16 +6495,423 @@ function syncEffectsPanelForGame(game) {
   }
 
   const isTemple = currentSelectedGame.id === TEMPLE_GAME_ID;
+  const keymapCard = document.getElementById("effectsKeymapCard");
+  const eventsCard = document.getElementById("effectsEventsCard");
+  const importCard = document.getElementById("effectsImportCard");
+  const keymapTitle = document.getElementById("effectsKeymapTitle");
+  const hasKeymap = isRiderKeymapGame(currentSelectedGame);
   defaultsCard?.classList.toggle("hidden", !isTemple);
-  noDefaultsCard?.classList.toggle("hidden", isTemple);
+  noDefaultsCard?.classList.toggle("hidden", isTemple || hasKeymap);
+  keymapCard?.classList.toggle("hidden", !hasKeymap);
+  eventsCard?.classList.toggle("hidden", !hasKeymap);
+  importCard?.classList.toggle("hidden", !hasKeymap);
+  syncGiftChipsForGame(hasKeymap);
+  if (keymapTitle) keymapTitle.textContent = `Actions — ${name}`;
   if (isTemple) {
     if (defaultsTitle) defaultsTitle.textContent = `ค่าตั้งต้น gift ใน ${name}`;
     if (defaultsHint) {
       defaultsHint.innerHTML =
         `กดปุ่มด้านล่างเพื่อ<b>ทับ</b>ไฟล์เซฟเกมด้วยแพ็กที่มากับ Monkeyeffect · ปิดเกม <b>${name}</b> ก่อนกด · แล้วเปิดเกมใหม่`;
     }
+  } else if (hasKeymap) {
+    if (testHint) {
+      testHint.textContent = `ส่งของทดสอบเข้า ${name} — กดคีย์ตาม Keyboard Mapping เข้าหน้าต่างเกม`;
+    }
+    loadEffectsKeymapUI();
   } else if (noDefaultsHint) {
     noDefaultsHint.textContent = `${name} ยังไม่มีแพ็กค่าตั้งต้นในแอพ — ใช้ Send Test เพื่อยิงของเข้าเกมผ่าน /livemsg ได้ตามปกติ`;
+  }
+}
+
+/** Keyboard mapping UI + delivery only for THE RIDER, or custom/auto that actually names RIDER. */
+function isRiderKeymapGame(game) {
+  const id = (game?.id || "").toLowerCase();
+  if (id === "the-rider") return true;
+  if (id !== "custom" && id !== "auto") return false;
+  const blob = [
+    game?.displayName,
+    game?.customProcess,
+    game?.customTitle,
+    id === "custom" ? customGameProcess?.value : "",
+    id === "custom" ? customGameTitle?.value : "",
+  ].join(" ").toUpperCase();
+  return blob.includes("RIDER");
+}
+
+const TEMPLE_GIFT_CHIPS = [
+  { gift: "Rose", type: "SendGift", label: "Rose" },
+  { gift: "TikTok", type: "SendGift", label: "TikTok" },
+  { gift: "GG", type: "SendGift", label: "GG" },
+  { gift: "Like", type: "SendLike", label: "Like" },
+  { gift: "Follow", type: "SendFollow", label: "Follow" },
+];
+
+const RIDER_GIFT_CHIPS = [
+  { gift: "Rose", type: "SendGift", label: "Rose · หมา" },
+  { gift: "Perfume", type: "SendGift", label: "Perfume · ยายสปีด" },
+  { gift: "Flower Garland", type: "SendGift", label: "Flower Garland · ควาย" },
+  { gift: "The Lucky 9", type: "SendGift", label: "The Lucky 9 · ไนตรัส" },
+  { gift: "GG", type: "SendGift", label: "GG · +เงิน" },
+  { gift: "Ice Cream Cone", type: "SendGift", label: "Ice Cream · -เงิน" },
+  { gift: "Friendship Necklace", type: "SendGift", label: "Necklace · ผีซ้อนท้าย" },
+  { gift: "Baby Hippo", type: "SendGift", label: "Baby Hippo · อมตะ" },
+  { gift: "Doughnut", type: "SendGift", label: "Doughnut · พายุ" },
+  { gift: "Lots of Bread", type: "SendGift", label: "Lots of Bread · -1" },
+  { gift: "Rosa", type: "SendGift", label: "Rosa · สุ่ม" },
+  { gift: "Night Star", type: "SendGift", label: "Night Star · สุ่ม" },
+  { gift: "Heart Me", type: "SendGift", label: "Heart Me · +1" },
+  { gift: "Like", type: "SendLike", label: "Like" },
+  { gift: "Follow", type: "SendFollow", label: "Follow" },
+];
+
+function syncGiftChipsForGame(hasKeymap) {
+  const host = document.getElementById("giftChips");
+  if (!host) return;
+  const chips = hasKeymap ? RIDER_GIFT_CHIPS : TEMPLE_GIFT_CHIPS;
+  const signature = chips.map((c) => c.gift).join("|");
+  if (host.dataset.chipSet === signature) return;
+  host.dataset.chipSet = signature;
+  host.innerHTML = chips.map((c, i) =>
+    `<button type="button" class="chip-btn${i === 0 ? " active" : ""}" data-gift="${c.gift}" data-type="${c.type}">${c.label}</button>`
+  ).join("");
+  if (testGiftInput) testGiftInput.value = chips[0].gift;
+  const typeInput = document.getElementById("testType");
+  if (typeInput) typeInput.value = chips[0].type;
+}
+
+let keymapDraftRules = [];
+let keymapDraftEvents = [];
+
+function setKeymapMsg(text, isErr = false) {
+  const el = document.getElementById("effectsKeymapMsg");
+  if (!el) return;
+  el.textContent = text || "";
+  el.style.color = isErr ? "#fda4af" : "";
+}
+
+function setEventsMsg(text, isErr = false) {
+  const el = document.getElementById("effectsEventsMsg");
+  if (!el) return;
+  el.textContent = text || "";
+  el.style.color = isErr ? "#fda4af" : "";
+}
+
+function setImportMsg(text, isErr = false) {
+  const el = document.getElementById("effectsImportMsg");
+  const status = document.getElementById("effectsImportStatus");
+  if (el) {
+    el.textContent = text || "";
+    el.style.color = isErr ? "#fda4af" : "";
+  }
+  if (status && text && !isErr) status.textContent = "ok";
+}
+
+function keyToVk(key) {
+  const k = String(key || "").trim().replace(/[{}]/g, "").toUpperCase();
+  if (!k) return 0;
+  if (k.length === 1) {
+    const c = k.charCodeAt(0);
+    if (c >= 65 && c <= 90) return c;
+    if (c >= 48 && c <= 57) return c;
+    return { "-": 189, "=": 187, ",": 188, ".": 190, "/": 191, ";": 186, "'": 222, "[": 219, "]": 221, "\\": 220, "`": 192 }[k] || 0;
+  }
+  const named = { SPACE: 32, ENTER: 13, TAB: 9, ESC: 27, SHIFT: 16, CTRL: 17, ALT: 18 };
+  return named[k] || 0;
+}
+
+function readKeymapRowsFromDom() {
+  const tableEl = document.getElementById("effectsKeymapTable");
+  const rows = [...(tableEl?.querySelectorAll("tr[data-keymap-row]") || [])];
+  return rows.map((tr) => {
+    const giftName = tr.querySelector("[data-f=gift]")?.value?.trim() || "";
+    const key = (tr.querySelector("[data-f=key]")?.value || "").trim().replace(/[{}]/g, "");
+    const label = tr.querySelector("[data-f=label]")?.value?.trim() || "";
+    const holdMs = Number(tr.querySelector("[data-f=hold]")?.value) || 80;
+    const enabled = !!tr.querySelector("[data-f=on]")?.checked;
+    return { giftName, key, vk: keyToVk(key), label, holdMs, enabled };
+  });
+}
+
+function renderEffectsKeymapTable(rules, enabled) {
+  const tableEl = document.getElementById("effectsKeymapTable");
+  const statusEl = document.getElementById("effectsKeymapStatus");
+  keymapDraftRules = (rules || []).map((r) => ({
+    giftName: r.giftName || "",
+    key: r.key || "",
+    vk: r.vk || 0,
+    label: r.label || "",
+    holdMs: r.holdMs || 80,
+    enabled: r.enabled !== false,
+  }));
+  const onCount = keymapDraftRules.filter((r) => r.enabled && (r.vk > 0 || r.key)).length;
+  if (statusEl) statusEl.textContent = enabled === false ? "OFF" : `${onCount} live · ${keymapDraftRules.length} actions`;
+  if (!tableEl) return;
+  const rows = keymapDraftRules.map((r, i) =>
+    `<tr data-keymap-row="${i}" style="border-top:1px solid rgba(255,255,255,.08);opacity:${r.enabled ? 1 : .45}">
+      <td style="padding:6px 4px;white-space:nowrap">
+        <button type="button" class="btn ghost" data-keymap-play="${i}" title="ทดสอบกดคีย์เข้าเกม" style="padding:2px 8px">▶</button>
+        <button type="button" class="btn ghost" data-keymap-del="${i}" title="ลบ" style="padding:2px 8px;color:#fda4af">✕</button>
+      </td>
+      <td style="padding:4px"><input data-f="label" value="${escapeHtml(r.label)}" placeholder="หมา" style="width:7.5rem" /></td>
+      <td style="padding:4px"><input data-f="gift" value="${escapeHtml(r.giftName)}" placeholder="Rose / Like / Follow" style="width:9.5rem" /></td>
+      <td style="padding:4px"><input data-f="key" value="${escapeHtml(r.key)}" placeholder="ว่าง" maxlength="12" style="width:3.6rem;text-align:center;font-weight:700;opacity:${r.key ? 1 : .45}" title="คลิกแล้วกดปุ่มเพื่อจับคีย์" /></td>
+      <td style="padding:4px"><input data-f="hold" type="number" min="20" max="2000" value="${r.holdMs || 80}" style="width:4.2rem" /></td>
+      <td style="padding:4px;text-align:center"><input data-f="on" type="checkbox" ${r.enabled ? "checked" : ""} /></td>
+    </tr>`
+  ).join("");
+  tableEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.85rem">
+    <thead><tr style="text-align:left;opacity:.6">
+      <th style="padding:4px 8px"></th>
+      <th style="padding:4px 8px">ชื่อ</th>
+      <th style="padding:4px 8px">ของขวัญ / ไลค์ / ฟอล</th>
+      <th style="padding:4px 8px">คีย์</th>
+      <th style="padding:4px 8px">ms</th>
+      <th style="padding:4px 8px">ไลฟ์</th>
+    </tr></thead><tbody>${rows || `<tr><td colspan="6" style="padding:10px;opacity:.5">ยังไม่มี Action — กดเพิ่ม Action</td></tr>`}</tbody></table>`;
+
+  tableEl.querySelectorAll("[data-f=key]").forEach((inp) => {
+    inp.addEventListener("keydown", (ev) => {
+      if (ev.key === "Tab") return;
+      ev.preventDefault();
+      let k = ev.key;
+      if (k === " ") k = "SPACE";
+      else if (k.length === 1) k = k.toUpperCase();
+      else k = k.toUpperCase();
+      inp.value = k;
+      inp.blur();
+    });
+  });
+  tableEl.querySelectorAll("[data-keymap-play]").forEach((btn) => {
+    btn.addEventListener("click", () => playKeymapRow(Number(btn.getAttribute("data-keymap-play"))));
+  });
+  tableEl.querySelectorAll("[data-keymap-del]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = readKeymapRowsFromDom();
+      next.splice(Number(btn.getAttribute("data-keymap-del")), 1);
+      renderEffectsKeymapTable(next, true);
+    });
+  });
+}
+
+async function playKeymapRow(index) {
+  const rules = readKeymapRowsFromDom();
+  const r = rules[index];
+  if (!r) return;
+  if (!r.key && !r.vk) {
+    setKeymapMsg("แถวนี้ยังไม่มีคีย์ — คลิกช่องคีย์แล้วกดปุ่ม", true);
+    return;
+  }
+  setKeymapMsg(`กำลังกด ${r.key} เข้าเกม…`);
+  try {
+    const res = await fetch("/api/keymap/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: r.key, vk: r.vk || keyToVk(r.key), holdMs: r.holdMs || 80, count: 1 }),
+    });
+    const data = await res.json();
+    if (data.ok) setKeymapMsg(`กด ${r.key} แล้ว (${r.label || r.giftName || ""})`);
+    else setKeymapMsg(data.error || "กดไม่สำเร็จ — เปิด THE RIDER ไว้", true);
+  } catch (e) {
+    setKeymapMsg(e.message || "กดไม่สำเร็จ", true);
+  }
+}
+
+function readEventsFromDom() {
+  const tableEl = document.getElementById("effectsEventsTable");
+  const rows = [...(tableEl?.querySelectorAll("tr[data-event-row]") || [])];
+  return rows.map((tr) => ({
+    trigger: tr.querySelector("[data-f=trigger]")?.value || "gift",
+    giftName: tr.querySelector("[data-f=gift]")?.value?.trim() || "",
+    action: tr.querySelector("[data-f=action]")?.value?.trim() || "",
+    enabled: !!tr.querySelector("[data-f=on]")?.checked,
+  }));
+}
+
+function actionOptionsHtml(selected) {
+  const labels = [...new Set((readKeymapRowsFromDom().length ? readKeymapRowsFromDom() : keymapDraftRules)
+    .map((r) => r.label)
+    .filter(Boolean))];
+  const opts = labels.map((l) =>
+    `<option value="${escapeHtml(l)}" ${l === selected ? "selected" : ""}>${escapeHtml(l)}</option>`
+  );
+  if (selected && !labels.includes(selected)) {
+    opts.unshift(`<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)}</option>`);
+  }
+  opts.unshift(`<option value="">— เลือกแอคชัน —</option>`);
+  return opts.join("");
+}
+
+function renderEffectsEventsTable(events) {
+  const tableEl = document.getElementById("effectsEventsTable");
+  const statusEl = document.getElementById("effectsEventsStatus");
+  keymapDraftEvents = (events || []).map((e) => ({
+    trigger: e.trigger || "gift",
+    giftName: e.giftName || "",
+    action: e.action || "",
+    enabled: e.enabled !== false,
+  }));
+  const live = keymapDraftEvents.filter((e) => e.enabled && e.action).length;
+  if (statusEl) statusEl.textContent = `${live} live · ${keymapDraftEvents.length} events`;
+  if (!tableEl) return;
+  const rows = keymapDraftEvents.map((e, i) => {
+    const giftDisabled = e.trigger !== "gift" ? "disabled" : "";
+    return `<tr data-event-row="${i}" style="border-top:1px solid rgba(255,255,255,.08);opacity:${e.enabled ? 1 : .45}">
+      <td style="padding:6px 4px;white-space:nowrap">
+        <button type="button" class="btn ghost" data-event-del="${i}" title="ลบ" style="padding:2px 8px;color:#fda4af">✕</button>
+      </td>
+      <td style="padding:4px;text-align:center"><input data-f="on" type="checkbox" ${e.enabled ? "checked" : ""} /></td>
+      <td style="padding:4px">
+        <select data-f="trigger" style="min-width:7.5rem">
+          <option value="gift" ${e.trigger === "gift" ? "selected" : ""}>ของขวัญ</option>
+          <option value="like" ${e.trigger === "like" ? "selected" : ""}>ไลค์</option>
+          <option value="follow" ${e.trigger === "follow" ? "selected" : ""}>ฟอลโลว์</option>
+        </select>
+      </td>
+      <td style="padding:4px"><input data-f="gift" value="${escapeHtml(e.giftName)}" placeholder="Rose / Perfume" ${giftDisabled} style="width:11rem" /></td>
+      <td style="padding:4px"><select data-f="action" style="min-width:8rem">${actionOptionsHtml(e.action)}</select></td>
+    </tr>`;
+  }).join("");
+  tableEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.85rem">
+    <thead><tr style="text-align:left;opacity:.6">
+      <th style="padding:4px 8px"></th>
+      <th style="padding:4px 8px">เปิด</th>
+      <th style="padding:4px 8px">ทริกเกอร์</th>
+      <th style="padding:4px 8px">ของขวัญ</th>
+      <th style="padding:4px 8px">แอคชัน</th>
+    </tr></thead><tbody>${rows || `<tr><td colspan="5" style="padding:10px;opacity:.5">ยังไม่มี Event — กด + สร้าง Event</td></tr>`}</tbody></table>`;
+  tableEl.querySelectorAll("[data-f=trigger]").forEach((sel) => {
+    sel.addEventListener("change", () => {
+      const tr = sel.closest("tr");
+      const gift = tr?.querySelector("[data-f=gift]");
+      if (gift) gift.disabled = sel.value !== "gift";
+    });
+  });
+  tableEl.querySelectorAll("[data-event-del]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = readEventsFromDom();
+      next.splice(Number(btn.getAttribute("data-event-del")), 1);
+      renderEffectsEventsTable(next);
+    });
+  });
+}
+
+async function exportEffectsKeymap() {
+  setImportMsg("กำลังส่งออก…");
+  try {
+    const res = await fetch("/api/keymap/export");
+    if (!res.ok) throw new Error("export failed");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "THE-RIDER-preset.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    setImportMsg("ส่งออกแล้ว — ไฟล์ THE-RIDER-preset.json");
+  } catch (e) {
+    setImportMsg(e.message || "ส่งออกไม่สำเร็จ", true);
+  }
+}
+
+async function importEffectsKeymapFile(ev) {
+  const file = ev.target?.files?.[0];
+  ev.target.value = "";
+  if (!file) return;
+  setImportMsg(`กำลังนำเข้า ${file.name}…`);
+  try {
+    const text = await file.text();
+    const res = await fetch("/api/keymap/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: text,
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      setImportMsg(data.error || "นำเข้าไม่สำเร็จ", true);
+      return;
+    }
+    await loadEffectsKeymapUI();
+    const filled = (keymapDraftRules || []).filter((r) => r.key).length;
+    const empty = Math.max(0, (data.rules || 0) - filled);
+    const nEvents = data.events || 0;
+    setImportMsg(
+      empty
+        ? `นำเข้าแล้ว ${data.rules} แอคชัน · ${nEvents} อีเวนต์ · คีย์มี ${filled} แถว ที่ว่าง ${empty} แถว ให้คลิกช่องคีย์แล้วกดปุ่มตาม TikFinity`
+        : `นำเข้าแล้ว ${data.rules} แอคชัน · ${nEvents} อีเวนต์ · คีย์ครบ ${filled} แถว — ใช้ตอนไลฟ์ได้เลย`
+    );
+  } catch (e) {
+    setImportMsg(e.message || "นำเข้าไม่สำเร็จ", true);
+  }
+}
+
+async function importEffectsKeymapDefault() {
+  setImportMsg("กำลังโหลดพรีเซ็ต THE RIDER v2…");
+  try {
+    const res = await fetch("/api/keymap/import-default", { method: "POST" });
+    const data = await res.json();
+    if (!data.ok) {
+      setImportMsg(data.error || "โหลดพรีเซ็ตไม่สำเร็จ", true);
+      return;
+    }
+    await loadEffectsKeymapUI();
+    const filled = (keymapDraftRules || []).filter((r) => r.key).length;
+    const empty = Math.max(0, (data.rules || 0) - filled);
+    setImportMsg(
+      empty
+        ? `ใช้พรีเซ็ตแล้ว · คีย์มี ${filled} แถว ที่ว่าง ${empty} แถว ให้คลิกช่องคีย์แล้วกดปุ่มตามตาราง Actions ของ TikFinity`
+        : `ใช้พรีเซ็ตแล้ว ${data.rules} แอคชัน · คีย์ครบ — ใช้ตอนไลฟ์ได้เลย`
+    );
+  } catch (e) {
+    setImportMsg(e.message || "โหลดพรีเซ็ตไม่สำเร็จ", true);
+  }
+}
+
+async function saveEffectsKeymap() {
+  const rules = readKeymapRowsFromDom();
+  const events = readEventsFromDom();
+  setKeymapMsg("กำลังบันทึก…");
+  setEventsMsg("กำลังบันทึก…");
+  try {
+    const res = await fetch("/api/keymap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: true, rules, events }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      setKeymapMsg(data.error || "บันทึกไม่สำเร็จ", true);
+      setEventsMsg(data.error || "บันทึกไม่สำเร็จ", true);
+      return;
+    }
+    keymapDraftRules = rules;
+    keymapDraftEvents = events;
+    setKeymapMsg(`บันทึกแล้ว ${rules.length} แอคชัน`);
+    setEventsMsg(`บันทึกแล้ว ${events.length} events — ใช้ตอนไลฟ์ได้เลย`);
+    loadEffectsKeymapUI();
+  } catch (e) {
+    setKeymapMsg(e.message || "บันทึกไม่สำเร็จ", true);
+    setEventsMsg(e.message || "บันทึกไม่สำเร็จ", true);
+  }
+}
+
+async function loadEffectsKeymapUI() {
+  try {
+    const res = await fetch("/api/keymap");
+    const cfg = await res.json();
+    renderEffectsKeymapTable(cfg.rules || [], cfg.enabled);
+    renderEffectsEventsTable(cfg.events || []);
+  } catch {
+    renderEffectsKeymapTable([
+      { giftName: "Rose", key: "G", label: "หมา" },
+      { giftName: "Perfume", key: "B", label: "ยายสปีด" },
+      { giftName: "Flower Garland", key: "C", label: "ควาย" },
+      { giftName: "Doughnut", key: "T", label: "พายุ" },
+      { giftName: "Rosa", key: "P", label: "สุ่ม" },
+    ], true);
+    renderEffectsEventsTable([
+      { trigger: "gift", giftName: "Rose", action: "หมา", enabled: true },
+      { trigger: "gift", giftName: "Perfume", action: "ยายสปีด", enabled: true },
+    ]);
   }
 }
 
@@ -6483,6 +6929,11 @@ async function saveSelectedGame(extra = {}) {
     if (!payload.displayName) {
       const opt = gameSelect.selectedOptions?.[0];
       payload.displayName = opt?.textContent || payload.id;
+    }
+    const selectedId = (payload.id || "").toLowerCase();
+    if (selectedId !== "custom") {
+      payload.customProcess = null;
+      payload.customTitle = null;
     }
     localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(payload));
     const res = await fetch("/api/games/selected", {
@@ -6606,14 +7057,14 @@ customGameTitle?.addEventListener("change", () => saveSelectedGame());
 scanGamesBtn?.addEventListener("click", scanRunningWindows);
 useScannedGameBtn?.addEventListener("click", useScannedWindow);
 
-document.querySelectorAll(".chip-btn").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    testGiftInput.value = btn.dataset.gift || "";
-    const typeInput = document.getElementById("testType");
-    if (typeInput) typeInput.value = btn.dataset.type || "SendGift";
-    document.querySelectorAll(".chip-btn").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-  });
+document.getElementById("giftChips")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".chip-btn");
+  if (!btn) return;
+  testGiftInput.value = btn.dataset.gift || "";
+  const typeInput = document.getElementById("testType");
+  if (typeInput) typeInput.value = btn.dataset.type || "SendGift";
+  document.getElementById("giftChips")?.querySelectorAll(".chip-btn").forEach((b) => b.classList.remove("active"));
+  btn.classList.add("active");
 });
 
 document.getElementById("musicEnabled")?.addEventListener("change", (e) => {
@@ -6784,7 +7235,7 @@ document.getElementById("rouletteCloseOverlayBtn")?.addEventListener("click", ()
   closeRouletteOverlay().catch(() => {});
 });
 document.getElementById("rouletteRestoreDefaultsBtn")?.addEventListener("click", async () => {
-  if (!confirm("ใช้กฎเริ่มต้น กฎ 02 (little hippo 16 ช่อง + Game Controller + Balloon Gift Box) แทนกฎปัจจุบัน?\nจะทับกฎกล่องสุ่มในแอพ")) return;
+  if (!confirm("ใช้กฎเริ่มต้น กฎ 02 (little hippo 16 ช่อง + Game Controller + Balloon Box) แทนกฎปัจจุบัน?\nจะทับกฎกล่องสุ่มในแอพ")) return;
   try {
     await applyRouletteDefaultsPack(true);
     alert("ใส่กฎเริ่มต้น กฎ 02 แล้ว");
@@ -7048,6 +7499,228 @@ document.getElementById("jarTestBtn")?.addEventListener("click", () => {
 loadJarCatalogUi();
 renderJarUiState();
 
+const LIVE_OVERLAY_BASE = "http://127.0.0.1:3847/live-overlay.html";
+const LIVE_OVERLAY_VER = "gal4";
+let _liveStatsLastRev = "";
+let _liveLastCountTimer = 0;
+let _liveSettingsTimer = 0;
+
+const OVERLAY_GALLERY_SECTIONS = [
+  { cat: "เล่น", title: "Games" },
+  { cat: "เอฟเฟกต์", title: "Effects" },
+  { cat: "ข้อมูล", title: "Info" },
+  { cat: "อันดับ", title: "Leaderboards" },
+  { cat: "ยูทิลิตี้", title: "Utilities" },
+  { cat: "ตัวละคร", title: "Characters" },
+  { cat: "พิเศษ", title: "Monkeyeffect" },
+];
+
+const OVERLAY_GALLERY = [
+  { id: "coinmatch", name: "Coin Match", cat: "เล่น", w: 520, h: 280 },
+  { id: "coinjar", name: "Coin Jar", cat: "เล่น", w: 360, h: 480 },
+  { id: "actions", name: "Wheel Of Actions", cat: "เล่น", w: 480, h: 480 },
+  { id: "fortune", name: "Wheel of Fortune", cat: "เล่น", w: 480, h: 480 },
+  { id: "slider", name: "Interaction Slider", cat: "เล่น", w: 560, h: 240 },
+  { id: "cannon", name: "Gift Cannon", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "likes", name: "Like Fountain", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "firework", name: "Gift Firework", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "snow", name: "Falling Snow", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "emojify", name: "Emojify", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "drop", name: "Points Drop", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "social", name: "Social Media Rotator", cat: "ข้อมูล", w: 720, h: 160 },
+  { id: "chat", name: "Chat", cat: "ข้อมูล", w: 420, h: 560 },
+  { id: "feed", name: "Gift Feed", cat: "ข้อมูล", w: 420, h: 520 },
+  { id: "gifters", name: "Last Gifters", cat: "ข้อมูล", w: 360, h: 420 },
+  { id: "points", name: "Points Animation", cat: "ข้อมูล", w: 480, h: 240 },
+  { id: "coins", name: "เพชรไลฟ์นี้", cat: "ข้อมูล", w: 420, h: 220 },
+  { id: "userinfo", name: "User Info Screen", cat: "ข้อมูล", w: 420, h: 360 },
+  { id: "commands", name: "Command Info Screen", cat: "ข้อมูล", w: 480, h: 360 },
+  { id: "myactions", name: "My Actions", cat: "ข้อมูล", w: 420, h: 360 },
+  { id: "topgifters", name: "Top Gifters", cat: "อันดับ", w: 420, h: 520 },
+  { id: "topliker", name: "Top Liker", cat: "อันดับ", w: 420, h: 520 },
+  { id: "ranking", name: "Ranking List", cat: "อันดับ", w: 420, h: 520 },
+  { id: "viewers", name: "Viewer Count", cat: "อันดับ", w: 420, h: 220 },
+  { id: "timer", name: "Timer", cat: "ยูทิลิตี้", w: 420, h: 240 },
+  { id: "songs", name: "Song Requests", cat: "ยูทิลิตี้", w: 520, h: 240 },
+  { id: "buddies", name: "Stream Buddies", cat: "ตัวละคร", w: 1280, h: 720, fx: 1 },
+  { id: "tiny", name: "Tiny Diny", cat: "ตัวละคร", w: 360, h: 360 },
+  { id: "jar", name: "โหลแก้ว (ฟิสิกส์)", cat: "พิเศษ", w: 720, h: 1080, url: "http://127.0.0.1:3847/jar-overlay.html?v=jar47" },
+  { id: "roulette", name: "กล่องสุ่มเกม", cat: "พิเศษ", w: 720, h: 720, url: "http://127.0.0.1:3847/roulette-overlay.html" },
+];
+
+function liveOverlayUrl(panel, fx) {
+  const item = OVERLAY_GALLERY.find((x) => x.id === panel);
+  if (item?.url) return item.url;
+  return `${LIVE_OVERLAY_BASE}?panel=${encodeURIComponent(panel)}&v=${LIVE_OVERLAY_VER}${fx ? "&chroma=1" : ""}`;
+}
+
+function renderOverlayGallery() {
+  const host = document.getElementById("overlayGallery");
+  if (!host) return;
+  const card = (item) => {
+    const url = liveOverlayUrl(item.id, item.fx);
+    return `<article class="og-row" data-id="${item.id}">
+      <div class="og-row-main">
+        <div class="og-name">${escapeHtml(item.name)}</div>
+        <div class="og-size">${item.w}×${item.h}${item.fx ? " · chroma" : ""}</div>
+      </div>
+      <div class="og-row-actions">
+        <button type="button" class="btn ghost og-copy" data-url="${escapeHtml(url)}">คัดลอก</button>
+        <button type="button" class="btn secondary og-preview" data-id="${item.id}" data-url="${escapeHtml(url)}" data-w="${item.w}" data-h="${item.h}">พรีวิว</button>
+      </div>
+    </article>`;
+  };
+  host.innerHTML = OVERLAY_GALLERY_SECTIONS.map((sec) => {
+    const items = OVERLAY_GALLERY.filter((x) => x.cat === sec.cat);
+    if (!items.length) return "";
+    return `<section class="og-section">
+      <h3 class="og-section-head">${escapeHtml(sec.title)} <span>${escapeHtml(sec.cat)}</span></h3>
+      <div class="og-rows">${items.map(card).join("")}</div>
+    </section>`;
+  }).join("");
+}
+
+async function copyFieldValue(id, fallback) {
+  const el = document.getElementById(id);
+  const text = el?.value || fallback;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    el?.select();
+  }
+}
+
+function fillLiveSettings(data) {
+  const c = data.config || {};
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (!el || document.activeElement === el) return;
+    if (val === undefined || val === null) return;
+    el.value = String(val);
+  };
+  set("liveLastCount", c.lastCount || data.lastCount);
+  set("liveGoal", c.goal);
+  set("liveTimerSeconds", c.timerSeconds);
+  set("liveStreamer", c.streamer);
+  set("liveSong", c.song);
+  set("liveSocials", c.socials);
+  set("liveCommands", c.commands);
+}
+
+function paintLiveStatsPreview(data) {
+  const coinsEl = document.getElementById("liveCoinsDisplay");
+  const viewersEl = document.getElementById("liveViewersDisplay");
+  const likesEl = document.getElementById("liveLikesDisplay");
+  const listEl = document.getElementById("liveGiftersPreview");
+  if (coinsEl) coinsEl.textContent = Number(data.coins || 0).toLocaleString("en-US");
+  if (likesEl) likesEl.textContent = Number(data.likes || 0).toLocaleString("en-US");
+  if (viewersEl) viewersEl.textContent = data.viewersKnown ? Number(data.viewers || 0).toLocaleString("en-US") : "—";
+  fillLiveSettings(data);
+  if (listEl) {
+    const rows = Array.isArray(data.gifters) ? data.gifters : [];
+    if (rows.length === 0) {
+      listEl.textContent = "ยังไม่มีคนส่งของขวัญ";
+    } else {
+      listEl.innerHTML = rows.map((row) => {
+        const nick = escapeHtml(row.nick || row.user || "ผู้ชม");
+        const gift = escapeHtml(row.gift || "Gift");
+        const count = Number(row.count) || 1;
+        const av = String(row.avatar || "").trim();
+        const img = av ? `<img alt="" referrerpolicy="no-referrer" src="${escapeHtml(av)}" />` : "";
+        return `<div class="live-gifter-line">${img}<span>${nick} · ${gift} ×${count}</span></div>`;
+      }).join("");
+    }
+  }
+}
+
+async function refreshLiveStatsPreview() {
+  try {
+    const res = await fetch("/api/live-stats", { cache: "no-store" });
+    if (!res.ok) return;
+    const data = await res.json();
+    const rev = String(data.rev ?? "") + ":" + (data.coins ?? "") + ":" + (data.likes ?? "") + ":" + JSON.stringify(data.gifters || []);
+    if (rev === _liveStatsLastRev) return;
+    _liveStatsLastRev = rev;
+    paintLiveStatsPreview(data);
+  } catch {
+    /* overlay poll is best-effort */
+  }
+}
+
+async function resetLiveStats(payload) {
+  const res = await fetch("/api/live-stats/reset", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  _liveStatsLastRev = "";
+  paintLiveStatsPreview(data);
+}
+
+async function saveLiveSettings(extra) {
+  const body = {
+    lastCount: Number(document.getElementById("liveLastCount")?.value) || 8,
+    goal: Number(document.getElementById("liveGoal")?.value) || 1000,
+    timerSeconds: Number(document.getElementById("liveTimerSeconds")?.value) || 300,
+    streamer: document.getElementById("liveStreamer")?.value || "",
+    song: document.getElementById("liveSong")?.value || "",
+    socials: document.getElementById("liveSocials")?.value || "",
+    commands: document.getElementById("liveCommands")?.value || "",
+    ...extra,
+  };
+  const res = await fetch("/api/live-stats/settings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  _liveStatsLastRev = "";
+  paintLiveStatsPreview(data);
+}
+
+renderOverlayGallery();
+document.getElementById("overlayGallery")?.addEventListener("click", async (e) => {
+  const copyBtn = e.target.closest(".og-copy");
+  const prevBtn = e.target.closest(".og-preview");
+  if (copyBtn) {
+    try {
+      await navigator.clipboard.writeText(copyBtn.dataset.url || "");
+      copyBtn.textContent = "คัดลอกแล้ว";
+      setTimeout(() => { copyBtn.textContent = "คัดลอก"; }, 900);
+    } catch {
+      alert(copyBtn.dataset.url || "");
+    }
+  }
+  if (prevBtn) {
+    const w = Math.min(900, Number(prevBtn.dataset.w) || 480);
+    const h = Math.min(800, Number(prevBtn.dataset.h) || 360);
+    window.open(prevBtn.dataset.url, "me-ov-" + prevBtn.dataset.id, `width=${w},height=${h}`);
+  }
+});
+document.getElementById("liveResetCoinsBtn")?.addEventListener("click", () => {
+  resetLiveStats({ coins: true, gifters: false, likes: false }).catch((err) => alert(err.message || String(err)));
+});
+document.getElementById("liveResetGiftersBtn")?.addEventListener("click", () => {
+  resetLiveStats({ coins: false, gifters: true, likes: false }).catch((err) => alert(err.message || String(err)));
+});
+document.getElementById("liveResetAllBtn")?.addEventListener("click", () => {
+  resetLiveStats({ all: true }).catch((err) => alert(err.message || String(err)));
+});
+document.getElementById("liveSaveSettingsBtn")?.addEventListener("click", () => {
+  saveLiveSettings().catch((err) => alert(err.message || String(err)));
+});
+document.getElementById("liveTimerStartBtn")?.addEventListener("click", () => saveLiveSettings({ timer: "start" }).catch((err) => alert(err.message || String(err))));
+document.getElementById("liveTimerStopBtn")?.addEventListener("click", () => saveLiveSettings({ timer: "stop" }).catch((err) => alert(err.message || String(err))));
+document.getElementById("liveTimerResetBtn")?.addEventListener("click", () => saveLiveSettings({ timer: "reset" }).catch((err) => alert(err.message || String(err))));
+["liveLastCount", "liveGoal", "liveTimerSeconds"].forEach((id) => {
+  document.getElementById(id)?.addEventListener("change", () => {
+    clearTimeout(_liveSettingsTimer);
+    _liveSettingsTimer = setTimeout(() => saveLiveSettings().catch(() => {}), 250);
+  });
+});
+refreshLiveStatsPreview();
+
 async function openAgencyDashboard() {
   try {
     const res = await fetch("/api/agency/dashboard/open", { method: "POST" });
@@ -7284,7 +7957,7 @@ async function loadUpdateUi() {
     const res = await fetch(`/api/version?t=${Date.now()}`);
     if (!res.ok) return;
     const data = await res.json();
-    const ver = data.version || "1.0.7.2";
+    const ver = data.version || "1.0.7.4";
     const label = document.getElementById("appVersionLabel");
     const chip = document.getElementById("updateStatusChip");
     if (label) label.textContent = `v${ver}`;
