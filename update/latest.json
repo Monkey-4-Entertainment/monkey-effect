@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.5",
-    "notes":  "Monkeyeffect 1.0.7.5 - mason jar overlay art, overflow physics, coin HUD",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.5-update.zip",
-    "sha256":  "3385ff6701283b8c9fca7d02510fffbf3b8c6bb9c4a7cf80195f290b96cef787",
+    "version":  "1.0.7.6",
+    "notes":  "Monkeyeffect 1.0.7.6 - THE RIDER Actions+Events ครบจาก TikFinity พรีเซ็ต v2",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.6-update.zip",
+    "sha256":  "9f485c8307193f59d4acdf0a50b6eedbf2b511e8a8b372827a770317f1588c31",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

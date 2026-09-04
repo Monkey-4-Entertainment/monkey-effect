@@ -1,18 +1,194 @@
 {
   "enabled": true,
-  "comment": "THE RIDER gift → key mapping (based on gift.png guide). Virtual-key codes: https://learn.microsoft.com/windows/win32/inputdev/virtual-key-codes",
+  "comment": "พรีเซ็ต THE RIDER v2 จาก TikFinity พรีเซ็ต v2.tfc (Actions + Events)",
   "rules": [
-    { "giftName": "Rose",        "key": "G", "vk": 71, "label": "หมา",              "holdMs": 100 },
-    { "giftName": "Perfume",     "key": "H", "vk": 72, "label": "ยายสปีด",          "holdMs": 100 },
-    { "giftName": "Phuang Malai","key": "J", "vk": 74, "label": "ควาย",             "holdMs": 100 },
-    { "giftName": "GG",          "key": "N", "vk": 78, "label": "ถัง NOS",          "holdMs": 100 },
-    { "giftName": "Super GG",    "key": "B", "vk": 66, "label": "บวกเงิน",          "holdMs": 100 },
-    { "giftName": "Ice Cream Cone","key":"M","vk": 77, "label": "หักเงิน",          "holdMs": 100 },
-    { "giftName": "TikTok",      "key": "K", "vk": 75, "label": "ผีซ้อนท้าย",      "holdMs": 100 },
-    { "giftName": "Corgi",       "key": "R", "vk": 82, "label": "อมตะ",             "holdMs": 100 },
-    { "giftName": "Doughnut",    "key": "T", "vk": 84, "label": "พายุหมุน",         "holdMs": 100 },
-    { "giftName": "Money Gun",   "key": "Y", "vk": 89, "label": "ฟ้าผ่า ลบ 1",     "holdMs": 100 },
-    { "giftName": "Rosa",        "key": "U", "vk": 85, "label": "จุ๋ม (สุ่ม)",      "holdMs": 100 },
-    { "giftName": "Hand Heart",  "key": "F", "vk": 70, "label": "ฝนอาหาร บวก 1 วิน","holdMs": 100 }
+    {
+      "giftName": "Rose",
+      "key": "G",
+      "vk": 71,
+      "label": "หมา",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "Perfume",
+      "key": "B",
+      "vk": 66,
+      "label": "ยายสปีด",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "Flower Garland",
+      "key": "C",
+      "vk": 67,
+      "label": "ควาย",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "The Lucky 9",
+      "key": "Q",
+      "vk": 81,
+      "label": "ไนตรัส",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "GG",
+      "key": "N",
+      "vk": 78,
+      "label": "+เงิน",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "Ice Cream Cone",
+      "key": "J",
+      "vk": 74,
+      "label": "-เงิน",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "Friendship Necklace",
+      "key": "V",
+      "vk": 86,
+      "label": "ผีซ้อนท้าย",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "Baby Hippo",
+      "key": "I",
+      "vk": 73,
+      "label": "อมตะ",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "Doughnut",
+      "key": "T",
+      "vk": 84,
+      "label": "พายุ",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "Lots of Bread",
+      "key": "L",
+      "vk": 76,
+      "label": "-1",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "Rosa",
+      "key": "P",
+      "vk": 80,
+      "label": "สุ่ม",
+      "holdMs": 80,
+      "enabled": true
+    },
+    {
+      "giftName": "Night Star",
+      "key": "O",
+      "vk": 79,
+      "label": "+1",
+      "holdMs": 80,
+      "enabled": true
+    }
+  ],
+  "events": [
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Rose",
+      "action": "หมา"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Perfume",
+      "action": "ยายสปีด"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Flower Garland",
+      "action": "ควาย"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "The Lucky 9",
+      "action": "ไนตรัส"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Doughnut",
+      "action": "พายุ"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Rosa",
+      "action": "สุ่ม"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Heart Me",
+      "action": "สุ่ม"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Night Star",
+      "action": "+1"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Friendship Necklace",
+      "action": "ผีซ้อนท้าย"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "GG",
+      "action": "+เงิน"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Ice Cream Cone",
+      "action": "-เงิน"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Baby Hippo",
+      "action": "อมตะ"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Lots of Bread",
+      "action": "-1"
+    },
+    {
+      "enabled": false,
+      "trigger": "like",
+      "giftName": "",
+      "action": ""
+    },
+    {
+      "enabled": false,
+      "trigger": "follow",
+      "giftName": "",
+      "action": ""
+    }
   ]
 }

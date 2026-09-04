@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\monkeyeffect.ico</ApplicationIcon>
+    <AssemblyName>Monkeyeffect-Setup</AssemblyName>
+    <RootNamespace>MonkeyeffectSetup</RootNamespace>
+    <Version>1.0.7.6</Version>
+    <FileVersion>1.0.7.6</FileVersion>
+    <InformationalVersion>1.0.7.6</InformationalVersion>
+    <Product>Monkeyeffect Setup</Product>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="payload.zip" Condition="Exists('payload.zip')" />
+    <EmbeddedResource Include="..\..\monkeyeffect.ico" Condition="Exists('..\..\monkeyeffect.ico')" LogicalName="MonkeyeffectSetup.monkeyeffect.ico" />
+  </ItemGroup>
+</Project>

@@ -118,6 +118,7 @@ public class Program
 			webApplicationBuilder.Services.AddSingleton<GameBridgeService>();
 			webApplicationBuilder.Services.AddSingleton<RouletteConfigService>();
 			webApplicationBuilder.Services.AddSingleton<RouletteSpinService>();
+			webApplicationBuilder.Services.AddSingleton<LiveStatsOverlayService>();
 			webApplicationBuilder.Services.AddSingleton<BrowserGiftReaderService>();
 			app = webApplicationBuilder.Build();
 			GameBridgeService gameBridge = app.Services.GetRequiredService<GameBridgeService>();
@@ -229,6 +230,62 @@ public class Program
 					liveServes = live.ServeCount,
 					lastServed = live.LastServedJson
 				});
+			});
+			app.MapGet("/api/live-stats", (Func<LiveStatsOverlayService, RelayState, HttpResponse, IResult>)((LiveStatsOverlayService stats, RelayState state, HttpResponse response) =>
+			{
+				response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+				response.Headers["Pragma"] = "no-cache";
+				response.Headers["Access-Control-Allow-Origin"] = "*";
+				return Results.Json(stats.ToSnapshot(state.TikTokConnected, state.TikTokLive));
+			}));
+			app.MapPost("/api/live-stats/reset", async (HttpRequest request, LiveStatsOverlayService stats, RelayState state) =>
+			{
+				bool coins = true;
+				bool gifters = true;
+				bool likes = false;
+				try
+				{
+					using JsonDocument doc = await JsonDocument.ParseAsync(request.Body);
+					if (doc.RootElement.ValueKind == JsonValueKind.Object)
+					{
+						if (doc.RootElement.TryGetProperty("coins", out JsonElement c) && (c.ValueKind == JsonValueKind.False || c.ValueKind == JsonValueKind.True))
+						{
+							coins = c.GetBoolean();
+						}
+						if (doc.RootElement.TryGetProperty("gifters", out JsonElement g) && (g.ValueKind == JsonValueKind.False || g.ValueKind == JsonValueKind.True))
+						{
+							gifters = g.GetBoolean();
+						}
+						if (doc.RootElement.TryGetProperty("likes", out JsonElement l) && (l.ValueKind == JsonValueKind.False || l.ValueKind == JsonValueKind.True))
+						{
+							likes = l.GetBoolean();
+						}
+						if (doc.RootElement.TryGetProperty("all", out JsonElement all) && all.ValueKind == JsonValueKind.True)
+						{
+							coins = gifters = likes = true;
+						}
+					}
+				}
+				catch
+				{
+				}
+				stats.Reset(coins, gifters, likes);
+				return Results.Json(stats.ToSnapshot(state.TikTokConnected, state.TikTokLive));
+			});
+			app.MapPost("/api/live-stats/settings", async (HttpRequest request, LiveStatsOverlayService stats, RelayState state) =>
+			{
+				try
+				{
+					using JsonDocument doc = await JsonDocument.ParseAsync(request.Body);
+					if (doc.RootElement.ValueKind == JsonValueKind.Object)
+					{
+						stats.ApplySettings(doc.RootElement);
+					}
+				}
+				catch
+				{
+				}
+				return Results.Json(stats.ToSnapshot(state.TikTokConnected, state.TikTokLive));
 			});
 			app.MapGet("/api/games", (Func<GameWindowService, IResult>)(gameWindow =>
 			{
@@ -658,7 +715,7 @@ public class Program
 					status = state.ToStatus()
 				});
 			});
-			app.MapPost("/api/test-gift", (Func<TestGiftRequest, GameBridgeService, RelayState, GameWindowService, AvatarCacheService, Task<IResult>>)async delegate(TestGiftRequest request, GameBridgeService gameBridgeService, RelayState state, GameWindowService gameWindowService, AvatarCacheService avatars)
+			app.MapPost("/api/test-gift", (Func<TestGiftRequest, GameBridgeService, RelayState, GameWindowService, AvatarCacheService, LiveStatsOverlayService, Task<IResult>>)async delegate(TestGiftRequest request, GameBridgeService gameBridgeService, RelayState state, GameWindowService gameWindowService, AvatarCacheService avatars, LiveStatsOverlayService liveStats)
 			{
 				gameWindowService.Refresh();
 				string msgType = (string.IsNullOrWhiteSpace(request.MessageType) ? "SendGift" : request.MessageType.Trim());
@@ -738,7 +795,15 @@ public class Program
 					Nickname = nickname
 				};
 				DevLogService.Write("gift.test", "test-gift enqueue", new { giftName, repeatCount, msgType, nickname, source = request.Source });
-				string kind = (msgType.Contains("Like", StringComparison.OrdinalIgnoreCase) ? "like" : (msgType.Contains("Follow", StringComparison.OrdinalIgnoreCase) ? "follow" : "gift"));
+				string kind = (msgType.Contains("Like", StringComparison.OrdinalIgnoreCase) ? "like" : (msgType.Contains("Follow", StringComparison.OrdinalIgnoreCase) ? "follow" : (msgType.Contains("Chat", StringComparison.OrdinalIgnoreCase) ? "chat" : "gift")));
+				try
+				{
+					if (kind == "like") liveStats.RecordLike(payload);
+					else if (kind == "follow") liveStats.RecordFollow(payload);
+					else if (kind == "chat") liveStats.RecordChat(payload);
+					else liveStats.RecordGift(payload);
+				}
+				catch { }
 				string prefix = "[TEST] ";
 				string line = kind == "follow"
 					? $"{prefix}Follow from {payload.Nickname}"
@@ -755,7 +820,7 @@ public class Program
 				state.PushLog(new LogEntry
 				{
 					Kind = "game",
-					Text = line,
+					Text = line + (string.IsNullOrWhiteSpace(deliveryResult.Channel) ? "" : $" [{deliveryResult.Channel}]"),
 					Sent = deliveryResult.TotalSent,
 					WindowSent = deliveryResult.YcLiveSent
 				});
@@ -793,7 +858,14 @@ public class Program
 			// ──── KeyMap (THE RIDER keyboard delivery) API ────
 			app.MapGet("/api/keymap", (KeyMapDeliveryService km) =>
 			{
-				return Results.Json(km.GetSnapshot());
+				var snap = km.GetSnapshot();
+				return Results.Json(new
+				{
+					enabled = snap.Enabled,
+					comment = snap.Comment,
+					rules = snap.Rules,
+					events = snap.Events ?? new List<KeyMapDeliveryService.KeyMapEvent>()
+				});
 			});
 			app.MapPost("/api/keymap", async (HttpRequest request, KeyMapDeliveryService km) =>
 			{
@@ -802,15 +874,81 @@ public class Program
 					new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 				if (cfg != null)
 				{
+					if (!doc.RootElement.TryGetProperty("events", out _))
+						cfg.Events = km.GetSnapshot().Events;
 					km.Save(cfg);
-					return Results.Json(new { ok = true, rules = cfg.Rules.Count });
+					return Results.Json(new { ok = true, rules = cfg.Rules.Count, events = cfg.Events.Count });
 				}
 				return Results.BadRequest(new { ok = false, error = "invalid config" });
 			});
 			app.MapPost("/api/keymap/reload", (KeyMapDeliveryService km) =>
 			{
 				km.Load();
-				return Results.Json(new { ok = true, rules = km.GetSnapshot().Rules.Count });
+				return Results.Json(new { ok = true, rules = km.GetSnapshot().Rules.Count, events = km.GetSnapshot().Events.Count });
+			});
+			app.MapGet("/api/keymap/export", (KeyMapDeliveryService km) =>
+			{
+				byte[] bytes = System.Text.Encoding.UTF8.GetBytes(km.ExportJson());
+				return Results.File(bytes, "application/json", "THE-RIDER-preset.json");
+			});
+			app.MapPost("/api/keymap/import", async (HttpRequest request, KeyMapDeliveryService km) =>
+			{
+				using var reader = new StreamReader(request.Body);
+				string text = await reader.ReadToEndAsync();
+				if (text.TrimStart().StartsWith("{") && text.Contains("\"text\""))
+				{
+					try
+					{
+						using JsonDocument wrap = JsonDocument.Parse(text);
+						if (wrap.RootElement.TryGetProperty("text", out JsonElement t) && t.ValueKind == JsonValueKind.String)
+							text = t.GetString() ?? text;
+					}
+					catch
+					{
+						/* body is the preset itself */
+					}
+				}
+				if (!km.TryImport(text, out var cfg, out string error))
+				{
+					return Results.Json(new { ok = false, error });
+				}
+				km.Save(cfg);
+				return Results.Json(new { ok = true, rules = cfg.Rules.Count, events = cfg.Events.Count });
+			});
+			app.MapPost("/api/keymap/import-default", (KeyMapDeliveryService km) =>
+			{
+				if (!km.TryImportDefaultPack(out var cfg, out string error))
+				{
+					return Results.Json(new { ok = false, error });
+				}
+				km.Save(cfg);
+				return Results.Json(new { ok = true, rules = cfg.Rules.Count, events = cfg.Events.Count });
+			});
+			app.MapPost("/api/keymap/test", async (HttpRequest request, KeyMapDeliveryService km) =>
+			{
+				using var doc = await JsonDocument.ParseAsync(request.Body);
+				JsonElement root = doc.RootElement;
+				string key = root.TryGetProperty("key", out JsonElement keyEl) ? (keyEl.GetString() ?? "") : "";
+				int vk = 0;
+				if (root.TryGetProperty("vk", out JsonElement vkEl) && vkEl.ValueKind == JsonValueKind.Number)
+				{
+					vk = vkEl.GetInt32();
+				}
+				int holdMs = 80;
+				if (root.TryGetProperty("holdMs", out JsonElement holdEl) && holdEl.ValueKind == JsonValueKind.Number)
+				{
+					holdMs = holdEl.GetInt32();
+				}
+				int count = 1;
+				if (root.TryGetProperty("count", out JsonElement countEl) && countEl.ValueKind == JsonValueKind.Number)
+				{
+					count = countEl.GetInt32();
+				}
+				if (km.TrySendKey(key, vk, holdMs, count, out string detail))
+				{
+					return Results.Json(new { ok = true, detail });
+				}
+				return Results.Json(new { ok = false, error = string.IsNullOrWhiteSpace(detail) ? "send failed" : detail });
 			});
 
 			app.MapPost("/api/test-replay-sample", (Func<LocalLiveHttpService, RelayState, IResult>)delegate(LocalLiveHttpService live, RelayState state)

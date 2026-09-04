@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.7.5",
-  [string]$Notes = "Monkeyeffect 1.0.7.5 - mason jar overlay art, overflow physics, coin HUD",
+  [string]$Ver = "1.0.7.6",
+  [string]$Notes = "Monkeyeffect 1.0.7.6 - THE RIDER Actions+Events from TikFinity preset v2",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 

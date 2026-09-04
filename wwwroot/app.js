@@ -6858,8 +6858,8 @@ async function importEffectsKeymapDefault() {
     const empty = Math.max(0, (data.rules || 0) - filled);
     setImportMsg(
       empty
-        ? `ใช้พรีเซ็ตแล้ว · คีย์มี ${filled} แถว ที่ว่าง ${empty} แถว ให้คลิกช่องคีย์แล้วกดปุ่มตามตาราง Actions ของ TikFinity`
-        : `ใช้พรีเซ็ตแล้ว ${data.rules} แอคชัน · คีย์ครบ — ใช้ตอนไลฟ์ได้เลย`
+        ? `ใช้พรีเซ็ตแล้ว ${data.rules || 0} แอคชัน · ${data.events || 0} อีเวนต์ · คีย์มี ${filled} แถว ที่ว่าง ${empty} แถว ให้คลิกช่องคีย์แล้วกดปุ่มตามตาราง Actions ของ TikFinity`
+        : `ใช้พรีเซ็ตแล้ว ${data.rules || 0} แอคชัน · ${data.events || 0} อีเวนต์ · คีย์ครบ — ใช้ตอนไลฟ์ได้เลย`
     );
   } catch (e) {
     setImportMsg(e.message || "โหลดพรีเซ็ตไม่สำเร็จ", true);
@@ -6898,8 +6898,11 @@ async function loadEffectsKeymapUI() {
   try {
     const res = await fetch("/api/keymap");
     const cfg = await res.json();
-    renderEffectsKeymapTable(cfg.rules || [], cfg.enabled);
-    renderEffectsEventsTable(cfg.events || []);
+    const rules = cfg.rules || cfg.Rules || [];
+    const events = Array.isArray(cfg.events) ? cfg.events
+      : (Array.isArray(cfg.Events) ? cfg.Events : []);
+    renderEffectsKeymapTable(rules, cfg.enabled !== false && cfg.Enabled !== false);
+    renderEffectsEventsTable(events);
   } catch {
     renderEffectsKeymapTable([
       { giftName: "Rose", key: "G", label: "หมา" },
