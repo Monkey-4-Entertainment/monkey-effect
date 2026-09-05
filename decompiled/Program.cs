@@ -851,13 +851,6 @@ public class Program
 						Sent = 0,
 						WindowSent = false
 					});
-					return Results.Json(new
-					{
-						ok = true,
-						payload,
-						sent = 0,
-						status = state.ToStatus()
-					});
 				}
 				// Dual-path A: UI first, then game (test is instantaneous both ways).
 				state.PushLog(new LogEntry

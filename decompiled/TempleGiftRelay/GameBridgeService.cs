@@ -106,6 +106,12 @@ public sealed class GameBridgeService : IDisposable
 			_state.GameError = fail;
 			return new DeliveryResult(0, YcLiveSent: false, _clients.Count, _state.GameWindowFound, fail);
 		}
+		string msgBlob = string.Join(" ", payload.MessageType, payload.Type, payload.MsgType);
+		if (msgBlob.Contains("Chat", StringComparison.OrdinalIgnoreCase) ||
+		    msgBlob.Contains("Comment", StringComparison.OrdinalIgnoreCase))
+		{
+			return new DeliveryResult(0, YcLiveSent: true, _clients.Count, _state.GameWindowFound, "chat");
+		}
 
 		int wsSent = 0;
 		KeyValuePair<Guid, IWebSocketConnection>[] array = _clients.ToArray();

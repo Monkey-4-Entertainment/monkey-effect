@@ -66,12 +66,20 @@ public sealed class KeyMapDeliveryService
 		[JsonPropertyName("enabled")]
 		public bool? Enabled { get; set; }
 
-		/// <summary>gift | like | follow</summary>
+		/// <summary>gift | like | follow | chat</summary>
 		[JsonPropertyName("trigger")]
 		public string Trigger { get; set; } = "gift";
 
 		[JsonPropertyName("giftName")]
 		public string GiftName { get; set; } = "";
+
+		/// <summary>TikFinity chatCmd — viewer types this to fire the action (e.g. 1 = แดง).</summary>
+		[JsonPropertyName("chatCmd")]
+		public string? ChatCmd { get; set; }
+
+		/// <summary>Minimum like count (TikFinity minLikesAmount).</summary>
+		[JsonPropertyName("minCount")]
+		public int MinCount { get; set; }
 
 		/// <summary>Action label to fire (matches KeyMapRule.Label).</summary>
 		[JsonPropertyName("action")]
@@ -86,7 +94,7 @@ public sealed class KeyMapDeliveryService
 	private readonly object _lock = new();
 	private string _activeFile = "rider-keymap.json";
 	private static readonly HttpClient WebhookHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
-	private readonly HashSet<string> _joinedViewerIds = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Dictionary<string, string> _joinedTeams = new(StringComparer.OrdinalIgnoreCase);
 	private bool _webhookExclusive;
 	private string _lastWebhookDetail = "";
 
@@ -485,14 +493,23 @@ public sealed class KeyMapDeliveryService
 					string action = (FirstString(e, "action", "actionName", "actionLabel") ?? "").Trim();
 					if (string.IsNullOrWhiteSpace(action))
 						action = MapActionIds(e, actionNames);
+					string chatCmd = (FirstString(e, "chatCmd", "chatCommand", "command") ?? "").Trim();
+					int minCount = (int)(FirstInt64(e, "minLikesAmount", "minLikes", "minCount") ?? 0);
 					ParseTikFinityTrigger(triggerRaw, ref gift, out string kind);
 					if (string.IsNullOrWhiteSpace(kind) || kind == "gift")
 					{
 						int triggerId = (int)(FirstInt64(e, "triggerTypeId") ?? 0);
-						if (triggerId == 2) kind = "like";
-						else if (triggerId == 3) kind = "follow";
-						else kind = "gift";
+						kind = triggerId switch
+						{
+							2 => "chat",
+							7 => "like",
+							1 or 3 or 9 => "follow",
+							4 => "gift",
+							_ => string.IsNullOrWhiteSpace(chatCmd) ? "gift" : "chat"
+						};
 					}
+					if (kind == "chat" && string.IsNullOrWhiteSpace(gift))
+						gift = chatCmd;
 					if (string.IsNullOrWhiteSpace(action) && e.TryGetProperty("actions", out JsonElement acts) &&
 					    acts.ValueKind == JsonValueKind.Array && acts.GetArrayLength() > 0)
 					{
@@ -503,6 +520,8 @@ public sealed class KeyMapDeliveryService
 					{
 						Trigger = kind,
 						GiftName = gift,
+						ChatCmd = chatCmd,
+						MinCount = minCount,
 						Action = action,
 						Enabled = BoolOrTrue(e, "enabled", "active")
 					});
@@ -628,6 +647,12 @@ public sealed class KeyMapDeliveryService
 	{
 		string t = (raw ?? "").Trim();
 		kind = "gift";
+		if (t.Contains("chat", StringComparison.OrdinalIgnoreCase) ||
+		    t.Contains("comment", StringComparison.OrdinalIgnoreCase))
+		{
+			kind = "chat";
+			return;
+		}
 		if (t.Contains("like", StringComparison.OrdinalIgnoreCase))
 		{
 			kind = "like";
@@ -896,6 +921,14 @@ public sealed class KeyMapDeliveryService
 		if (!cfg.Enabled || cfg.Rules.Count == 0)
 			return false;
 
+		if (IsChatPayload(payload))
+		{
+			KeyMapRule? join = ResolveChatJoin(cfg, payload);
+			if (join == null || string.IsNullOrWhiteSpace(join.WebhookUrl))
+				return false;
+			return FireMappedWebhook(join, payload, payload.Comment ?? "chat", out channel);
+		}
+
 		string gift = (payload.GiftName ?? "").Trim();
 		if (gift.Length == 0) return false;
 
@@ -903,20 +936,7 @@ public sealed class KeyMapDeliveryService
 		if (rule == null) return false;
 
 		if (!string.IsNullOrWhiteSpace(rule.WebhookUrl))
-		{
-			_webhookExclusive = true;
-			if (!TryFireWebhook(rule.WebhookUrl, out string whDetail, payload))
-			{
-				_lastWebhookDetail = whDetail;
-				channel = "webhook-failed";
-				AppPaths.Log($"webhook miss {gift}: {whDetail}");
-				return false;
-			}
-			_lastWebhookDetail = whDetail;
-			channel = $"webhook:{rule.WebhookUrl}";
-			AppPaths.Log($"webhook delivered {gift} -> {rule.WebhookUrl} ({rule.Label}) {whDetail}");
-			return true;
-		}
+			return FireMappedWebhook(rule, payload, gift, out channel);
 
 		int vk = ResolveVk(rule);
 		if (vk <= 0) return false;
@@ -942,13 +962,29 @@ public sealed class KeyMapDeliveryService
 		}
 	}
 
+	private bool FireMappedWebhook(KeyMapRule rule, GiftPayload payload, string label, out string channel)
+	{
+		_webhookExclusive = true;
+		if (!TryFireWebhook(rule.WebhookUrl, out string whDetail, payload))
+		{
+			_lastWebhookDetail = whDetail;
+			channel = "webhook-failed";
+			AppPaths.Log($"webhook miss {label}: {whDetail}");
+			return false;
+		}
+		_lastWebhookDetail = whDetail;
+		channel = $"webhook:{rule.WebhookUrl}";
+		AppPaths.Log($"webhook delivered {label} -> {rule.WebhookUrl} ({rule.Label}) {whDetail}");
+		return true;
+	}
+
 	private static KeyMapRule? ResolveRule(KeyMapConfig cfg, GiftPayload payload, string gift)
 	{
 		string kind = EventKind(payload, gift);
 		if (cfg.Events.Count > 0)
 		{
 			KeyMapEvent? ev = cfg.Events.FirstOrDefault(e =>
-				e.IsEnabled && EventMatches(e, kind, gift));
+				e.IsEnabled && EventMatches(e, kind, gift, payload));
 			if (ev != null)
 			{
 				KeyMapRule? byAction = cfg.Rules.FirstOrDefault(r =>
@@ -965,8 +1001,44 @@ public sealed class KeyMapDeliveryService
 			GiftNamesMatch(r.GiftName.Trim(), gift));
 	}
 
+	private static KeyMapRule? ResolveChatJoin(KeyMapConfig cfg, GiftPayload payload)
+	{
+		string cmd = (payload.Comment ?? "").Trim();
+		if (cmd.Length == 0) cmd = (payload.GiftName ?? "").Trim();
+		if (cmd.Length == 0) return null;
+
+		KeyMapEvent? ev = cfg.Events.FirstOrDefault(e =>
+			e.IsEnabled && EventMatches(e, "chat", cmd, payload));
+		if (ev != null)
+		{
+			KeyMapRule? byAction = cfg.Rules.FirstOrDefault(r =>
+				r.IsEnabled &&
+				!string.IsNullOrWhiteSpace(r.Label) &&
+				string.Equals(r.Label.Trim(), ev.Action.Trim(), StringComparison.OrdinalIgnoreCase));
+			if (byAction != null) return byAction;
+		}
+
+		bool red = cmd == "1" || cmd.Equals("แดง", StringComparison.OrdinalIgnoreCase) ||
+		           cmd.Equals("red", StringComparison.OrdinalIgnoreCase);
+		bool blue = cmd == "2" || cmd.Equals("น้ำเงิน", StringComparison.OrdinalIgnoreCase) ||
+		            cmd.Equals("blue", StringComparison.OrdinalIgnoreCase);
+		if (!red && !blue) return null;
+		return cfg.Rules.FirstOrDefault(r =>
+			r.IsEnabled &&
+			!string.IsNullOrWhiteSpace(r.WebhookUrl) &&
+			r.WebhookUrl.IndexOf(red ? "/j/r" : "/j/b", StringComparison.OrdinalIgnoreCase) >= 0);
+	}
+
+	private static bool IsChatPayload(GiftPayload payload)
+	{
+		string blob = string.Join(" ", payload.MessageType, payload.Type, payload.MsgType, payload.GiftName);
+		return blob.Contains("Chat", StringComparison.OrdinalIgnoreCase) ||
+		       blob.Contains("Comment", StringComparison.OrdinalIgnoreCase);
+	}
+
 	private static string EventKind(GiftPayload payload, string gift)
 	{
+		if (IsChatPayload(payload)) return "chat";
 		string blob = string.Join(" ", payload.MessageType, payload.Type, payload.MsgType, gift);
 		if (blob.Contains("Follow", StringComparison.OrdinalIgnoreCase) ||
 		    gift.Equals("Follow", StringComparison.OrdinalIgnoreCase))
@@ -977,11 +1049,19 @@ public sealed class KeyMapDeliveryService
 		return "gift";
 	}
 
-	private static bool EventMatches(KeyMapEvent ev, string kind, string gift)
+	private static bool EventMatches(KeyMapEvent ev, string kind, string gift, GiftPayload payload)
 	{
 		string trigger = string.IsNullOrWhiteSpace(ev.Trigger) ? "gift" : ev.Trigger.Trim().ToLowerInvariant();
+		if (trigger == "chat" || trigger == "comment")
+		{
+			if (kind != "chat") return false;
+			string want = !string.IsNullOrWhiteSpace(ev.ChatCmd) ? ev.ChatCmd.Trim() : (ev.GiftName ?? "").Trim();
+			string got = (payload.Comment ?? "").Trim();
+			if (got.Length == 0) got = gift;
+			return want.Length > 0 && got.Equals(want, StringComparison.OrdinalIgnoreCase);
+		}
 		if (trigger == "like" || trigger == "likes")
-			return kind == "like";
+			return kind == "like" && payload.RepeatCount >= Math.Max(1, ev.MinCount > 0 ? ev.MinCount : 1);
 		if (trigger == "follow" || trigger == "follower")
 			return kind == "follow";
 		if (kind != "gift") return false;
@@ -1063,7 +1143,9 @@ public sealed class KeyMapDeliveryService
 			using HttpResponseMessage resp = WebhookHttp.Send(req);
 			int code = (int)resp.StatusCode;
 			detail = $"HTTP {code} {uri.PathAndQuery}";
-			return code is >= 200 and < 500;
+			bool ok = code is >= 200 and < 500;
+			if (ok) NoteTeamFromPath(uri.AbsolutePath, viewerId);
+			return ok;
 		}
 		catch (Exception ex)
 		{
@@ -1088,9 +1170,20 @@ public sealed class KeyMapDeliveryService
 		return ViewerId(payload);
 	}
 
+	private void NoteTeamFromPath(string? path, string userId)
+	{
+		if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(path)) return;
+		string team = path.Contains("/j/r", StringComparison.OrdinalIgnoreCase) ? "r"
+			: path.Contains("/j/b", StringComparison.OrdinalIgnoreCase) ? "b"
+			: "";
+		if (team.Length == 0) return;
+		lock (_joinedTeams) { _joinedTeams[userId] = team; }
+		AppPaths.Log($"webhook team {userId} -> {(team == "r" ? "red" : "blue")}");
+	}
+
 	/// <summary>
-	/// CRITICAL LIVE ignores /spawn and /event until that userId has joined a team.
-	/// Join blue once per viewer for this session (Follow/Like rules can still switch teams).
+	/// CRITICAL LIVE ignores /spawn until that userId has joined.
+	/// Default blue if they never picked a side. Chat 1 (/j/r) is remembered and not overwritten.
 	/// </summary>
 	private void EnsureTeamJoin(Uri target, string userId, string nick)
 	{
@@ -1099,9 +1192,9 @@ public sealed class KeyMapDeliveryService
 		    !path.StartsWith("/event/", StringComparison.OrdinalIgnoreCase))
 			return;
 		if (string.IsNullOrWhiteSpace(userId)) return;
-		lock (_joinedViewerIds)
+		lock (_joinedTeams)
 		{
-			if (_joinedViewerIds.Contains(userId)) return;
+			if (_joinedTeams.ContainsKey(userId)) return;
 		}
 		try
 		{
@@ -1111,7 +1204,7 @@ public sealed class KeyMapDeliveryService
 			using HttpResponseMessage resp = WebhookHttp.Send(req);
 			if ((int)resp.StatusCode is >= 200 and < 500)
 			{
-				lock (_joinedViewerIds) { _joinedViewerIds.Add(userId); }
+				lock (_joinedTeams) { _joinedTeams[userId] = "b"; }
 				AppPaths.Log($"webhook auto-join blue {userId} HTTP {(int)resp.StatusCode}");
 			}
 		}

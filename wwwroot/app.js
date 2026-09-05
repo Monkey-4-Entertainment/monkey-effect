@@ -6847,6 +6847,9 @@ function readEventsFromDom() {
   return rows.map((tr) => ({
     trigger: tr.querySelector("[data-f=trigger]")?.value || "gift",
     giftName: tr.querySelector("[data-f=gift]")?.value?.trim() || "",
+    chatCmd: tr.querySelector("[data-f=trigger]")?.value === "chat"
+      ? (tr.querySelector("[data-f=gift]")?.value?.trim() || "")
+      : "",
     action: tr.querySelector("[data-f=action]")?.value?.trim() || "",
     enabled: !!tr.querySelector("[data-f=on]")?.checked,
   }));
@@ -6871,7 +6874,8 @@ function renderEffectsEventsTable(events) {
   const statusEl = document.getElementById("effectsEventsStatus");
   keymapDraftEvents = (events || []).map((e) => ({
     trigger: e.trigger || "gift",
-    giftName: e.giftName || "",
+    giftName: e.giftName || e.chatCmd || "",
+    chatCmd: e.chatCmd || "",
     action: e.action || "",
     enabled: e.enabled !== false,
   }));
@@ -6879,7 +6883,8 @@ function renderEffectsEventsTable(events) {
   if (statusEl) statusEl.textContent = `${live} live · ${keymapDraftEvents.length} events`;
   if (!tableEl) return;
   const rows = keymapDraftEvents.map((e, i) => {
-    const giftDisabled = e.trigger !== "gift" ? "disabled" : "";
+    const giftDisabled = (e.trigger !== "gift" && e.trigger !== "chat") ? "disabled" : "";
+    const giftPh = e.trigger === "chat" ? "1 = แดง · 2 = น้ำเงิน" : "Rose / Perfume";
     return `<tr data-event-row="${i}" style="border-top:1px solid rgba(255,255,255,.08);opacity:${e.enabled ? 1 : .45}">
       <td style="padding:6px 4px;white-space:nowrap">
         <button type="button" class="btn ghost" data-event-del="${i}" title="ลบ" style="padding:2px 8px;color:#fda4af">✕</button>
@@ -6888,11 +6893,12 @@ function renderEffectsEventsTable(events) {
       <td style="padding:4px">
         <select data-f="trigger" style="min-width:7.5rem">
           <option value="gift" ${e.trigger === "gift" ? "selected" : ""}>ของขวัญ</option>
+          <option value="chat" ${e.trigger === "chat" ? "selected" : ""}>แชท</option>
           <option value="like" ${e.trigger === "like" ? "selected" : ""}>ไลค์</option>
           <option value="follow" ${e.trigger === "follow" ? "selected" : ""}>ฟอลโลว์</option>
         </select>
       </td>
-      <td style="padding:4px"><input data-f="gift" value="${escapeHtml(e.giftName)}" placeholder="Rose / Perfume" ${giftDisabled} style="width:11rem" /></td>
+      <td style="padding:4px"><input data-f="gift" value="${escapeHtml(e.giftName)}" placeholder="${giftPh}" ${giftDisabled} style="width:11rem" /></td>
       <td style="padding:4px"><select data-f="action" style="min-width:8rem">${actionOptionsHtml(e.action)}</select></td>
     </tr>`;
   }).join("");
@@ -6908,7 +6914,10 @@ function renderEffectsEventsTable(events) {
     sel.addEventListener("change", () => {
       const tr = sel.closest("tr");
       const gift = tr?.querySelector("[data-f=gift]");
-      if (gift) gift.disabled = sel.value !== "gift";
+      if (gift) {
+        gift.disabled = sel.value !== "gift" && sel.value !== "chat";
+        gift.placeholder = sel.value === "chat" ? "1 = แดง · 2 = น้ำเงิน" : "Rose / Perfume";
+      }
     });
   });
   tableEl.querySelectorAll("[data-event-del]").forEach((btn) => {

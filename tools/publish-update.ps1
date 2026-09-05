@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.7.10",
-  [string]$Notes = "Monkeyeffect 1.0.7.10 - ZERO-HOUR join+spawn, show webhook errors, detect generalszh",
+  [string]$Ver = "1.0.7.11",
+  [string]$Notes = "Monkeyeffect 1.0.7.11 - chat 1 joins RED, chat 2 joins BLUE, gifts follow that team",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 
