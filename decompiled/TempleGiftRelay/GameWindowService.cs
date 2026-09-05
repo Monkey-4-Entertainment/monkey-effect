@@ -212,8 +212,13 @@ public sealed class GameWindowService
 	{
 		try
 		{
+			// AskLink / remote-control blocks focus steal; drop the lock timeout.
+			SystemParametersInfo(0x2001, 0, IntPtr.Zero, 0x0002);
 			AllowSetForegroundWindow(-1);
 			ShowWindow(hwnd, 9); // SW_RESTORE
+			// Alt tap lets Windows accept the next SetForegroundWindow.
+			keybd_event(0x12, 0, 0, 0);
+			keybd_event(0x12, 0, 2, 0);
 			nint fg = GetForegroundWindow();
 			uint fgTid = GetWindowThreadProcessId(fg, out _);
 			uint destTid = GetWindowThreadProcessId(hwnd, out _);
@@ -221,6 +226,7 @@ public sealed class GameWindowService
 			if (fgTid != destTid) AttachThreadInput(fgTid, destTid, true);
 			if (selfTid != destTid) AttachThreadInput(selfTid, destTid, true);
 			BringWindowToTop(hwnd);
+			SwitchToThisWindow(hwnd, true);
 			SetForegroundWindow(hwnd);
 			SetActiveWindow(hwnd);
 			if (selfTid != destTid) AttachThreadInput(selfTid, destTid, false);
@@ -228,7 +234,7 @@ public sealed class GameWindowService
 		}
 		catch
 		{
-			SetForegroundWindow(hwnd);
+			try { SetForegroundWindow(hwnd); } catch { }
 		}
 	}
 
@@ -351,8 +357,10 @@ public sealed class GameWindowService
 		{
 			profile = _profile;
 		}
-		nint found = IntPtr.Zero;
+		if (profile.TitleContains.Length == 0 && profile.ProcessNames.Length == 0)
+			return IntPtr.Zero;
 
+		HashSet<uint> pids = new HashSet<uint>();
 		foreach (string processName in profile.ProcessNames)
 		{
 			if (string.IsNullOrWhiteSpace(processName)) continue;
@@ -360,52 +368,53 @@ public sealed class GameWindowService
 			{
 				foreach (Process process in Process.GetProcessesByName(processName))
 				{
-					try
-					{
-						if (process.MainWindowHandle != IntPtr.Zero && IsWindowVisible(process.MainWindowHandle))
-						{
-							return process.MainWindowHandle;
-						}
-					}
-					catch
-					{
-					}
+					try { pids.Add((uint)process.Id); }
+					catch { }
+					finally { try { process.Dispose(); } catch { } }
 				}
 			}
-			catch
-			{
-			}
+			catch { }
 		}
 
-		if (profile.TitleContains.Length == 0 && profile.ProcessNames.Length == 0)
-		{
-			return IntPtr.Zero;
-		}
-
+		nint best = IntPtr.Zero;
+		int bestScore = -1;
 		EnumWindows(delegate(nint hwnd, nint _)
 		{
-			if (!IsWindowVisible(hwnd))
-			{
+			if (!IsWindowVisible(hwnd) || IsIconic(hwnd))
 				return true;
-			}
-			string windowTitle = GetWindowTitle(hwnd);
-			if (string.IsNullOrWhiteSpace(windowTitle))
-			{
+			GetWindowThreadProcessId(hwnd, out uint pid);
+			string title = GetWindowTitle(hwnd);
+			if (IsSystemNoiseTitle(title))
 				return true;
-			}
-			foreach (string needle in profile.TitleContains)
+			bool pidMatch = pids.Contains(pid);
+			bool titleMatch = false;
+			if (!string.IsNullOrWhiteSpace(title))
 			{
-				if (!string.IsNullOrWhiteSpace(needle) &&
-				    (windowTitle.Equals(needle, StringComparison.OrdinalIgnoreCase) ||
-				     windowTitle.Contains(needle, StringComparison.OrdinalIgnoreCase)))
+				foreach (string needle in profile.TitleContains)
 				{
-					found = hwnd;
-					return false;
+					if (!string.IsNullOrWhiteSpace(needle) &&
+					    title.Contains(needle, StringComparison.OrdinalIgnoreCase))
+					{
+						titleMatch = true;
+						break;
+					}
 				}
+			}
+			if (!pidMatch && !titleMatch)
+				return true;
+			GetWindowRect(hwnd, out RECT rc);
+			int area = Math.Max(0, rc.Right - rc.Left) * Math.Max(0, rc.Bottom - rc.Top);
+			if (area < 200 * 150)
+				return true;
+			int score = area + (titleMatch ? 8_000_000 : 0) + (pidMatch ? 1_000_000 : 0);
+			if (score > bestScore)
+			{
+				bestScore = score;
+				best = hwnd;
 			}
 			return true;
 		}, IntPtr.Zero);
-		return found;
+		return best;
 	}
 
 	/// <summary>
@@ -608,6 +617,30 @@ public sealed class GameWindowService
 
 	[DllImport("user32.dll")]
 	private static extern uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct RECT
+	{
+		public int Left;
+		public int Top;
+		public int Right;
+		public int Bottom;
+	}
+
+	[DllImport("user32.dll")]
+	private static extern bool GetWindowRect(nint hWnd, out RECT lpRect);
+
+	[DllImport("user32.dll")]
+	private static extern bool IsIconic(nint hWnd);
+
+	[DllImport("user32.dll")]
+	private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, nint dwExtraInfo);
+
+	[DllImport("user32.dll")]
+	private static extern bool SystemParametersInfo(uint uiAction, uint uiParam, nint pvParam, uint fWinIni);
+
+	[DllImport("user32.dll")]
+	private static extern void SwitchToThisWindow(nint hWnd, bool fAltTab);
 
 	[DllImport("user32.dll")]
 	private static extern bool SetForegroundWindow(nint hWnd);

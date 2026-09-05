@@ -24,7 +24,7 @@ internal sealed class SetupForm : Form
 
 	public SetupForm()
 	{
-		Text = "Monkeyeffect Setup 1.0.7.11";
+		Text = "Monkeyeffect Setup 1.0.7.12";
 		Width = 520;
 		Height = 240;
 		StartPosition = FormStartPosition.CenterScreen;
@@ -123,7 +123,7 @@ internal sealed class SetupForm : Form
 				/* shortcuts are optional — install is still complete */
 			}
 
-			File.WriteAllText(Path.Combine(InstallDir, "VERSION.txt"), "Monkeyeffect 1.0.7.11 build " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+			File.WriteAllText(Path.Combine(InstallDir, "VERSION.txt"), "Monkeyeffect 1.0.7.12 build " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 			try
 			{
 				// Clear leftover Program Files install that caused WebView2 write errors
