@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.7.14",
-  [string]$Notes = "Monkeyeffect 1.0.7.14 - same Roblox keymap as source PC, click game then send keys",
+  [string]$Ver = "1.0.7.15",
+  [string]$Notes = "Monkeyeffect 1.0.7.15 - hide app so Roblox can take focus through AskLink",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 
@@ -62,7 +62,7 @@ $obj = [ordered]@{
   notes = $Notes
   zipUrl = $zipUrl
   sha256 = $hash
-  mandatory = $false
+  mandatory = $true
   repo = "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
 [System.IO.File]::WriteAllText($json, ($obj | ConvertTo-Json -Depth 5), $utf8)

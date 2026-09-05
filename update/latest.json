@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.14",
-    "notes":  "Monkeyeffect 1.0.7.14 - same Roblox keymap as source PC, click game then send keys",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.14-update.zip",
-    "sha256":  "3f25567465e8a8d4f0071c5ed3e239498c5809a13cf997230cdadf09e926d713",
-    "mandatory":  false,
+    "version":  "1.0.7.15",
+    "notes":  "Monkeyeffect 1.0.7.15 - hide app so Roblox can take focus through AskLink",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.15-update.zip",
+    "sha256":  "ca099a0fff0cbb0606791134e57c83e75e52756e912521c5d4732aba29a60f51",
+    "mandatory":  true,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
