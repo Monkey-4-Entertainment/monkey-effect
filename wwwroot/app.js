@@ -6373,10 +6373,18 @@ async function disconnect() {
   }
 }
 
+function setTestResult(message, ok) {
+  const el = document.getElementById("testResult");
+  if (!el) return;
+  el.textContent = message || "";
+  el.style.color = ok ? "#7dffb3" : "#ff8a8a";
+}
+
 async function sendTestGift() {
   const giftName = testGiftInput.value.trim() || "Rose";
   const messageType = document.getElementById("testType")?.value || "SendGift";
   testBtn.disabled = true;
+  setTestResult("กำลังยิงเข้าเกม...", true);
 
   try {
     const res = await fetch("/api/test-gift", {
@@ -6390,18 +6398,22 @@ async function sendTestGift() {
     });
 
     const data = await res.json();
+    const detail = data.gameError || data.error || data.channel || data.status?.gameError || "";
     if (!res.ok || data.ok === false) {
-      setGameError(data.gameError || data.error || data.channel || data.status?.gameError || "Test failed");
+      const fail = detail || "กดเทสไม่สำเร็จ — เปิด Roblox แล้วคลิกจอเกมก่อน";
+      setGameError(fail);
+      setTestResult(fail, false);
       return;
     }
 
-    if (data.ycLiveSent || data.sent > 0) {
-      setGameError("");
-    } else if (data.status?.gameError || data.status?.ycLiveError) {
-      setGameError(data.status.gameError || data.status.ycLiveError);
-    }
+    setGameError("");
+    setTestResult(detail ? `ส่งแล้ว: ${detail}` : `ส่ง ${giftName} เข้าเกมแล้ว`, true);
 
     await fetchStatus();
+  } catch (err) {
+    const fail = "ยิงเทสไม่ถึงโปรแกรม — เปิด Monkeyeffect ใหม่แล้วลองอีกครั้ง";
+    setGameError(fail);
+    setTestResult(fail, false);
   } finally {
     testBtn.disabled = false;
   }

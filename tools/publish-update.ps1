@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.7.13",
-  [string]$Notes = "Monkeyeffect 1.0.7.13 - Send Test keys go to Roblox process, not Edge JOJO Matrix tab",
+  [string]$Ver = "1.0.7.14",
+  [string]$Notes = "Monkeyeffect 1.0.7.14 - same Roblox keymap as source PC, click game then send keys",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 

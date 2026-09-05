@@ -1,0 +1,405 @@
+{
+  "enabled": true,
+  "comment": null,
+  "rules": [
+    {
+      "giftName": "Boxing Gloves",
+      "key": "h",
+      "vk": 72,
+      "label": "h",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Bravo!",
+      "key": "numpad8",
+      "vk": 104,
+      "label": "n8",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Balloon Gift Box",
+      "key": "numpad7",
+      "vk": 103,
+      "label": "n7",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Peach",
+      "key": "numpad6",
+      "vk": 102,
+      "label": "n6",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Game Controller",
+      "key": "numpad5",
+      "vk": 101,
+      "label": "n5",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Heart Me",
+      "key": "numpad4",
+      "vk": 100,
+      "label": "n4",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Doughnut",
+      "key": "numpad3",
+      "vk": 99,
+      "label": "n3",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Lucky Pig",
+      "key": "numpad2",
+      "vk": 98,
+      "label": "n2",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Kudos for My Star",
+      "key": "numpad1",
+      "vk": 97,
+      "label": "n1",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Corgi",
+      "key": "g",
+      "vk": 71,
+      "label": "g",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Confetti",
+      "key": "k",
+      "vk": 75,
+      "label": "k",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Bouquet",
+      "key": "0",
+      "vk": 48,
+      "label": "0",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Cap",
+      "key": "9",
+      "vk": 57,
+      "label": "9",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Hearts",
+      "key": "8",
+      "vk": 56,
+      "label": "8",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Paper Crane",
+      "key": "7",
+      "vk": 55,
+      "label": "7",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "little kisses",
+      "key": "6",
+      "vk": 54,
+      "label": "6",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Ice cream",
+      "key": "5",
+      "vk": 53,
+      "label": "5",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Perfume",
+      "key": "4",
+      "vk": 52,
+      "label": "4",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Rosa",
+      "key": "3",
+      "vk": 51,
+      "label": "3",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Finger Heart",
+      "key": "2",
+      "vk": 50,
+      "label": "2",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    },
+    {
+      "giftName": "Rose",
+      "key": "1",
+      "vk": 49,
+      "label": "1",
+      "holdMs": 80,
+      "webhookUrl": null,
+      "enabled": true
+    }
+  ],
+  "events": [
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Heart Me",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "n4"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Balloon Gift Box",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "n7"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Boxing Gloves",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "h"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Game Controller",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "n5"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Balloon Gift Box",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "n7"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Bravo!",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "n8"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Peach",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "n6"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Doughnut",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "n3"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Kudos for My Star",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "n1"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Lucky Pig",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "n2"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Shamrock",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "n4"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Corgi",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "g"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Confetti",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "k"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Bouquet",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "0"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Bouquet",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "0"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Cap",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "9"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Hearts",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "8"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Paper Crane",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "7"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "little kisses",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "6"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Ice cream",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "5"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Perfume",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "4"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Rosa",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "3"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Finger Heart",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "2"
+    },
+    {
+      "enabled": true,
+      "trigger": "gift",
+      "giftName": "Rose",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "1"
+    },
+    {
+      "enabled": true,
+      "trigger": "like",
+      "giftName": "",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "1"
+    },
+    {
+      "enabled": true,
+      "trigger": "follow",
+      "giftName": "",
+      "chatCmd": "",
+      "minCount": 0,
+      "action": "1"
+    }
+  ]
+}

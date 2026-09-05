@@ -176,8 +176,9 @@ public sealed class GameWindowService
 	}
 
 	/// <summary>
-	/// Force the game window to the front and inject a virtual key via
-	/// PostMessage (works without focus) + SendInput with scan code (Unity Input System).
+	/// Bring the real game window forward (click + focus) then inject the key.
+	/// SendInput only lands if the game process actually has foreground —
+	/// otherwise we refuse so keys do not type into Monkeyeffect / Edge / AskLink.
 	/// </summary>
 	public bool TrySendVirtualKey(byte virtualKey, int count, int holdMs, out string detail)
 	{
@@ -185,38 +186,185 @@ public sealed class GameWindowService
 		if (!TryGetWindow(out nint hwnd, out string title))
 		{
 			detail = "no-window";
+			AppPaths.Log("keymap miss no-window " + DescribeSearch());
 			return false;
 		}
 		count = Math.Max(1, count);
 		holdMs = Math.Max(20, holdMs);
-		ForceForeground(hwnd);
-		Thread.Sleep(80);
+		if (IsIconic(hwnd)) ShowWindow(hwnd, 9);
+
+		ActivateGameWindow(hwnd);
+		if (!IsGameForeground(hwnd))
+		{
+			ClickWindowCenter(hwnd);
+			Thread.Sleep(120);
+			ActivateGameWindow(hwnd);
+		}
+
+		if (!IsGameForeground(hwnd))
+		{
+			string fgTitle = GetWindowTitle(GetForegroundWindow());
+			detail = "โฟกัสเกมไม่ได้ — คลิกจอ Roblox ให้ขึ้นหน้าสุด แล้วกดเทสทันที (AskLink แย่งจออยู่) ตอนนี้โฟกัสอยู่ที่: " +
+			         (string.IsNullOrWhiteSpace(fgTitle) ? "(ไม่มีชื่อ)" : fgTitle);
+			AppPaths.Log($"keymap blocked focus hwnd={hwnd:X} title={title} fg={fgTitle}");
+			return false;
+		}
+
+		GetWindowThreadProcessId(hwnd, out uint destPid);
+		uint destTid = GetWindowThreadProcessId(hwnd, out _);
+		nint fg = GetForegroundWindow();
+		uint fgTid = GetWindowThreadProcessId(fg, out _);
+		uint selfTid = GetCurrentThreadId();
+		bool attachedFg = false;
+		bool attachedSelf = false;
 		uint scan = MapVirtualKey(virtualKey, 0);
 		nint downLParam = MakeKeyLParam(scan, keyUp: false);
 		nint upLParam = MakeKeyLParam(scan, keyUp: true);
-		for (int i = 0; i < count; i++)
+		List<nint> targets = CollectKeyTargets(hwnd);
+		try
 		{
-			PostMessage(hwnd, 0x0100, virtualKey, downLParam); // WM_KEYDOWN
-			SendScanKey(virtualKey, (ushort)scan, keyUp: false);
-			Thread.Sleep(holdMs);
-			PostMessage(hwnd, 0x0101, virtualKey, upLParam); // WM_KEYUP
-			SendScanKey(virtualKey, (ushort)scan, keyUp: true);
-			if (i < count - 1) Thread.Sleep(40);
+			if (fgTid != 0 && fgTid != destTid) attachedFg = AttachThreadInput(fgTid, destTid, true);
+			if (selfTid != destTid) attachedSelf = AttachThreadInput(selfTid, destTid, true);
+			SetForegroundWindow(hwnd);
+			SetActiveWindow(hwnd);
+			SetFocus(hwnd);
+			for (int i = 0; i < count; i++)
+			{
+				foreach (nint t in targets)
+				{
+					PostMessage(t, 0x0100, virtualKey, downLParam);
+				}
+				SendScanKey(virtualKey, (ushort)scan, keyUp: false);
+				Thread.Sleep(holdMs);
+				foreach (nint t in targets)
+				{
+					PostMessage(t, 0x0101, virtualKey, upLParam);
+				}
+				SendScanKey(virtualKey, (ushort)scan, keyUp: true);
+				if (i < count - 1) Thread.Sleep(40);
+			}
 		}
-		detail = $"vk{virtualKey}/sc{scan} x{count} hwnd={hwnd:X} title={title}";
+		finally
+		{
+			if (attachedSelf) AttachThreadInput(selfTid, destTid, false);
+			if (attachedFg) AttachThreadInput(fgTid, destTid, false);
+		}
+
+		detail = $"vk{virtualKey}/sc{scan} x{count} hwnd={hwnd:X} pid={destPid} title={title}";
 		AppPaths.Log("keymap key " + detail);
 		return true;
 	}
 
-	private static void ForceForeground(nint hwnd)
+	private static bool IsGameForeground(nint hwnd)
+	{
+		if (hwnd == IntPtr.Zero || !IsWindow(hwnd)) return false;
+		nint fg = GetForegroundWindow();
+		if (fg == hwnd) return true;
+		GetWindowThreadProcessId(fg, out uint fgPid);
+		GetWindowThreadProcessId(hwnd, out uint destPid);
+		return fgPid != 0 && fgPid == destPid;
+	}
+
+	private static List<nint> CollectKeyTargets(nint hwnd)
+	{
+		List<nint> list = new List<nint> { hwnd };
+		try
+		{
+			EnumChildWindows(hwnd, delegate(nint child, nint _)
+			{
+				if (child != IntPtr.Zero) list.Add(child);
+				return true;
+			}, IntPtr.Zero);
+		}
+		catch { }
+		return list;
+	}
+
+	private static void ClickWindowCenter(nint hwnd)
+	{
+		if (!GetWindowRect(hwnd, out RECT rc)) return;
+		int width = rc.Right - rc.Left;
+		int height = rc.Bottom - rc.Top;
+		if (width < 40 || height < 40) return;
+		int x = rc.Left + width / 2;
+		int y = rc.Top + Math.Max(48, height * 2 / 3);
+		try
+		{
+			SetCursorPos(x, y);
+			mouse_event(0x0002, 0, 0, 0, IntPtr.Zero);
+			Thread.Sleep(20);
+			mouse_event(0x0004, 0, 0, 0, IntPtr.Zero);
+		}
+		catch { }
+		try
+		{
+			int vx = GetSystemMetrics(76);
+			int vy = GetSystemMetrics(77);
+			int vw = GetSystemMetrics(78);
+			int vh = GetSystemMetrics(79);
+			if (vw <= 0 || vh <= 0) return;
+			int ax = (int)((x - vx) * 65535L / vw);
+			int ay = (int)((y - vy) * 65535L / vh);
+			SendInput(3u, new[]
+			{
+				MouseAbs(ax, ay, 0x8001),
+				MouseAbs(ax, ay, 0x8002),
+				MouseAbs(ax, ay, 0x8004)
+			}, Marshal.SizeOf<Input>());
+		}
+		catch { }
+	}
+
+	private static Input MouseAbs(int ax, int ay, uint flags)
+	{
+		return new Input
+		{
+			Type = 0,
+			Union = new InputUnion
+			{
+				Mouse = new MousePad
+				{
+					Dx = ax,
+					Dy = ay,
+					Flags = flags
+				}
+			}
+		};
+	}
+
+	private string DescribeSearch()
+	{
+		GameProfile profile;
+		lock (_lock) { profile = _profile; }
+		List<string> bits = new List<string>();
+		foreach (string name in profile.ProcessNames)
+		{
+			if (string.IsNullOrWhiteSpace(name)) continue;
+			try
+			{
+				Process[] ps = Process.GetProcessesByName(name);
+				bits.Add(name + "=" + ps.Length);
+				foreach (Process p in ps)
+				{
+					try { p.Dispose(); } catch { }
+				}
+			}
+			catch
+			{
+				bits.Add(name + "=?");
+			}
+		}
+		return $"game={profile.Id} {string.Join(" ", bits)}";
+	}
+
+	private static void ActivateGameWindow(nint hwnd)
 	{
 		try
 		{
-			// AskLink / remote-control blocks focus steal; drop the lock timeout.
+			LockSetForegroundWindow(2);
 			SystemParametersInfo(0x2001, 0, IntPtr.Zero, 0x0002);
 			AllowSetForegroundWindow(-1);
-			ShowWindow(hwnd, 9); // SW_RESTORE
-			// Alt tap lets Windows accept the next SetForegroundWindow.
+			ShowWindow(hwnd, 9);
 			keybd_event(0x12, 0, 0, 0);
 			keybd_event(0x12, 0, 2, 0);
 			nint fg = GetForegroundWindow();
@@ -229,6 +377,7 @@ public sealed class GameWindowService
 			SwitchToThisWindow(hwnd, true);
 			SetForegroundWindow(hwnd);
 			SetActiveWindow(hwnd);
+			SetFocus(hwnd);
 			if (selfTid != destTid) AttachThreadInput(selfTid, destTid, false);
 			if (fgTid != destTid) AttachThreadInput(fgTid, destTid, false);
 		}
@@ -403,8 +552,9 @@ public sealed class GameWindowService
 		int bestScore = -1;
 		EnumWindows(delegate(nint hwnd, nint _)
 		{
-			if (!IsWindowVisible(hwnd) || IsIconic(hwnd))
+			if (!IsWindowVisible(hwnd))
 				return true;
+			if (IsIconic(hwnd)) ShowWindow(hwnd, 9);
 			GetWindowThreadProcessId(hwnd, out uint pid);
 			if (IsBlockedProcess(pid))
 				return true;
@@ -431,7 +581,7 @@ public sealed class GameWindowService
 				return true;
 			GetWindowRect(hwnd, out RECT rc);
 			int area = Math.Max(0, rc.Right - rc.Left) * Math.Max(0, rc.Bottom - rc.Top);
-			if (area < 200 * 150)
+			if (area < 80 * 60)
 				return true;
 			int score = area + (pidMatch ? 8_000_000 : 0) + (titleMatch ? 1_000_000 : 0);
 			if (score > bestScore)
@@ -441,6 +591,28 @@ public sealed class GameWindowService
 			}
 			return true;
 		}, IntPtr.Zero);
+		if (best == IntPtr.Zero && pids.Count > 0)
+		{
+			foreach (uint pid in pids)
+			{
+				try
+				{
+					using Process process = Process.GetProcessById((int)pid);
+					nint main = process.MainWindowHandle;
+					if (main != IntPtr.Zero && IsWindow(main) && !IsBlockedProcess(pid))
+					{
+						if (IsIconic(main)) ShowWindow(main, 9);
+						best = main;
+						break;
+					}
+				}
+				catch { }
+			}
+		}
+		if (best == IntPtr.Zero)
+		{
+			AppPaths.Log($"find-window miss game={profile.Id} pids={pids.Count}");
+		}
 		return best;
 	}
 
@@ -637,6 +809,27 @@ public sealed class GameWindowService
 
 	[DllImport("user32.dll")]
 	private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, nint lParam);
+
+	[DllImport("user32.dll")]
+	private static extern bool EnumChildWindows(nint hWndParent, EnumWindowsProc lpEnumFunc, nint lParam);
+
+	[DllImport("user32.dll")]
+	private static extern bool IsWindow(nint hWnd);
+
+	[DllImport("user32.dll")]
+	private static extern bool SetCursorPos(int x, int y);
+
+	[DllImport("user32.dll")]
+	private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, nint dwExtraInfo);
+
+	[DllImport("user32.dll")]
+	private static extern int GetSystemMetrics(int nIndex);
+
+	[DllImport("user32.dll")]
+	private static extern bool LockSetForegroundWindow(uint uLockCode);
+
+	[DllImport("user32.dll")]
+	private static extern nint SetFocus(nint hWnd);
 
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)]
 	private static extern int GetWindowText(nint hWnd, StringBuilder lpString, int nMaxCount);

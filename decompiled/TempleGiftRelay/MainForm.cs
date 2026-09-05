@@ -27,7 +27,7 @@ public sealed class MainForm : Form
 
 	public MainForm()
 	{
-		Text = "Monkeyeffect 1.0.7.13";
+		Text = "Monkeyeffect 1.0.7.14";
 		base.StartPosition = FormStartPosition.CenterScreen;
 		MinimumSize = new Size(960, 640);
 		base.Size = new Size(1280, 800);

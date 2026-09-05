@@ -892,6 +892,7 @@ public class Program
 					wsSent = deliveryResult.WebSocketSent,
 					ycLiveSent = deliveryResult.YcLiveSent,
 					channel = deliveryResult.Channel,
+					gameError = deliveryResult.YcLiveSent ? null : (deliveryResult.Channel ?? state.GameError),
 					gameClients = deliveryResult.ClientCount,
 					gameWindowFound = deliveryResult.GameWindowFound,
 					directLiveReady = state.DirectLiveReady,

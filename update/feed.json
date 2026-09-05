@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.13",
-    "notes":  "Monkeyeffect 1.0.7.13 - Send Test keys go to Roblox process, not Edge JOJO Matrix tab",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.13-update.zip",
-    "sha256":  "d4d5893edbd98e8ea27b1c719c7f6d6977324e02e940204c647567484776c06e",
+    "version":  "1.0.7.14",
+    "notes":  "Monkeyeffect 1.0.7.14 - same Roblox keymap as source PC, click game then send keys",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.14-update.zip",
+    "sha256":  "3f25567465e8a8d4f0071c5ed3e239498c5809a13cf997230cdadf09e926d713",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

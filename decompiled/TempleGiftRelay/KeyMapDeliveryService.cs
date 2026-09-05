@@ -255,11 +255,31 @@ public sealed class KeyMapDeliveryService
 		}
 	}
 
+	private void TrySeedBundledKeymap()
+	{
+		try
+		{
+			if (File.Exists(ConfigPath) && new FileInfo(ConfigPath).Length >= 20)
+				return;
+			string bundled = Path.Combine(AppPaths.AppDir, "wwwroot", "defaults", _activeFile);
+			if (!File.Exists(bundled))
+				return;
+			Directory.CreateDirectory(AppPaths.UserDataDir);
+			File.Copy(bundled, ConfigPath, overwrite: true);
+			AppPaths.Log("keymap seeded from defaults: " + _activeFile);
+		}
+		catch (Exception ex)
+		{
+			AppPaths.Log("keymap seed error: " + ex.Message);
+		}
+	}
+
 	public void Load()
 	{
 		KeyMapConfig? loaded = null;
 		try
 		{
+			TrySeedBundledKeymap();
 			if (File.Exists(ConfigPath))
 			{
 				string json = File.ReadAllText(ConfigPath);
