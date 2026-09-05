@@ -27,6 +27,8 @@ public sealed class GameGiftDeliveryService
 		{
 			return true;
 		}
+		if (_keyMap.WebhookExclusive)
+			return false;
 		if (_pixel.TryDeliverPipeOnly(payload, out channel))
 		{
 			return true;

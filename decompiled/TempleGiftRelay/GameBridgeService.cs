@@ -92,11 +92,19 @@ public sealed class GameBridgeService : IDisposable
 
 	public async Task<DeliveryResult> DeliverGiftAsync(GiftPayload payload, CancellationToken cancellationToken = default(CancellationToken))
 	{
-		// Try keyboard key-map delivery first (THE RIDER and similar games)
+		// Keyboard / localhost webhook first (THE RIDER, ZERO-HOUR).
 		if (_keyMap != null && _keyMap.TryDeliver(payload, out string keyChannel))
 		{
 			_state.ClearGameError();
 			return new DeliveryResult(1, YcLiveSent: true, _clients.Count, _state.GameWindowFound, keyChannel);
+		}
+		if (_keyMap != null && _keyMap.WebhookExclusive)
+		{
+			string fail = string.IsNullOrWhiteSpace(_keyMap.LastWebhookDetail)
+				? "ยิง webhook ไม่ได้ — เปิดเกม CRITICAL LIVE และแดชบอร์ด :17180 บนเครื่องเดียวกับ Monkeyeffect"
+				: _keyMap.LastWebhookDetail;
+			_state.GameError = fail;
+			return new DeliveryResult(0, YcLiveSent: false, _clients.Count, _state.GameWindowFound, fail);
 		}
 
 		int wsSent = 0;

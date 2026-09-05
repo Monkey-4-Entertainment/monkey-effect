@@ -86,6 +86,13 @@ public sealed class KeyMapDeliveryService
 	private readonly object _lock = new();
 	private string _activeFile = "rider-keymap.json";
 	private static readonly HttpClient WebhookHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+	private readonly HashSet<string> _joinedViewerIds = new(StringComparer.OrdinalIgnoreCase);
+	private bool _webhookExclusive;
+	private string _lastWebhookDetail = "";
+
+	/// <summary>True when the last TryDeliver matched a webhook rule (success or fail). Generic livemsg must not run.</summary>
+	public bool WebhookExclusive => _webhookExclusive;
+	public string LastWebhookDetail => _lastWebhookDetail;
 
 	public string ConfigPath => Path.Combine(AppPaths.UserDataDir, _activeFile);
 
@@ -169,7 +176,10 @@ public sealed class KeyMapDeliveryService
 		string blob = string.Join(" ", proc, title, display);
 		if (blob.Contains("ZERO-HOUR", StringComparison.OrdinalIgnoreCase) ||
 		    blob.Contains("ZERO HOUR", StringComparison.OrdinalIgnoreCase) ||
-		    blob.Contains("ZEROHOUR", StringComparison.OrdinalIgnoreCase))
+		    blob.Contains("ZEROHOUR", StringComparison.OrdinalIgnoreCase) ||
+		    blob.Contains("GENERALSZH", StringComparison.OrdinalIgnoreCase) ||
+		    blob.Contains("CRITICAL ZERO", StringComparison.OrdinalIgnoreCase) ||
+		    blob.Contains("GENERALS ZERO", StringComparison.OrdinalIgnoreCase))
 			return "zero-hour-keymap.json";
 		if (blob.Contains("RIDER", StringComparison.OrdinalIgnoreCase))
 			return "rider-keymap.json";
@@ -877,6 +887,8 @@ public sealed class KeyMapDeliveryService
 	public bool TryDeliver(GiftPayload payload, out string channel)
 	{
 		channel = "";
+		_webhookExclusive = false;
+		_lastWebhookDetail = "";
 		EnsureActiveForCurrentGame();
 		KeyMapConfig cfg;
 		lock (_lock) { cfg = _config; }
@@ -892,11 +904,15 @@ public sealed class KeyMapDeliveryService
 
 		if (!string.IsNullOrWhiteSpace(rule.WebhookUrl))
 		{
+			_webhookExclusive = true;
 			if (!TryFireWebhook(rule.WebhookUrl, out string whDetail, payload))
 			{
+				_lastWebhookDetail = whDetail;
+				channel = "webhook-failed";
 				AppPaths.Log($"webhook miss {gift}: {whDetail}");
 				return false;
 			}
+			_lastWebhookDetail = whDetail;
 			channel = $"webhook:{rule.WebhookUrl}";
 			AppPaths.Log($"webhook delivered {gift} -> {rule.WebhookUrl} ({rule.Label}) {whDetail}");
 			return true;
@@ -1039,6 +1055,8 @@ public sealed class KeyMapDeliveryService
 			return false;
 		}
 		uri = AppendViewerQuery(uri, payload);
+		string viewerId = ViewerId(payload);
+		EnsureTeamJoin(uri, viewerId, ViewerNick(payload));
 		try
 		{
 			using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, uri);
@@ -1054,13 +1072,59 @@ public sealed class KeyMapDeliveryService
 		}
 	}
 
+	private static string ViewerId(GiftPayload? payload)
+	{
+		string user = (payload?.UserName ?? "").Trim();
+		if (user.Length > 0) return user;
+		string nick = (payload?.Nickname ?? "").Trim();
+		if (nick.Length > 0) return nick;
+		return "MonkeyeffectTest";
+	}
+
+	private static string ViewerNick(GiftPayload? payload)
+	{
+		string nick = (payload?.Nickname ?? "").Trim();
+		if (nick.Length > 0) return nick;
+		return ViewerId(payload);
+	}
+
+	/// <summary>
+	/// CRITICAL LIVE ignores /spawn and /event until that userId has joined a team.
+	/// Join blue once per viewer for this session (Follow/Like rules can still switch teams).
+	/// </summary>
+	private void EnsureTeamJoin(Uri target, string userId, string nick)
+	{
+		string path = target.AbsolutePath ?? "";
+		if (!path.StartsWith("/spawn/", StringComparison.OrdinalIgnoreCase) &&
+		    !path.StartsWith("/event/", StringComparison.OrdinalIgnoreCase))
+			return;
+		if (string.IsNullOrWhiteSpace(userId)) return;
+		lock (_joinedViewerIds)
+		{
+			if (_joinedViewerIds.Contains(userId)) return;
+		}
+		try
+		{
+			string join = $"{target.Scheme}://{target.Authority}/j/b?userId={Uri.EscapeDataString(userId)}" +
+			              $"&username={Uri.EscapeDataString(userId)}&nickname={Uri.EscapeDataString(nick)}";
+			using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, join);
+			using HttpResponseMessage resp = WebhookHttp.Send(req);
+			if ((int)resp.StatusCode is >= 200 and < 500)
+			{
+				lock (_joinedViewerIds) { _joinedViewerIds.Add(userId); }
+				AppPaths.Log($"webhook auto-join blue {userId} HTTP {(int)resp.StatusCode}");
+			}
+		}
+		catch (Exception ex)
+		{
+			AppPaths.Log("webhook auto-join failed: " + ex.Message);
+		}
+	}
+
 	private static Uri AppendViewerQuery(Uri uri, GiftPayload? payload)
 	{
-		if (payload == null) return uri;
-		string nick = (payload.Nickname ?? "").Trim();
-		string user = (payload.UserName ?? "").Trim();
-		if (string.IsNullOrWhiteSpace(user)) user = nick;
-		if (string.IsNullOrWhiteSpace(nick)) nick = user;
+		string user = ViewerId(payload);
+		string nick = ViewerNick(payload);
 		string existing = uri.Query ?? "";
 		bool Has(string key) => existing.Contains(key + "=", StringComparison.OrdinalIgnoreCase);
 		var parts = new List<string>();
@@ -1074,8 +1138,13 @@ public sealed class KeyMapDeliveryService
 		Add("uniqueId", user);
 		Add("userid", user);
 		Add("userId", user);
-		Add("giftName", payload.GiftName);
-		if (payload.RepeatCount > 0) Add("repeatCount", payload.RepeatCount.ToString());
+		if (payload != null)
+		{
+			Add("giftName", payload.GiftName);
+			if (payload.RepeatCount > 0) Add("repeatCount", payload.RepeatCount.ToString());
+		}
+		if (!Has("eventId"))
+			Add("eventId", "me-" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "-" + Guid.NewGuid().ToString("N")[..8]);
 		if (parts.Count == 0) return uri;
 		string join = string.IsNullOrEmpty(uri.Query) ? "?" : "&";
 		return new Uri(uri.GetLeftPart(UriPartial.Path) + uri.Query + join + string.Join("&", parts));

@@ -1005,7 +1005,14 @@ public class Program
 				string webhookUrl = root.TryGetProperty("webhookUrl", out JsonElement whEl) ? (whEl.GetString() ?? "") : "";
 				if (!string.IsNullOrWhiteSpace(webhookUrl))
 				{
-					if (km.TryFireWebhook(webhookUrl, out string whDetail))
+					var testPayload = new GiftPayload
+					{
+						GiftName = "Rose",
+						RepeatCount = 1,
+						UserName = "test_user",
+						Nickname = "Test User"
+					};
+					if (km.TryFireWebhook(webhookUrl, out string whDetail, testPayload))
 						return Results.Json(new { ok = true, detail = whDetail, webhook = true });
 					return Results.Json(new { ok = false, error = string.IsNullOrWhiteSpace(whDetail) ? "webhook failed" : whDetail });
 				}

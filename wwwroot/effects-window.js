@@ -217,8 +217,8 @@ async function sendTest() {
       }),
     });
     const data = await res.json();
-    if (!res.ok) {
-      setMsg(data.gameError || data.error || "Test failed", true);
+    if (!res.ok || data.ok === false) {
+      setMsg(data.gameError || data.error || data.channel || "Test failed", true);
       return;
     }
     setMsg(`ส่ง ${giftName} x${Number(testCount.value) || 1} → ${currentGame.displayName}`);

@@ -141,8 +141,8 @@ public static class GameCatalog
 		{
 			Id = "zero-hour",
 			Name = "ZERO-HOUR",
-			ProcessNames = new[] { "Zero Hour", "ZeroHour", "ZeroHour-Win64-Shipping", "ZERO-HOUR" },
-			TitleContains = new[] { "ZERO-HOUR", "Zero Hour", "ZeroHour" },
+			ProcessNames = new[] { "generalszh", "generals", "Zero Hour", "ZeroHour", "ZeroHour-Win64-Shipping", "ZERO-HOUR" },
+			TitleContains = new[] { "ZERO-HOUR", "Zero Hour", "ZeroHour", "CRITICAL ZERO", "Generals Zero Hour", "Command & Conquer" },
 			KeyMapFile = "zero-hour-keymap.json"
 		},
 		new GameProfile

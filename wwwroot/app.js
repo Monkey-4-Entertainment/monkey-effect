@@ -6390,8 +6390,8 @@ async function sendTestGift() {
     });
 
     const data = await res.json();
-    if (!res.ok) {
-      setGameError(data.gameError || data.error || "Test failed");
+    if (!res.ok || data.ok === false) {
+      setGameError(data.gameError || data.error || data.channel || data.status?.gameError || "Test failed");
       return;
     }
 
