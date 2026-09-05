@@ -139,11 +139,27 @@ public static class GameCatalog
 		},
 		new GameProfile
 		{
+			Id = "zero-hour",
+			Name = "ZERO-HOUR",
+			ProcessNames = new[] { "Zero Hour", "ZeroHour", "ZeroHour-Win64-Shipping", "ZERO-HOUR" },
+			TitleContains = new[] { "ZERO-HOUR", "Zero Hour", "ZeroHour" },
+			KeyMapFile = "zero-hour-keymap.json"
+		},
+		new GameProfile
+		{
 			Id = "roblox",
 			Name = "Roblox",
 			ProcessNames = new[] { "RobloxPlayerBeta", "RobloxPlayer", "Roblox" },
 			TitleContains = new[] { "Roblox", "JOJO MATRIX" },
 			KeyMapFile = "roblox-keymap.json"
+		},
+		new GameProfile
+		{
+			Id = "minecraft",
+			Name = "Minecraft",
+			ProcessNames = new[] { "javaw", "java", "Minecraft.Windows" },
+			TitleContains = new[] { "Minecraft" },
+			KeyMapFile = "minecraft-keymap.json"
 		},
 		new GameProfile
 		{
@@ -166,6 +182,27 @@ public static class GameCatalog
 		"Monkeyeffect",
 		"game-config.json");
 
+	/// <summary>
+	/// Built-in games keep their catalog name. Never persist
+	/// "Roblox · ZERO-HOUR-TikFinity" from an imported preset filename.
+	/// </summary>
+	public static string DisplayNameFor(string? id, string? current = null)
+	{
+		GameProfile? profile = FindById(id);
+		if (profile != null &&
+		    !profile.Id.Equals("custom", StringComparison.OrdinalIgnoreCase) &&
+		    !profile.Id.Equals("auto", StringComparison.OrdinalIgnoreCase))
+		{
+			return profile.Name;
+		}
+		if (!string.IsNullOrWhiteSpace(current))
+		{
+			int sep = current.IndexOf(" · ", StringComparison.Ordinal);
+			return sep > 0 ? current[..sep].Trim() : current.Trim();
+		}
+		return profile?.Name ?? id ?? "";
+	}
+
 	public static GameSelection LoadSelection()
 	{
 		try
@@ -176,6 +213,7 @@ public static class GameCatalog
 				GameSelection? sel = JsonSerializer.Deserialize<GameSelection>(json, JsonOpts);
 				if (sel != null && !string.IsNullOrWhiteSpace(sel.Id))
 				{
+					sel.DisplayName = DisplayNameFor(sel.Id, sel.DisplayName);
 					return sel;
 				}
 			}

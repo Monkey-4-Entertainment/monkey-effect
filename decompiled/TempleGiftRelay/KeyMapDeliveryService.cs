@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -48,6 +49,10 @@ public sealed class KeyMapDeliveryService
 		[JsonPropertyName("holdMs")]
 		public int HoldMs { get; set; } = 100;
 
+		/// <summary>TikFinity webhook (ZERO-HOUR spawn server on localhost).</summary>
+		[JsonPropertyName("webhookUrl")]
+		public string? WebhookUrl { get; set; }
+
 		/// <summary>Null/missing means on (older keymap files have no field).</summary>
 		[JsonPropertyName("enabled")]
 		public bool? Enabled { get; set; }
@@ -80,6 +85,7 @@ public sealed class KeyMapDeliveryService
 	private KeyMapConfig _config = new();
 	private readonly object _lock = new();
 	private string _activeFile = "rider-keymap.json";
+	private static readonly HttpClient WebhookHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
 
 	public string ConfigPath => Path.Combine(AppPaths.UserDataDir, _activeFile);
 
@@ -161,6 +167,10 @@ public sealed class KeyMapDeliveryService
 		string title = (selection.CustomTitle ?? "").Trim();
 		string display = (selection.DisplayName ?? "").Trim();
 		string blob = string.Join(" ", proc, title, display);
+		if (blob.Contains("ZERO-HOUR", StringComparison.OrdinalIgnoreCase) ||
+		    blob.Contains("ZERO HOUR", StringComparison.OrdinalIgnoreCase) ||
+		    blob.Contains("ZEROHOUR", StringComparison.OrdinalIgnoreCase))
+			return "zero-hour-keymap.json";
 		if (blob.Contains("RIDER", StringComparison.OrdinalIgnoreCase))
 			return "rider-keymap.json";
 		if (blob.Contains("ROBLOX", StringComparison.OrdinalIgnoreCase) ||
@@ -375,6 +385,7 @@ public sealed class KeyMapDeliveryService
 			r.Key = StripKeyToken(r.Key);
 			if (r.Vk <= 0) r.Vk = ParseVirtualKey(r.Key);
 			if (r.HoldMs < 20) r.HoldMs = 80;
+			r.WebhookUrl = string.IsNullOrWhiteSpace(r.WebhookUrl) ? null : r.WebhookUrl.Trim();
 		}
 		foreach (KeyMapEvent e in cfg.Events)
 		{
@@ -434,7 +445,9 @@ public sealed class KeyMapDeliveryService
 			if (string.IsNullOrWhiteSpace(key))
 				key = FirstString(a, "description", "desc") ?? "";
 			key = StripKeyToken(key);
-			if (string.IsNullOrWhiteSpace(label) && string.IsNullOrWhiteSpace(key)) continue;
+			string webhook = FirstString(a, "webhookUrl", "webhook", "url") ?? "";
+			if (string.IsNullOrWhiteSpace(label) && string.IsNullOrWhiteSpace(key) && string.IsNullOrWhiteSpace(webhook))
+				continue;
 			long id = FirstInt64(a, "id") ?? 0;
 			if (id != 0 && !string.IsNullOrWhiteSpace(label) && !actionNames.ContainsKey(id))
 				actionNames[id] = label;
@@ -445,6 +458,7 @@ public sealed class KeyMapDeliveryService
 				Vk = ParseVirtualKey(key),
 				GiftName = FirstString(a, "giftName", "gift") ?? "",
 				HoldMs = 80,
+				WebhookUrl = webhook,
 				Enabled = BoolOrTrue(a, "enabled", "active") && !BoolOrFalse(a, "isDeleted")
 			});
 		}
@@ -706,53 +720,123 @@ public sealed class KeyMapDeliveryService
 		}
 	}
 
-	/// <summary>
-	/// Pick rider-keymap.json vs roblox-keymap.json before Save so a JOJO / Roblox
-	/// TikFinity import does not overwrite THE RIDER, and vice versa.
-	/// </summary>
-	public string PrepareImportTarget(KeyMapConfig cfg, string? fileName = null)
+	public static string NormalizeGameId(string? raw)
 	{
-		string hint = (fileName ?? "").ToUpperInvariant();
-		if (hint.Contains("RIDER"))
-		{
-			_activeFile = "rider-keymap.json";
+		string id = (raw ?? "").Trim().ToLowerInvariant().Replace('_', '-').Replace(' ', '-');
+		if (id is "rider") return "the-rider";
+		if (id is "zerohour" or "zero-hour") return "zero-hour";
+		return id;
+	}
+
+	/// <summary>Which game a preset file is for. Null = generic / unknown — may apply to the selected game.</summary>
+	public static string? GuessPresetGameId(string? fileName, KeyMapConfig? cfg = null)
+	{
+		string blob = ((fileName ?? "") + " " + (cfg?.Comment ?? "")).ToUpperInvariant();
+		if (blob.Contains("ZERO-HOUR") || blob.Contains("ZEROHOUR") || blob.Contains("ZERO_HOUR") || blob.Contains("ZERO HOUR"))
+			return "zero-hour";
+		if (blob.Contains("RIDER") && !blob.Contains("ROBLOX") && !blob.Contains("JOJO"))
 			return "the-rider";
-		}
-		if (LooksLikeRobloxKeymap(cfg) ||
-		    hint.Contains("JOJO") ||
-		    hint.Contains("ROBLOX") ||
-		    hint.Contains("MATRIX") ||
-		    hint.EndsWith(".TFC"))
-		{
-			_activeFile = "roblox-keymap.json";
+		if (blob.Contains("JOJO") || blob.Contains("MATRIX") ||
+		    (blob.Contains("ROBLOX") && !blob.Contains("ZERO")))
 			return "roblox";
+		if (blob.Contains("MINECRAFT"))
+			return "minecraft";
+		return null;
+	}
+
+	public static string GameIdFromKeyMapFile(string? file)
+	{
+		string name = Path.GetFileName(file ?? "").ToLowerInvariant();
+		if (name.StartsWith("zero-hour", StringComparison.Ordinal)) return "zero-hour";
+		if (name.StartsWith("roblox", StringComparison.Ordinal)) return "roblox";
+		if (name.StartsWith("minecraft", StringComparison.Ordinal)) return "minecraft";
+		if (name.StartsWith("rider", StringComparison.Ordinal)) return "the-rider";
+		return "";
+	}
+
+	private static bool IsConcreteGame(string? id)
+	{
+		string n = NormalizeGameId(id);
+		return n.Length > 0 && n is not "auto" and not "custom";
+	}
+
+	private void BindActiveFile(string gameId)
+	{
+		GameProfile? profile = GameCatalog.FindById(gameId);
+		if (!string.IsNullOrWhiteSpace(profile?.KeyMapFile))
+		{
+			_activeFile = profile!.KeyMapFile!;
+			return;
 		}
 		string? file = ResolveKeyMapFile(_gameWindow.GetSelection());
 		if (!string.IsNullOrWhiteSpace(file))
-		{
 			_activeFile = file;
-			return file.StartsWith("roblox", StringComparison.OrdinalIgnoreCase) ? "roblox" : "the-rider";
+	}
+
+	/// <summary>
+	/// Import into the game that is already selected. Never switch games.
+	/// If the preset is clearly for another game, fail with a warning.
+	/// </summary>
+	public bool TryBindImportToSelected(
+		string? requestedGame,
+		string? fileName,
+		KeyMapConfig cfg,
+		out string gameId,
+		out string displayName,
+		out string? presetGameId,
+		out string error)
+	{
+		GameSelection? sel = _gameWindow.GetSelection();
+		gameId = NormalizeGameId(requestedGame);
+		if (string.IsNullOrWhiteSpace(gameId))
+			gameId = NormalizeGameId(sel?.Id);
+		displayName = GameCatalog.DisplayNameFor(gameId, sel?.DisplayName);
+		presetGameId = GuessPresetGameId(fileName, cfg);
+		error = "";
+
+		string inferredFromWindow = GameIdFromKeyMapFile(ResolveKeyMapFile(sel));
+		string compareId = IsConcreteGame(gameId) ? gameId : inferredFromWindow;
+
+		if (!string.IsNullOrWhiteSpace(presetGameId) &&
+		    !string.IsNullOrWhiteSpace(compareId) &&
+		    !presetGameId.Equals(compareId, StringComparison.OrdinalIgnoreCase))
+		{
+			string presetName = GameCatalog.DisplayNameFor(presetGameId);
+			error = $"พรีเซ็ตนี้สำหรับ {presetName} ไม่เข้ากับ {displayName} ที่เชื่อมอยู่\nเลือก {presetName} ก่อน แล้วค่อยนำเข้า — ระบบจะไม่เปลี่ยนเกมให้อัตโนมัติ";
+			return false;
 		}
-		_activeFile = "rider-keymap.json";
-		return "the-rider";
+
+		GameProfile? profile = GameCatalog.FindById(gameId);
+		string? keyFile = profile?.KeyMapFile ?? ResolveKeyMapFile(sel);
+		if (string.IsNullOrWhiteSpace(keyFile))
+		{
+			error = $"{displayName} ไม่ใช้ Keyboard Mapping — พรีเซ็ตนี้ใช้กับเกมอย่าง THE RIDER, ZERO-HOUR หรือ Roblox\nเลือกเกมให้ตรงแล้วค่อยนำเข้า ระบบจะไม่เปลี่ยนเกมให้อัตโนมัติ";
+			return false;
+		}
+
+		_activeFile = keyFile;
+		return true;
+	}
+
+	/// <summary>Bind keymap file for an explicit pack (e.g. default THE RIDER). Does not change game selection.</summary>
+	public string PrepareImportTarget(KeyMapConfig cfg, string? fileName = null, string? requestedGame = null)
+	{
+		string want = NormalizeGameId(requestedGame);
+		if (string.IsNullOrWhiteSpace(want))
+			want = GuessPresetGameId(fileName, cfg) ?? NormalizeGameId(_gameWindow.GetSelection()?.Id);
+		if (string.IsNullOrWhiteSpace(want))
+			want = "the-rider";
+		BindActiveFile(want);
+		return want;
 	}
 
 	public static string DisplayNameForPreset(string gameId, string? fileName)
 	{
-		if (!gameId.Equals("roblox", StringComparison.OrdinalIgnoreCase))
-			return "THE RIDER";
-		string baseName = Path.GetFileNameWithoutExtension(fileName ?? "");
-		if (baseName.Length > 0)
-		{
-			int paren = baseName.LastIndexOf(" (");
-			if (paren > 0 && baseName.EndsWith(")"))
-				baseName = baseName[..paren];
-			baseName = baseName.Trim();
-		}
-		if (string.IsNullOrWhiteSpace(baseName) ||
-		    baseName.Equals("Roblox", StringComparison.OrdinalIgnoreCase))
-			return "Roblox";
-		return "Roblox · " + baseName;
+		string name = GameCatalog.DisplayNameFor(gameId);
+		if (!string.IsNullOrWhiteSpace(name) &&
+		    !name.Equals(gameId, StringComparison.OrdinalIgnoreCase))
+			return name;
+		return string.IsNullOrWhiteSpace(fileName) ? gameId : Path.GetFileNameWithoutExtension(fileName);
 	}
 
 	private static bool LooksLikeRobloxKeymap(KeyMapConfig cfg)
@@ -804,8 +888,22 @@ public sealed class KeyMapDeliveryService
 		if (gift.Length == 0) return false;
 
 		KeyMapRule? rule = ResolveRule(cfg, payload, gift);
-		int vk = rule == null ? 0 : ResolveVk(rule);
-		if (rule == null || vk <= 0) return false;
+		if (rule == null) return false;
+
+		if (!string.IsNullOrWhiteSpace(rule.WebhookUrl))
+		{
+			if (!TryFireWebhook(rule.WebhookUrl, out string whDetail, payload))
+			{
+				AppPaths.Log($"webhook miss {gift}: {whDetail}");
+				return false;
+			}
+			channel = $"webhook:{rule.WebhookUrl}";
+			AppPaths.Log($"webhook delivered {gift} -> {rule.WebhookUrl} ({rule.Label}) {whDetail}");
+			return true;
+		}
+
+		int vk = ResolveVk(rule);
+		if (vk <= 0) return false;
 
 		try
 		{
@@ -911,6 +1009,76 @@ public sealed class KeyMapDeliveryService
 			return false;
 		}
 		return _gameWindow.TrySendVirtualKey((byte)resolved, Math.Max(1, count), Math.Max(20, holdMs), out detail);
+	}
+
+	public bool TryFireWebhook(string? url, out string detail, GiftPayload? payload = null)
+	{
+		detail = "";
+		if (string.IsNullOrWhiteSpace(url))
+		{
+			detail = "no-webhook";
+			return false;
+		}
+		if (!Uri.TryCreate(url.Trim(), UriKind.Absolute, out Uri? uri) || uri == null)
+		{
+			detail = "webhook URL ไม่ถูกต้อง";
+			return false;
+		}
+		if (!uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) &&
+		    !uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+		{
+			detail = "webhook ต้องเป็น http/https";
+			return false;
+		}
+		string host = uri.Host;
+		if (!host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase) &&
+		    !host.Equals("localhost", StringComparison.OrdinalIgnoreCase) &&
+		    !host.Equals("::1", StringComparison.OrdinalIgnoreCase))
+		{
+			detail = "webhook ใช้ได้เฉพาะเครื่องนี้ (127.0.0.1)";
+			return false;
+		}
+		uri = AppendViewerQuery(uri, payload);
+		try
+		{
+			using HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Get, uri);
+			using HttpResponseMessage resp = WebhookHttp.Send(req);
+			int code = (int)resp.StatusCode;
+			detail = $"HTTP {code} {uri.PathAndQuery}";
+			return code is >= 200 and < 500;
+		}
+		catch (Exception ex)
+		{
+			detail = "ยิง webhook ไม่ได้ — เปิดแดชบอร์ด ZERO-HOUR ที่พอร์ต " + uri.Port + " ไว้ (" + ex.Message + ")";
+			return false;
+		}
+	}
+
+	private static Uri AppendViewerQuery(Uri uri, GiftPayload? payload)
+	{
+		if (payload == null) return uri;
+		string nick = (payload.Nickname ?? "").Trim();
+		string user = (payload.UserName ?? "").Trim();
+		if (string.IsNullOrWhiteSpace(user)) user = nick;
+		if (string.IsNullOrWhiteSpace(nick)) nick = user;
+		string existing = uri.Query ?? "";
+		bool Has(string key) => existing.Contains(key + "=", StringComparison.OrdinalIgnoreCase);
+		var parts = new List<string>();
+		void Add(string key, string? val)
+		{
+			if (string.IsNullOrWhiteSpace(val) || Has(key)) return;
+			parts.Add(key + "=" + Uri.EscapeDataString(val));
+		}
+		Add("nickname", nick);
+		Add("username", user);
+		Add("uniqueId", user);
+		Add("userid", user);
+		Add("userId", user);
+		Add("giftName", payload.GiftName);
+		if (payload.RepeatCount > 0) Add("repeatCount", payload.RepeatCount.ToString());
+		if (parts.Count == 0) return uri;
+		string join = string.IsNullOrEmpty(uri.Query) ? "?" : "&";
+		return new Uri(uri.GetLeftPart(UriPartial.Path) + uri.Query + join + string.Join("&", parts));
 	}
 
 	public static int ResolveVk(KeyMapRule rule)

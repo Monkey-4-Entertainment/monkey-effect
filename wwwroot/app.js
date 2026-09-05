@@ -258,6 +258,14 @@ const WORKSPACE_META = {
   live: { title: "Overlay Gallery", sub: "เลือก overlay ใส่ OBS เป็น Browser Source — พื้นหลังโปร่งใส พร้อมเอฟเฟกต์และอันดับจากไลฟ์จริง" },
   stickers: { title: "สติกเกอร์", sub: "ชุดรูปสำหรับเกมวิ่ง Temple — ทั้งแผ่นไม่แยกไอคอน" },
   tts: { title: "อ่านเสียง AI", sub: "อ่านชื่อและของขวัญด้วยเสียงไทยอัตโนมัติ" },
+  alerts: { title: "เสียงเตือน", sub: "เล่นไฟล์เสียงทันทีเมื่อมีของขวัญ ไลค์ ฟอล หรือแชท" },
+  chatbot: { title: "คำสั่งแชท + บอท", sub: "ผู้ชมพิมพ์ !points / !rank แล้วระบบทำงาน · บอทตอบด้วยเสียง" },
+  subathon: { title: "Subathon Timer", sub: "จับเวลาแล้วยืดอัตโนมัติเมื่อมีของขวัญ" },
+  points: { title: "แต้มผู้ชม", sub: "สะสมแต้มรายคน แล้วยศอันดับบน Overlay" },
+  profiles: { title: "โปรไฟล์ไลฟ์", sub: "เซฟและสลับชุดตั้งค่าทั้งไลฟ์" },
+  minecraft: { title: "Minecraft", sub: "ส่งคำสั่งเข้าเซิร์ฟเวอร์ผ่าน RCON เมื่อได้ของขวัญ" },
+  welcome: { title: "กรอบต้อนรับ", sub: "แสดงกรอบรูปและชื่อเมื่อ Superfan หรือผู้ชมเลเวลเกิน 20 เข้าไลฟ์" },
+  agency: { title: "ครีเอเตอร์", sub: "แดชบอร์ดครีเอเตอร์จาก TikTok LIVE Backstage" },
   update: { title: "อัปเดต", sub: "ตรวจและติดตั้งอัปเดตออนไลน์จาก GitHub Monkeyeffect" },
   devlog: { title: "Dev Log", sub: "ดู log ภายในสำหรับไล่บั๊กและจับจังหวะอีเวนต์" },
 };
@@ -6110,6 +6118,9 @@ function fanOutUiFunctions(parsed) {
     if (claimUiFeature("tts", triggerParsed)) handleGiftForTts(triggerParsed);
     if (claimUiFeature("jar", triggerParsed)) handleGiftForJar(triggerParsed);
     if (claimUiFeature("roulette", parsed)) handleGiftForRoulette(parsed);
+    if (typeof window.handleStudioEvent === "function" && claimUiFeature("studio", triggerParsed)) {
+      window.handleStudioEvent(triggerParsed);
+    }
     return;
   }
   // Early ui: realtime for everything except interrupt
@@ -6118,6 +6129,9 @@ function fanOutUiFunctions(parsed) {
   if (claimUiFeature("win", parsed)) handleGiftForWin(parsed);
   if (claimUiFeature("tts", parsed)) handleGiftForTts(parsed);
   if (claimUiFeature("jar", parsed)) handleGiftForJar(parsed);
+  if (typeof window.handleStudioEvent === "function" && claimUiFeature("studio", parsed)) {
+    window.handleStudioEvent(parsed);
+  }
 }
 
 function processNewGifts(items) {
@@ -6434,12 +6448,34 @@ function toggleCustomGameFields() {
   customGameFields.classList.toggle("hidden", gameSelect.value !== "custom");
 }
 
+function catalogGameName(id) {
+  const key = (id || "").toLowerCase();
+  const g = (gameCatalog || []).find((x) => (x.id || "").toLowerCase() === key);
+  if (g?.name) return g.name;
+  if (key === "the-rider") return "THE RIDER";
+  if (key === "zero-hour") return "ZERO-HOUR";
+  if (key === "roblox") return "Roblox";
+  if (key === "minecraft") return "Minecraft";
+  return "";
+}
+
+function cleanGameDisplayName(id, name) {
+  const key = (id || "").toLowerCase();
+  const catalog = catalogGameName(key);
+  if (key === "roblox" || key === "the-rider" || key === "zero-hour" || key === "minecraft") {
+    return catalog || name || id;
+  }
+  const raw = String(name || "").trim();
+  if (raw.includes(" · ") && catalog) return catalog;
+  return raw || catalog || id;
+}
+
 function getSelectedGameSnapshot(extra = {}) {
   const id = extra.id || gameSelect?.value || TEMPLE_GAME_ID;
   const opt = gameSelect?.selectedOptions?.[0];
   return {
     id,
-    displayName: extra.displayName || opt?.textContent || id,
+    displayName: cleanGameDisplayName(id, extra.displayName || opt?.textContent || id),
     customProcess: extra.customProcess ?? (customGameProcess?.value?.trim() || null),
     customTitle: extra.customTitle ?? (customGameTitle?.value?.trim() || null),
   };
@@ -6540,10 +6576,12 @@ function syncEffectsPanelForGame(game) {
   }
 }
 
-/** Keyboard mapping UI + delivery for THE RIDER / Roblox, or custom/auto that names them. */
+/** Keyboard mapping UI + delivery for THE RIDER / ZERO-HOUR / Roblox / Minecraft. */
 function isRiderKeymapGame(game) {
   const id = (game?.id || "").toLowerCase();
-  if (id === "the-rider" || id === "roblox") return true;
+  const listed = (gameCatalog || []).find((g) => (g.id || "").toLowerCase() === id);
+  if (listed?.keyMapFile) return true;
+  if (id === "the-rider" || id === "zero-hour" || id === "roblox" || id === "minecraft") return true;
   if (id !== "custom" && id !== "auto") return false;
   const blob = [
     game?.displayName,
@@ -6553,7 +6591,8 @@ function isRiderKeymapGame(game) {
     id === "custom" ? customGameTitle?.value : "",
     id === "auto" ? lastGameWindowTitle : "",
   ].join(" ").toUpperCase();
-  return blob.includes("RIDER") || blob.includes("ROBLOX") || blob.includes("JOJO");
+  return blob.includes("RIDER") || blob.includes("ZERO-HOUR") || blob.includes("ZERO HOUR") ||
+    blob.includes("ROBLOX") || blob.includes("JOJO");
 }
 
 const TEMPLE_GIFT_CHIPS = [
@@ -6697,7 +6736,8 @@ function readKeymapRowsFromDom() {
     const label = tr.querySelector("[data-f=label]")?.value?.trim() || "";
     const holdMs = Number(tr.querySelector("[data-f=hold]")?.value) || 80;
     const enabled = !!tr.querySelector("[data-f=on]")?.checked;
-    return { giftName, key, vk: keyToVk(key), label, holdMs, enabled };
+    const webhookUrl = tr.querySelector("[data-f=webhook]")?.value?.trim() || "";
+    return { giftName, key, vk: keyToVk(key), label, holdMs, webhookUrl, enabled };
   });
 }
 
@@ -6710,9 +6750,10 @@ function renderEffectsKeymapTable(rules, enabled) {
     vk: r.vk || 0,
     label: r.label || "",
     holdMs: r.holdMs || 80,
+    webhookUrl: r.webhookUrl || "",
     enabled: r.enabled !== false,
   }));
-  const onCount = keymapDraftRules.filter((r) => r.enabled && (r.vk > 0 || r.key)).length;
+  const onCount = keymapDraftRules.filter((r) => r.enabled && (r.vk > 0 || r.key || r.webhookUrl)).length;
   if (statusEl) statusEl.textContent = enabled === false ? "OFF" : `${onCount} live · ${keymapDraftRules.length} actions`;
   if (!tableEl) return;
   const rows = keymapDraftRules.map((r, i) =>
@@ -6723,7 +6764,10 @@ function renderEffectsKeymapTable(rules, enabled) {
       </td>
       <td style="padding:4px"><input data-f="label" value="${escapeHtml(r.label)}" placeholder="หมา" style="width:7.5rem" /></td>
       <td style="padding:4px"><input data-f="gift" value="${escapeHtml(r.giftName)}" placeholder="Rose / Like / Follow" style="width:9.5rem" /></td>
-      <td style="padding:4px"><input data-f="key" value="${escapeHtml(r.key)}" placeholder="ว่าง" maxlength="12" style="width:3.6rem;text-align:center;font-weight:700;opacity:${r.key ? 1 : .45}" title="คลิกแล้วกดปุ่มเพื่อจับคีย์" /></td>
+      <td style="padding:4px">
+        <input data-f="key" value="${escapeHtml(r.key)}" placeholder="${r.webhookUrl ? "HTTP" : "ว่าง"}" maxlength="12" style="width:3.6rem;text-align:center;font-weight:700;opacity:${r.key || r.webhookUrl ? 1 : .45}" title="${r.webhookUrl ? escapeHtml(r.webhookUrl) : "คลิกแล้วกดปุ่มเพื่อจับคีย์"}" />
+        <input data-f="webhook" type="hidden" value="${escapeHtml(r.webhookUrl || "")}" />
+      </td>
       <td style="padding:4px"><input data-f="hold" type="number" min="20" max="2000" value="${r.holdMs || 80}" style="width:4.2rem" /></td>
       <td style="padding:4px;text-align:center"><input data-f="on" type="checkbox" ${r.enabled ? "checked" : ""} /></td>
     </tr>`
@@ -6766,20 +6810,32 @@ async function playKeymapRow(index) {
   const rules = readKeymapRowsFromDom();
   const r = rules[index];
   if (!r) return;
-  if (!r.key && !r.vk) {
-    setKeymapMsg("แถวนี้ยังไม่มีคีย์ — คลิกช่องคีย์แล้วกดปุ่ม", true);
+  if (!r.key && !r.vk && !r.webhookUrl) {
+    setKeymapMsg("แถวนี้ยังไม่มีคีย์หรือ webhook", true);
     return;
   }
-  setKeymapMsg(`กำลังกด ${r.key} เข้าเกม…`);
+  const viaWebhook = !!r.webhookUrl;
+  setKeymapMsg(viaWebhook ? `กำลังยิงเข้าเกม… ${r.webhookUrl}` : `กำลังกด ${r.key} เข้าเกม…`);
   try {
     const res = await fetch("/api/keymap/test", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: r.key, vk: r.vk || keyToVk(r.key), holdMs: r.holdMs || 80, count: 1 }),
+      body: JSON.stringify({
+        key: r.key,
+        vk: r.vk || keyToVk(r.key),
+        holdMs: r.holdMs || 80,
+        count: 1,
+        webhookUrl: r.webhookUrl || "",
+      }),
     });
     const data = await res.json();
-    if (data.ok) setKeymapMsg(`กด ${r.key} แล้ว (${r.label || r.giftName || ""})`);
-    else setKeymapMsg(data.error || "กดไม่สำเร็จ — เปิด THE RIDER ไว้", true);
+    if (data.ok) {
+      setKeymapMsg(viaWebhook
+        ? `ยิงเข้าเกมแล้ว (${r.label || r.giftName || ""})`
+        : `กด ${r.key} แล้ว (${r.label || r.giftName || ""})`);
+    } else {
+      setKeymapMsg(data.error || "ส่งเข้าเกมไม่สำเร็จ — เปิดเกม / ตัวช่วย ZERO-HOUR ไว้", true);
+    }
   } catch (e) {
     setKeymapMsg(e.message || "กดไม่สำเร็จ", true);
   }
@@ -6897,37 +6953,18 @@ function parseImportedKeymapText(text) {
   return null;
 }
 
-function displayNameForPresetGame(gameId, fileName, serverName) {
-  if (serverName) return serverName;
-  if (gameId !== "roblox") return "THE RIDER";
-  const base = String(fileName || "").replace(/\.[^.]+$/, "").replace(/\s*\(\d+\)\s*$/, "").trim();
-  if (!base || /^roblox$/i.test(base)) return "Roblox";
-  return `Roblox · ${base}`;
+function currentEffectsGame() {
+  const id = (gameSelect?.value || currentSelectedGame?.id || "").toLowerCase();
+  const name = cleanGameDisplayName(
+    id,
+    gameSelect?.selectedOptions?.[0]?.textContent?.trim() || currentSelectedGame?.displayName || id
+  );
+  return { id, displayName: name };
 }
 
-function resolveImportedPresetGame(fileName, text, data) {
-  const name = String(fileName || "").toUpperCase();
-  const body = String(text || "").toUpperCase();
-  if (name.includes("RIDER") || /"GAME"\s*:\s*"THE-RIDER"/.test(body)) {
-    return { id: "the-rider", displayName: "THE RIDER" };
-  }
-  const serverId = data?.game || "";
-  if (name.includes("JOJO") || name.includes("ROBLOX") || name.includes("MATRIX") ||
-      name.endsWith(".TFC") || body.includes("NUMPAD") || body.includes("JOJO") ||
-      serverId === "roblox") {
-    return { id: "roblox", displayName: displayNameForPresetGame("roblox", fileName, data?.displayName) };
-  }
-  if (serverId === "the-rider") return { id: "the-rider", displayName: "THE RIDER" };
-  return { id: "roblox", displayName: displayNameForPresetGame("roblox", fileName, data?.displayName) };
-}
-
-async function applyImportedEffectsPreset(data, rawText, preferGame, fileName) {
+async function applyImportedEffectsPreset(data, rawText) {
+  const keep = currentEffectsGame();
   revealEffectsKeymapCards();
-  const detected = resolveImportedPresetGame(fileName, rawText, data);
-  const target = preferGame
-    ? { id: preferGame, displayName: displayNameForPresetGame(preferGame, fileName, data?.displayName) }
-    : detected;
-  await activateKeymapGameForImportedPreset(target.id, target.displayName);
   const local = rawText ? parseImportedKeymapText(rawText) : null;
   if (local) {
     renderEffectsKeymapTable(local.rules, true);
@@ -6935,17 +6972,18 @@ async function applyImportedEffectsPreset(data, rawText, preferGame, fileName) {
   } else {
     await loadEffectsKeymapUI();
   }
+  currentSelectedGame = { id: keep.id, displayName: keep.displayName };
+  syncEffectsPanelForGame(currentSelectedGame);
   syncGiftChipsForGame(true);
-  const filled = (keymapDraftRules || []).filter((r) => r.key).length;
+  const filled = (keymapDraftRules || []).filter((r) => r.key || r.webhookUrl).length;
   const total = data.rules || keymapDraftRules.length || 0;
   const empty = Math.max(0, total - filled);
   const nEvents = data.events || keymapDraftEvents.length || 0;
-  return { filled, empty, nEvents, total, gameName: currentSelectedGame?.displayName || target.displayName };
+  return { filled, empty, nEvents, total, gameName: keep.displayName || keep.id };
 }
 
-async function activateKeymapGameForImportedPreset(gameId, displayName) {
-  const id = gameId === "roblox" ? "roblox" : "the-rider";
-  const label = displayName || (id === "roblox" ? "Roblox" : "THE RIDER");
+async function restoreSelectedGame(id, displayName) {
+  const label = cleanGameDisplayName(id, displayName);
   if (!gameSelect) {
     currentSelectedGame = { id, displayName: label };
     syncEffectsPanelForGame(currentSelectedGame);
@@ -6953,12 +6991,9 @@ async function activateKeymapGameForImportedPreset(gameId, displayName) {
   }
   localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify({ id, displayName: label }));
   if (![...gameSelect.options].some((o) => o.value === id)) {
-    try { await loadGames(); } catch { /* keep going */ }
-  }
-  if (![...gameSelect.options].some((o) => o.value === id)) {
     const opt = document.createElement("option");
     opt.value = id;
-    opt.textContent = id === "roblox" ? "Roblox" : "THE RIDER";
+    opt.textContent = label;
     gameSelect.appendChild(opt);
   }
   gameSelect.value = id;
@@ -6972,7 +7007,8 @@ async function importEffectsKeymapFile(ev) {
   setImportMsg(`กำลังนำเข้า ${file.name}…`);
   try {
     const text = await file.text();
-    const qs = new URLSearchParams({ file: file.name }).toString();
+    const keep = currentEffectsGame();
+    const qs = new URLSearchParams({ file: file.name, game: keep.id || "" }).toString();
     const res = await fetch("/api/keymap/import?" + qs, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -6980,10 +7016,12 @@ async function importEffectsKeymapFile(ev) {
     });
     const data = await res.json();
     if (!data.ok) {
-      setImportMsg(data.error || "นำเข้าไม่สำเร็จ", true);
+      const msg = data.error || "นำเข้าไม่สำเร็จ";
+      setImportMsg(msg, true);
+      if (data.mismatch) window.alert(msg);
       return;
     }
-    const info = await applyImportedEffectsPreset(data, text, "", file.name);
+    const info = await applyImportedEffectsPreset(data, text);
     setImportMsg(
       info.empty
         ? `นำเข้าแล้วสำหรับ ${info.gameName} · ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ · คีย์มี ${info.filled} แถว ที่ว่าง ${info.empty} แถว`
@@ -7064,12 +7102,14 @@ async function saveSelectedGame(extra = {}) {
       body: JSON.stringify(payload),
     });
     const data = await res.json();
-    if (data?.selected?.displayName && selectedGameLabel) {
-      selectedGameLabel.textContent = data.selected.displayName;
-    }
+    const label = cleanGameDisplayName(
+      payload.id,
+      data?.selected?.displayName || payload.displayName || payload.id
+    );
+    if (selectedGameLabel) selectedGameLabel.textContent = label;
     const snap = {
       id: payload.id,
-      displayName: data?.selected?.displayName || payload.displayName || payload.id,
+      displayName: label,
     };
     syncEffectsPanelForGame(snap);
     broadcastSelectedGame(snap);
@@ -7102,6 +7142,7 @@ async function loadGames() {
       /* ignore */
     }
     if (selected?.id) {
+      selected.displayName = cleanGameDisplayName(selected.id, selected.displayName);
       gameSelect.value = selected.id;
       if (customGameProcess) customGameProcess.value = selected.customProcess || "";
       if (customGameTitle) customGameTitle.value = selected.customTitle || "";
@@ -7112,10 +7153,16 @@ async function loadGames() {
     toggleCustomGameFields();
     // sync server with UI (including localStorage preference)
     await saveSelectedGame({
-      displayName: selected?.displayName || gameSelect.selectedOptions?.[0]?.textContent,
+      displayName: cleanGameDisplayName(
+        selected?.id || gameSelect.value,
+        selected?.displayName || gameSelect.selectedOptions?.[0]?.textContent
+      ),
     });
     syncEffectsPanelForGame(getSelectedGameSnapshot({
-      displayName: selected?.displayName || gameSelect.selectedOptions?.[0]?.textContent,
+      displayName: cleanGameDisplayName(
+        selected?.id || gameSelect.value,
+        selected?.displayName || gameSelect.selectedOptions?.[0]?.textContent
+      ),
     }));
   } catch {
     gameSelect.innerHTML = '<option value="temple-escape">Temple Escape (神庙跑跑跑)</option>';
@@ -7622,12 +7669,13 @@ loadJarCatalogUi();
 renderJarUiState();
 
 const LIVE_OVERLAY_BASE = "http://127.0.0.1:3847/live-overlay.html";
-const LIVE_OVERLAY_VER = "gal4";
+const LIVE_OVERLAY_VER = "gal9";
 let _liveStatsLastRev = "";
 let _liveLastCountTimer = 0;
 let _liveSettingsTimer = 0;
 
 const OVERLAY_GALLERY_SECTIONS = [
+  { cat: "ต้อนรับ", title: "Welcome" },
   { cat: "เล่น", title: "Games" },
   { cat: "เอฟเฟกต์", title: "Effects" },
   { cat: "ข้อมูล", title: "Info" },
@@ -7638,6 +7686,7 @@ const OVERLAY_GALLERY_SECTIONS = [
 ];
 
 const OVERLAY_GALLERY = [
+  { id: "welcome", name: "กรอบต้อนรับ Superfan", cat: "ต้อนรับ", w: 720, h: 420 },
   { id: "coinmatch", name: "Coin Match", cat: "เล่น", w: 520, h: 280 },
   { id: "coinjar", name: "Coin Jar", cat: "เล่น", w: 360, h: 480 },
   { id: "actions", name: "Wheel Of Actions", cat: "เล่น", w: 480, h: 480 },
@@ -7663,6 +7712,9 @@ const OVERLAY_GALLERY = [
   { id: "ranking", name: "Ranking List", cat: "อันดับ", w: 420, h: 520 },
   { id: "viewers", name: "Viewer Count", cat: "อันดับ", w: 420, h: 220 },
   { id: "timer", name: "Timer", cat: "ยูทิลิตี้", w: 420, h: 240 },
+  { id: "subathon", name: "Subathon Timer", cat: "ยูทิลิตี้", w: 420, h: 260 },
+  { id: "pointsboard", name: "Points Leaderboard", cat: "อันดับ", w: 420, h: 520 },
+  { id: "bot", name: "Chatbot Replies", cat: "ข้อมูล", w: 420, h: 360 },
   { id: "songs", name: "Song Requests", cat: "ยูทิลิตี้", w: 520, h: 240 },
   { id: "buddies", name: "Stream Buddies", cat: "ตัวละคร", w: 1280, h: 720, fx: 1 },
   { id: "tiny", name: "Tiny Diny", cat: "ตัวละคร", w: 360, h: 360 },
@@ -7815,10 +7867,31 @@ document.getElementById("overlayGallery")?.addEventListener("click", async (e) =
     }
   }
   if (prevBtn) {
+    if (prevBtn.dataset.id === "welcome") {
+      showWelcomeDemo("gold");
+      document.querySelector(".welcome-inline-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     const w = Math.min(900, Number(prevBtn.dataset.w) || 480);
     const h = Math.min(800, Number(prevBtn.dataset.h) || 360);
     window.open(prevBtn.dataset.url, "me-ov-" + prevBtn.dataset.id, `width=${w},height=${h}`);
   }
+});
+
+function showWelcomeDemo(kind) {
+  const key = String(kind || "gold").toLowerCase();
+  const frame = document.getElementById("welcomeGalleryFrame") || document.getElementById("welcomePreviewFrame");
+  if (frame) {
+    frame.src = `/live-overlay.html?panel=welcome&v=${LIVE_OVERLAY_VER}&demo=${encodeURIComponent(key)}&t=${Date.now()}`;
+  }
+  document.querySelectorAll(".welcome-demo-btn").forEach((btn) => {
+    btn.classList.toggle("primary", btn.getAttribute("data-welcome-demo") === key);
+    btn.classList.toggle("secondary", btn.getAttribute("data-welcome-demo") !== key);
+  });
+}
+
+document.querySelectorAll(".welcome-demo-btn").forEach((btn) => {
+  btn.addEventListener("click", () => showWelcomeDemo(btn.getAttribute("data-welcome-demo")));
 });
 document.getElementById("liveResetCoinsBtn")?.addEventListener("click", () => {
   resetLiveStats({ coins: true, gifters: false, likes: false }).catch((err) => alert(err.message || String(err)));

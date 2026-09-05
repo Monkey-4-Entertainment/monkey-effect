@@ -82,10 +82,11 @@ function applyGame(game) {
 
 function isRiderKeymapGame(game) {
   const id = (game?.id || "").toLowerCase();
-  if (id === "the-rider" || id === "roblox") return true;
+  if (id === "the-rider" || id === "zero-hour" || id === "roblox" || id === "minecraft") return true;
   if (id !== "custom" && id !== "auto") return false;
   const blob = `${game?.displayName || ""} ${game?.customProcess || ""} ${game?.customTitle || ""}`.toUpperCase();
-  return blob.includes("RIDER") || blob.includes("ROBLOX") || blob.includes("JOJO");
+  return blob.includes("RIDER") || blob.includes("ZERO-HOUR") || blob.includes("ZERO HOUR") ||
+    blob.includes("ROBLOX") || blob.includes("JOJO");
 }
 
 const TEMPLE_GIFT_CHIPS = [

@@ -119,6 +119,7 @@ public class Program
 			webApplicationBuilder.Services.AddSingleton<RouletteConfigService>();
 			webApplicationBuilder.Services.AddSingleton<RouletteSpinService>();
 			webApplicationBuilder.Services.AddSingleton<LiveStatsOverlayService>();
+			webApplicationBuilder.Services.AddSingleton<MinecraftRconService>();
 			webApplicationBuilder.Services.AddSingleton<BrowserGiftReaderService>();
 			app = webApplicationBuilder.Build();
 			GameBridgeService gameBridge = app.Services.GetRequiredService<GameBridgeService>();
@@ -287,13 +288,39 @@ public class Program
 				}
 				return Results.Json(stats.ToSnapshot(state.TikTokConnected, state.TikTokLive));
 			});
+			app.MapPost("/api/minecraft/rcon", async (HttpRequest request, MinecraftRconService rcon, CancellationToken ct) =>
+			{
+				try
+				{
+					using JsonDocument doc = await JsonDocument.ParseAsync(request.Body);
+					JsonElement root = doc.RootElement;
+					string host = root.TryGetProperty("host", out JsonElement hostEl) ? (hostEl.GetString() ?? "") : "";
+					int port = 25575;
+					if (root.TryGetProperty("port", out JsonElement portEl) && portEl.ValueKind == JsonValueKind.Number)
+					{
+						port = portEl.GetInt32();
+					}
+					else if (root.TryGetProperty("port", out portEl) && int.TryParse(portEl.GetString(), out int parsedPort))
+					{
+						port = parsedPort;
+					}
+					string password = root.TryGetProperty("password", out JsonElement pwEl) ? (pwEl.GetString() ?? "") : "";
+					string command = root.TryGetProperty("command", out JsonElement cmdEl) ? (cmdEl.GetString() ?? "") : "";
+					MinecraftRconService.RconResult result = await rcon.SendAsync(host, port, password, command, ct);
+					return Results.Json(new { ok = result.Ok, detail = result.Detail });
+				}
+				catch (Exception ex)
+				{
+					return Results.Json(new { ok = false, detail = ex.Message });
+				}
+			});
 			app.MapGet("/api/games", (Func<GameWindowService, IResult>)(gameWindow =>
 			{
 				GameSelection sel = gameWindow.GetSelection();
 				return Results.Json(new
 				{
 					selected = sel,
-					games = GameCatalog.BuiltIn.Select(g => new { id = g.Id, name = g.Name, processNames = g.ProcessNames, titleContains = g.TitleContains })
+					games = GameCatalog.BuiltIn.Select(g => new { id = g.Id, name = g.Name, processNames = g.ProcessNames, titleContains = g.TitleContains, keyMapFile = g.KeyMapFile })
 				});
 			}));
 			app.MapPut("/api/games/selected", async (HttpRequest request, GameWindowService gameWindow, RelayState state, KeyMapDeliveryService keyMap) =>
@@ -790,10 +817,15 @@ public class Program
 					Type = msgType,
 					MsgType = msgType,
 					GiftName = giftName,
+					Comment = (request.Comment ?? "").Trim(),
 					RepeatCount = repeatCount,
 					UserName = userName,
 					Nickname = nickname
 				};
+				if (msgType.Contains("Chat", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(payload.Comment))
+				{
+					payload.Comment = giftName;
+				}
 				DevLogService.Write("gift.test", "test-gift enqueue", new { giftName, repeatCount, msgType, nickname, source = request.Source });
 				string kind = (msgType.Contains("Like", StringComparison.OrdinalIgnoreCase) ? "like" : (msgType.Contains("Follow", StringComparison.OrdinalIgnoreCase) ? "follow" : (msgType.Contains("Chat", StringComparison.OrdinalIgnoreCase) ? "chat" : "gift")));
 				try
@@ -807,7 +839,26 @@ public class Program
 				string prefix = "[TEST] ";
 				string line = kind == "follow"
 					? $"{prefix}Follow from {payload.Nickname}"
-					: $"{prefix}{giftName} x{repeatCount} from {payload.Nickname}";
+					: kind == "chat"
+						? $"{prefix}Chat: {payload.Comment} from {payload.Nickname}"
+						: $"{prefix}{giftName} x{repeatCount} from {payload.Nickname}";
+				if (kind == "chat")
+				{
+					state.PushLog(new LogEntry
+					{
+						Kind = "chat",
+						Text = $"Chat: {payload.Comment} from {payload.Nickname}",
+						Sent = 0,
+						WindowSent = false
+					});
+					return Results.Json(new
+					{
+						ok = true,
+						payload,
+						sent = 0,
+						status = state.ToStatus()
+					});
+				}
 				// Dual-path A: UI first, then game (test is instantaneous both ways).
 				state.PushLog(new LogEntry
 				{
@@ -915,12 +966,22 @@ public class Program
 				string fileName = request.Query["file"].ToString();
 				if (string.IsNullOrWhiteSpace(fileName))
 					fileName = Uri.UnescapeDataString(request.Headers["X-Preset-Filename"].ToString() ?? "");
-				string gameId = km.PrepareImportTarget(cfg, fileName);
+				string requestedGame = request.Query["game"].ToString();
+				if (string.IsNullOrWhiteSpace(requestedGame))
+					requestedGame = gameWindow.GetSelection()?.Id ?? "";
+				if (!km.TryBindImportToSelected(requestedGame, fileName, cfg, out string gameId, out string displayName, out string? presetGame, out string bindError))
+				{
+					return Results.Json(new
+					{
+						ok = false,
+						error = bindError,
+						mismatch = true,
+						game = gameId,
+						displayName,
+						presetGame
+					});
+				}
 				km.Save(cfg);
-				string displayName = gameId == "roblox"
-					? KeyMapDeliveryService.DisplayNameForPreset(gameId, fileName)
-					: "THE RIDER";
-				gameWindow.SetSelection(new GameSelection { Id = gameId, DisplayName = displayName });
 				km.AutoActivateFromGame(gameWindow.GetSelection());
 				return Results.Json(new { ok = true, rules = cfg.Rules.Count, events = cfg.Events.Count, game = gameId, displayName });
 			});
@@ -941,6 +1002,13 @@ public class Program
 				using var doc = await JsonDocument.ParseAsync(request.Body);
 				JsonElement root = doc.RootElement;
 				string key = root.TryGetProperty("key", out JsonElement keyEl) ? (keyEl.GetString() ?? "") : "";
+				string webhookUrl = root.TryGetProperty("webhookUrl", out JsonElement whEl) ? (whEl.GetString() ?? "") : "";
+				if (!string.IsNullOrWhiteSpace(webhookUrl))
+				{
+					if (km.TryFireWebhook(webhookUrl, out string whDetail))
+						return Results.Json(new { ok = true, detail = whDetail, webhook = true });
+					return Results.Json(new { ok = false, error = string.IsNullOrWhiteSpace(whDetail) ? "webhook failed" : whDetail });
+				}
 				int vk = 0;
 				if (root.TryGetProperty("vk", out JsonElement vkEl) && vkEl.ValueKind == JsonValueKind.Number)
 				{

@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.8",
-    "notes":  "Monkeyeffect 1.0.7.8 - Roblox keymap and self-serve preset import",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.8-update.zip",
-    "sha256":  "eea689e62c39f864259bf5ddbe786b2cab0ea03118dfd894c5e3527d5668af29",
+    "version":  "1.0.7.9",
+    "notes":  "Monkeyeffect 1.0.7.9 - ZERO-HOUR webhook spawn, preset stays on selected game",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.9-update.zip",
+    "sha256":  "41d09f1ee84803ec1e03d6100f319ae0a89189d9903aef291fa3464fcece98db",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

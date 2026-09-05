@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v1049" />
+    <link rel="stylesheet" href="/style.css?v=v1053-welcome" />
   </head>
   <body>
     <div class="bg"></div>
@@ -22,7 +22,7 @@
           <div class="sidebar-brand-text">
             <div class="title-row">
               <h1>Monkeyeffect</h1>
-              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.7.8</span>
+              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.7.9</span>
             </div>
             <p>Gift relay → เกม</p>
           </div>
@@ -87,6 +87,38 @@
             <button type="button" class="nav-btn" data-panel="tts">
               <span class="nav-ico" aria-hidden="true">🎙</span>
               <span class="nav-label">อ่านเสียง AI</span>
+            </button>
+          </div>
+
+          <div class="nav-group">
+            <span class="nav-group-label">สตูดิโอ</span>
+            <button type="button" class="nav-btn" data-panel="alerts">
+              <span class="nav-ico" aria-hidden="true">♪</span>
+              <span class="nav-label">เสียงเตือน</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="chatbot">
+              <span class="nav-ico" aria-hidden="true">💬</span>
+              <span class="nav-label">คำสั่งแชท</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="subathon">
+              <span class="nav-ico" aria-hidden="true">⏱</span>
+              <span class="nav-label">Subathon</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="points">
+              <span class="nav-ico" aria-hidden="true">◆</span>
+              <span class="nav-label">แต้มผู้ชม</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="profiles">
+              <span class="nav-ico" aria-hidden="true">☰</span>
+              <span class="nav-label">โปรไฟล์ไลฟ์</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="minecraft">
+              <span class="nav-ico" aria-hidden="true">▣</span>
+              <span class="nav-label">Minecraft</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="welcome">
+              <span class="nav-ico" aria-hidden="true">♛</span>
+              <span class="nav-label">กรอบต้อนรับ</span>
             </button>
           </div>
 
@@ -844,6 +876,23 @@ Please click OK to continue.</textarea>
           </div>
         </section>
 
+        <section class="card welcome-inline-card">
+          <div class="card-head">
+            <h2>กรอบต้อนรับ Superfan — กดดูตัวอย่าง</h2>
+          </div>
+          <p class="hint">กดปุ่มด้านล่างเพื่อดูกรอบแต่ละระดับในหน้านี้เลย ไม่เปิดหน้าต่างใหม่</p>
+          <div class="actions tight welcome-test-row">
+            <button type="button" class="btn primary welcome-demo-btn" data-welcome-demo="fan">Superfan</button>
+            <button type="button" class="btn secondary welcome-demo-btn" data-welcome-demo="silver">LV 25 เงิน</button>
+            <button type="button" class="btn secondary welcome-demo-btn" data-welcome-demo="gold">LV 35 ทอง</button>
+            <button type="button" class="btn secondary welcome-demo-btn" data-welcome-demo="platinum">LV 45 แพลตินัม</button>
+            <button type="button" class="btn secondary welcome-demo-btn" data-welcome-demo="diamond">LV 55 เพชร</button>
+          </div>
+          <div class="welcome-preview-wrap">
+            <iframe id="welcomeGalleryFrame" class="welcome-preview-frame" title="ตัวอย่างกรอบต้อนรับ" src="/live-overlay.html?panel=welcome&v=gal9&demo=gold"></iframe>
+          </div>
+        </section>
+
         <div id="overlayGallery" class="og-gallery"></div>
 
         <section class="card">
@@ -994,6 +1043,371 @@ Facebook Fanpage</textarea>
             <button id="ttsStopBtn" class="btn ghost" type="button">หยุดพูด</button>
           </div>
         </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2>Daily TTS Snippets</h2>
+            <label class="toggle">
+              <input id="dailyTtsEnabled" type="checkbox" />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">สุ่มอ่านวลีวันละครั้ง หลังถึงชั่วโมงที่ตั้ง — ใช้ทักทายไลฟ์ประจำวัน</p>
+          <div class="form-grid">
+            <div>
+              <label for="dailyTtsHour">อ่านหลังชั่วโมง</label>
+              <input id="dailyTtsHour" class="field" type="number" min="0" max="23" value="9" />
+            </div>
+            <div>
+              <label for="dailyTtsText">วลีใหม่</label>
+              <input id="dailyTtsText" class="field" type="text" placeholder="สวัสดีตอนเช้า วันนี้พร้อมไลฟ์แล้ว" />
+            </div>
+          </div>
+          <div class="actions tight">
+            <button id="dailyTtsAddBtn" class="btn secondary" type="button">เพิ่มวลี</button>
+            <button id="dailyTtsTestBtn" class="btn ghost" type="button">ทดสอบอ่านสุ่ม</button>
+          </div>
+          <p id="dailyTtsActivity" class="hint">ยังไม่ได้อ่านวันนี้</p>
+          <div id="dailyTtsList" class="rules-list"></div>
+        </section>
+      </div>
+
+      <!-- ===== เสียงเตือน ===== -->
+      <div id="panel-alerts" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>Sound Alerts</h2>
+            <label class="toggle">
+              <input id="alertEnabled" type="checkbox" checked />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">เล่นไฟล์เสียงทันทีเมื่อมีของขวัญ / ไลค์ / ฟอล / แชท — แยกจากฟังก์ชันเพลง</p>
+          <div>
+            <label for="alertVolume">ระดับเสียง</label>
+            <input id="alertVolume" class="field" type="range" min="0" max="100" value="85" />
+            <div class="range-value"><span id="alertVolumeLabel">85</span>%</div>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label for="alertTrigger">ทริกเกอร์</label>
+              <select id="alertTrigger" class="field select">
+                <option value="gift">ของขวัญ</option>
+                <option value="like">ไลค์</option>
+                <option value="follow">ฟอลโลว์</option>
+                <option value="chat">แชท</option>
+                <option value="any">ทุกอีเวนต์</option>
+              </select>
+            </div>
+            <div>
+              <label for="alertGiftName">ชื่อของขวัญ (ว่าง = ทุกชิ้น)</label>
+              <input id="alertGiftName" class="field" type="text" placeholder="Rose" />
+            </div>
+          </div>
+          <label for="alertFile">ไฟล์เสียง</label>
+          <input id="alertFile" class="field" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" />
+          <div class="actions">
+            <button id="alertSaveBtn" class="btn primary" type="button">บันทึกกฎ</button>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h2>รายการกฎเสียง</h2>
+            <span class="chip" id="alertRuleCount">0 กฎ</span>
+          </div>
+          <div id="alertRulesList" class="rules-list"></div>
+        </section>
+      </div>
+
+      <!-- ===== คำสั่งแชท + บอท ===== -->
+      <div id="panel-chatbot" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>Chat Commands</h2>
+            <label class="toggle">
+              <input id="chatCmdEnabled" type="checkbox" checked />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">ผู้ชมพิมพ์ในแชทแล้วระบบทำงานจริง — มีให้อยู่แล้ว: <b>!points</b> <b>!rank</b> <b>!timer</b> <b>!help</b></p>
+          <div class="form-grid">
+            <div>
+              <label for="commandName">คำสั่ง (ไม่ต้องใส่ !)</label>
+              <input id="commandName" class="field" type="text" placeholder="song" />
+            </div>
+            <div>
+              <label for="commandAction">การทำงาน</label>
+              <select id="commandAction" class="field select">
+                <option value="tts">อ่านเสียงตอบ</option>
+                <option value="song">ตั้งชื่อเพลงบน Overlay</option>
+                <option value="help">อ่านรายการคำสั่ง</option>
+              </select>
+            </div>
+          </div>
+          <label for="commandReply">ข้อความตอบ (ใช้ {name} {arg} {points})</label>
+          <input id="commandReply" class="field" type="text" placeholder="ตั้งเพลงเป็น {arg}" />
+          <div class="actions tight">
+            <button id="commandAddBtn" class="btn primary" type="button">เพิ่มคำสั่ง</button>
+          </div>
+          <div id="commandRulesList" class="rules-list"></div>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h2>Chatbot</h2>
+            <label class="toggle">
+              <input id="botEnabled" type="checkbox" />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">เจอคำในแชทแล้วอ่านตอบอัตโนมัติ — ไม่ส่งข้อความกลับเข้า TikTok (แพลตฟอร์มไม่เปิด API ส่งแชท)</p>
+          <div class="form-grid">
+            <div>
+              <label for="botKeyword">คำที่เจอ</label>
+              <input id="botKeyword" class="field" type="text" placeholder="สวัสดี" />
+            </div>
+            <div>
+              <label for="botMatch">วิธีจับ</label>
+              <select id="botMatch" class="field select">
+                <option value="contains">มีคำนี้อยู่ในข้อความ</option>
+                <option value="starts">ขึ้นต้นด้วย</option>
+                <option value="exact">ตรงทั้งข้อความ</option>
+              </select>
+            </div>
+          </div>
+          <label for="botReply">คำตอบ (ใช้ {name})</label>
+          <input id="botReply" class="field" type="text" placeholder="สวัสดีค่ะ {name}" />
+          <div class="form-grid">
+            <div>
+              <label for="botCooldown">คูลดาวน์ต่อคน (วินาที)</label>
+              <input id="botCooldown" class="field" type="number" min="0" max="300" value="12" />
+            </div>
+          </div>
+          <div class="actions tight">
+            <button id="botAddBtn" class="btn secondary" type="button">เพิ่มกฎบอท</button>
+          </div>
+          <div id="botRulesList" class="rules-list"></div>
+          <p class="hint">คำตอบล่าสุด</p>
+          <div id="botReplyLog"></div>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h2>ทดสอบแชท</h2>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label for="chatTestName">ชื่อผู้ชม</label>
+              <input id="chatTestName" class="field" type="text" value="Test User" />
+            </div>
+            <div>
+              <label for="chatTestText">ข้อความ</label>
+              <input id="chatTestText" class="field" type="text" value="!points" />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="chatTestBtn" class="btn primary" type="button">จำลองแชท</button>
+          </div>
+          <p id="chatActivity" class="hint">รอข้อความจากไลฟ์...</p>
+        </section>
+      </div>
+
+      <!-- ===== Subathon ===== -->
+      <div id="panel-subathon" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>Subathon Timer</h2>
+            <label class="toggle">
+              <input id="subathonEnabled" type="checkbox" />
+              <span>ยืดเวลาเมื่อมีของขวัญ</span>
+            </label>
+          </div>
+          <p class="hint">เริ่มจับเวลาแล้วของขวัญจะต่อเวลาให้อัตโนมัติ — Overlay ใช้ตัว Timer ใน Gallery หรือแผง Subathon</p>
+          <div class="live-stats-preview">
+            <div class="live-stat-box">
+              <div class="live-stat-label">เวลาที่เหลือ</div>
+              <div id="subathonClock" class="win-score-display">00:00</div>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div>
+              <label for="subathonSecPerCoin">วินาทีต่อ 1 เพชร</label>
+              <input id="subathonSecPerCoin" class="field" type="number" min="0" max="3600" value="1" />
+            </div>
+            <div>
+              <label for="subathonSecPerGift">วินาทีต่อ 1 ชิ้น (เพิ่มจากเพชร)</label>
+              <input id="subathonSecPerGift" class="field" type="number" min="0" max="3600" value="0" />
+            </div>
+            <div>
+              <label for="subathonSecPerLike">วินาทีต่อไลค์</label>
+              <input id="subathonSecPerLike" class="field" type="number" min="0" max="60" value="0" />
+            </div>
+            <div>
+              <label for="subathonMaxSeconds">เพดานสูงสุด (วินาที)</label>
+              <input id="subathonMaxSeconds" class="field" type="number" min="60" max="86400" value="14400" />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="subathonSaveBtn" class="btn secondary" type="button">บันทึกกฎ</button>
+            <button id="subathonStartBtn" class="btn primary" type="button">เริ่มจับเวลา</button>
+            <button id="subathonStopBtn" class="btn ghost" type="button">หยุด</button>
+            <button id="subathonTestBtn" class="btn ghost" type="button">เทส Rose +เวลา</button>
+          </div>
+          <p id="subathonActivity" class="hint">ยังไม่เริ่ม — กดเริ่มจับเวลาก่อนแล้วค่อยส่งของขวัญ</p>
+        </section>
+      </div>
+
+      <!-- ===== แต้มผู้ชม ===== -->
+      <div id="panel-points" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>Points System</h2>
+            <label class="toggle">
+              <input id="pointsEnabled" type="checkbox" checked />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">สะสมแต้มรายคนจากเพชร / ไลค์ / ฟอล / แชท — ผู้ชมถามด้วย !points หรือ !rank</p>
+          <div class="form-grid">
+            <div>
+              <label for="pointsPerCoin">แต้มต่อ 1 เพชร</label>
+              <input id="pointsPerCoin" class="field" type="number" min="0" max="100" value="1" />
+            </div>
+            <div>
+              <label for="pointsPerLike">แต้มต่อไลค์</label>
+              <input id="pointsPerLike" class="field" type="number" min="0" max="100" value="1" />
+            </div>
+            <div>
+              <label for="pointsPerFollow">แต้มต่อฟอล</label>
+              <input id="pointsPerFollow" class="field" type="number" min="0" max="1000" value="10" />
+            </div>
+            <div>
+              <label for="pointsPerChat">แต้มต่อแชท</label>
+              <input id="pointsPerChat" class="field" type="number" min="0" max="100" value="1" />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="pointsResetBtn" class="btn ghost" type="button">ล้างแต้มทั้งหมด</button>
+          </div>
+          <p id="pointsActivity" class="hint">รออีเวนต์จากไลฟ์...</p>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h2>อันดับแต้ม</h2>
+            <span class="chip" id="pointsUserCount">0 คน</span>
+          </div>
+          <div id="pointsTable"></div>
+        </section>
+      </div>
+
+      <!-- ===== โปรไฟล์ไลฟ์ ===== -->
+      <div id="panel-profiles" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>Stream Profiles</h2>
+          </div>
+          <p class="hint">เซฟชุดตั้งค่าทั้งไลฟ์ (เสียงเตือน / คำสั่ง / Subathon / แต้ม / TTS / keymap / overlay) แล้วสลับใช้ตอนไลฟ์คนละแนว</p>
+          <label for="profileName">ชื่อโปรไฟล์</label>
+          <input id="profileName" class="field" type="text" placeholder="ไลฟ์ดึก / ไลฟ์เกม / ทอล์ค" />
+          <div class="actions">
+            <button id="profileSaveBtn" class="btn primary" type="button">บันทึกโปรไฟล์ปัจจุบัน</button>
+            <button id="profileExportBtn" class="btn secondary" type="button">ส่งออกไฟล์</button>
+            <label class="btn ghost" for="profileImportFile">นำเข้าไฟล์</label>
+            <input id="profileImportFile" type="file" accept="application/json,.json" hidden />
+          </div>
+          <div id="profileList" class="rules-list"></div>
+        </section>
+      </div>
+
+      <!-- ===== Minecraft ===== -->
+      <div id="panel-minecraft" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>Minecraft Integration</h2>
+            <label class="toggle">
+              <input id="mcEnabled" type="checkbox" />
+              <span>เปิดใช้ RCON</span>
+            </label>
+          </div>
+          <p class="hint">
+            เปิด RCON ใน <code>server.properties</code> (<b>enable-rcon=true</b> · <b>rcon.port=25575</b> · <b>rcon.password=...</b>)
+            แล้วแมปของขวัญเป็นคำสั่งเซิร์ฟเวอร์ · ใช้ <code>{name}</code> <code>{gift}</code> <code>{count}</code>
+          </p>
+          <div class="form-grid">
+            <div>
+              <label for="mcHost">โฮสต์</label>
+              <input id="mcHost" class="field" type="text" value="127.0.0.1" />
+            </div>
+            <div>
+              <label for="mcPort">พอร์ต RCON</label>
+              <input id="mcPort" class="field" type="number" min="1" max="65535" value="25575" />
+            </div>
+          </div>
+          <label for="mcPassword">รหัส RCON</label>
+          <input id="mcPassword" class="field" type="password" autocomplete="off" />
+          <div class="form-grid">
+            <div>
+              <label for="mcGiftName">ของขวัญ</label>
+              <input id="mcGiftName" class="field" type="text" placeholder="Rose" />
+            </div>
+            <div>
+              <label for="mcCommand">คำสั่ง</label>
+              <input id="mcCommand" class="field" type="text" placeholder="say {name} ส่ง {gift} x{count}" />
+            </div>
+          </div>
+          <div class="actions tight">
+            <button id="mcAddBtn" class="btn secondary" type="button">เพิ่มกฎ</button>
+          </div>
+          <div id="mcRulesList" class="rules-list"></div>
+          <label for="mcTestCommand">ทดสอบคำสั่ง</label>
+          <input id="mcTestCommand" class="field" type="text" value="list" />
+          <div class="actions">
+            <button id="mcTestBtn" class="btn primary" type="button">ส่ง RCON</button>
+          </div>
+          <p id="mcActivity" class="hint">ยังไม่ได้ส่งคำสั่ง</p>
+        </section>
+      </div>
+
+      <!-- ===== กรอบต้อนรับ ===== -->
+      <div id="panel-welcome" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>กรอบต้อนรับ Superfan / LV 20+</h2>
+            <label class="toggle">
+              <input id="welcomeEnabled" type="checkbox" checked />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">
+            แสดงกรอบพร้อมรูปและชื่อเมื่อ Superfan เข้าไลฟ์ หรือผู้ชมเลเวลเกินค่าที่ตั้ง
+            ความสวยของกรอบแบ่งตามเลเวล — นำไปใส่ OBS จาก Overlay Gallery ชื่อ <b>กรอบต้อนรับ</b>
+          </p>
+          <div class="form-grid">
+            <div>
+              <label for="welcomeMinLevel">เลเวลขั้นต่ำ (เกินค่านี้)</label>
+              <input id="welcomeMinLevel" class="field" type="number" min="1" max="99" value="20" />
+            </div>
+            <div>
+              <label for="welcomeDurationSec">แสดงกี่วินาที</label>
+              <input id="welcomeDurationSec" class="field" type="number" min="2" max="60" value="8" />
+            </div>
+          </div>
+          <p class="hint">ทดสอบกรอบแต่ละระดับ — เปิดพรีวิว Overlay ค้างไว้แล้วกดปุ่ม</p>
+          <div class="actions tight welcome-test-row">
+            <button type="button" class="btn ghost" data-welcome-test="fan">Superfan</button>
+            <button type="button" class="btn ghost" data-welcome-test="silver">LV 25 เงิน</button>
+            <button type="button" class="btn ghost" data-welcome-test="gold">LV 35 ทอง</button>
+            <button type="button" class="btn ghost" data-welcome-test="platinum">LV 45 แพลตินัม</button>
+            <button type="button" class="btn ghost" data-welcome-test="diamond">LV 55 เพชร</button>
+          </div>
+          <p id="welcomeActivity" class="hint">รอ Superfan หรือผู้ชมเลเวลสูงเข้าไลฟ์...</p>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h2>พรีวิว Overlay</h2>
+          </div>
+          <div class="welcome-preview-wrap">
+            <iframe id="welcomePreviewFrame" class="welcome-preview-frame" title="พรีวิวกรอบต้อนรับ" src="/live-overlay.html?panel=welcome&v=gal9&demo=gold"></iframe>
+          </div>
+        </section>
       </div>
 
       <!-- ===== อัปเดต ===== -->
@@ -1001,7 +1415,7 @@ Facebook Fanpage</textarea>
         <section class="card">
           <div class="card-head">
             <h2>อัปเดตออนไลน์</h2>
-            <span class="chip" id="updateStatusChip">v1.0.7.8</span>
+            <span class="chip" id="updateStatusChip">v1.0.7.9</span>
           </div>
           <p class="hint">ค่าเริ่มต้นชี้ไปที่ GitHub Monkeyeffect — มีอัปเดตแล้วตัวเวอร์ชันมุมซ้ายจะมีจุดแดง กดที่เวอร์ชันเพื่อเปิดหน้านี้และติดตั้ง</p>
           <label for="updateFeedUrl">URL ของ latest.json</label>
@@ -1058,6 +1472,7 @@ Facebook Fanpage</textarea>
       </div>
     </main>
 
-    <script src="/app.js?v=v1097-import-filename"></script>
+    <script src="/app.js?v=v1107-zero-hour-wh"></script>
+    <script src="/studio.js?v=studio8"></script>
   </body>
 </html>

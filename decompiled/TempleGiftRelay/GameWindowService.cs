@@ -1,0 +1,752 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
+
+namespace TempleGiftRelay;
+
+public sealed class GameWindowService
+{
+	private delegate bool EnumWindowsProc(nint hWnd, nint lParam);
+
+	private struct CopyDataStruct
+	{
+		public nint DwData;
+
+		public int CbData;
+
+		public nint LpData;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct Input
+	{
+		public uint Type;
+
+		public InputUnion Union;
+	}
+
+	[StructLayout(LayoutKind.Explicit)]
+	private struct InputUnion
+	{
+		[FieldOffset(0)]
+		public KeyboardInput Keyboard;
+
+		[FieldOffset(0)]
+		public MousePad Mouse;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct KeyboardInput
+	{
+		public ushort VirtualKey;
+
+		public ushort ScanCode;
+
+		public uint Flags;
+
+		public uint Time;
+
+		public nint ExtraInfo;
+	}
+
+	[StructLayout(LayoutKind.Sequential)]
+	private struct MousePad
+	{
+		public int Dx;
+		public int Dy;
+		public uint MouseData;
+		public uint Flags;
+		public uint Time;
+		public nint ExtraInfo;
+	}
+
+	private readonly RelayState _state;
+
+	private readonly object _lock = new object();
+
+	private nint _cachedHwnd = IntPtr.Zero;
+
+	private string _cachedTitle = string.Empty;
+
+	private GameSelection _selection;
+
+	private GameProfile _profile;
+
+	private const int WmCopyData = 74;
+
+	private const byte VkReturn = 13;
+
+	private const byte VkControl = 17;
+
+	private const byte VkV = 86;
+
+	private const uint KeyeventfKeyup = 2u;
+
+	private const uint GmemMoveable = 2u;
+
+	private const uint CfUnicode = 13u;
+
+	public GameWindowService(RelayState state)
+	{
+		_state = state;
+		_selection = GameCatalog.LoadSelection();
+		_profile = GameCatalog.ResolveEffective(_selection);
+		ApplySelectionToState();
+	}
+
+	public GameSelection GetSelection()
+	{
+		lock (_lock)
+		{
+			return new GameSelection
+			{
+				Id = _selection.Id,
+				CustomProcess = _selection.CustomProcess,
+				CustomTitle = _selection.CustomTitle,
+				DisplayName = _selection.DisplayName ?? _profile.Name
+			};
+		}
+	}
+
+	public GameProfile GetProfile()
+	{
+		lock (_lock)
+		{
+			return _profile;
+		}
+	}
+
+	public void SetSelection(GameSelection selection)
+	{
+		if (selection == null || string.IsNullOrWhiteSpace(selection.Id))
+		{
+			selection = new GameSelection { Id = "temple-escape" };
+		}
+		GameProfile profile = GameCatalog.ResolveEffective(selection);
+		selection.DisplayName = GameCatalog.DisplayNameFor(selection.Id, selection.DisplayName);
+		if (string.IsNullOrWhiteSpace(selection.DisplayName))
+		{
+			selection.DisplayName = profile.Name;
+		}
+		lock (_lock)
+		{
+			_selection = selection;
+			_profile = profile;
+			_cachedHwnd = IntPtr.Zero;
+			_cachedTitle = string.Empty;
+		}
+		GameCatalog.SaveSelection(selection);
+		ApplySelectionToState();
+		Refresh();
+	}
+
+	private void ApplySelectionToState()
+	{
+		_state.SelectedGameId = _selection.Id;
+		_state.SelectedGameName = _selection.DisplayName ?? _profile.Name;
+	}
+
+	public void Refresh()
+	{
+		nint num = FindGameWindow();
+		lock (_lock)
+		{
+			_cachedHwnd = num;
+			_cachedTitle = ((num == IntPtr.Zero) ? string.Empty : GetWindowTitle(num));
+		}
+		_state.GameWindowFound = num != IntPtr.Zero;
+		_state.GameWindowTitle = _cachedTitle;
+		ApplySelectionToState();
+	}
+
+	public bool TryGetWindow(out nint hwnd, out string title)
+	{
+		Refresh();
+		lock (_lock)
+		{
+			hwnd = _cachedHwnd;
+			title = _cachedTitle;
+			return hwnd != IntPtr.Zero;
+		}
+	}
+
+	/// <summary>
+	/// Force the game window to the front and inject a virtual key via
+	/// PostMessage (works without focus) + SendInput with scan code (Unity Input System).
+	/// </summary>
+	public bool TrySendVirtualKey(byte virtualKey, int count, int holdMs, out string detail)
+	{
+		detail = "";
+		if (!TryGetWindow(out nint hwnd, out string title))
+		{
+			detail = "no-window";
+			return false;
+		}
+		count = Math.Max(1, count);
+		holdMs = Math.Max(20, holdMs);
+		ForceForeground(hwnd);
+		Thread.Sleep(80);
+		uint scan = MapVirtualKey(virtualKey, 0);
+		nint downLParam = MakeKeyLParam(scan, keyUp: false);
+		nint upLParam = MakeKeyLParam(scan, keyUp: true);
+		for (int i = 0; i < count; i++)
+		{
+			PostMessage(hwnd, 0x0100, virtualKey, downLParam); // WM_KEYDOWN
+			SendScanKey(virtualKey, (ushort)scan, keyUp: false);
+			Thread.Sleep(holdMs);
+			PostMessage(hwnd, 0x0101, virtualKey, upLParam); // WM_KEYUP
+			SendScanKey(virtualKey, (ushort)scan, keyUp: true);
+			if (i < count - 1) Thread.Sleep(40);
+		}
+		detail = $"vk{virtualKey}/sc{scan} x{count} hwnd={hwnd:X} title={title}";
+		AppPaths.Log("keymap key " + detail);
+		return true;
+	}
+
+	private static void ForceForeground(nint hwnd)
+	{
+		try
+		{
+			AllowSetForegroundWindow(-1);
+			ShowWindow(hwnd, 9); // SW_RESTORE
+			nint fg = GetForegroundWindow();
+			uint fgTid = GetWindowThreadProcessId(fg, out _);
+			uint destTid = GetWindowThreadProcessId(hwnd, out _);
+			uint selfTid = GetCurrentThreadId();
+			if (fgTid != destTid) AttachThreadInput(fgTid, destTid, true);
+			if (selfTid != destTid) AttachThreadInput(selfTid, destTid, true);
+			BringWindowToTop(hwnd);
+			SetForegroundWindow(hwnd);
+			SetActiveWindow(hwnd);
+			if (selfTid != destTid) AttachThreadInput(selfTid, destTid, false);
+			if (fgTid != destTid) AttachThreadInput(fgTid, destTid, false);
+		}
+		catch
+		{
+			SetForegroundWindow(hwnd);
+		}
+	}
+
+	private static nint MakeKeyLParam(uint scan, bool keyUp)
+	{
+		uint lp = 1u | ((scan & 0xFF) << 16);
+		if (keyUp) lp |= 1u << 30 | 1u << 31;
+		return unchecked((nint)lp);
+	}
+
+	private static void SendScanKey(byte virtualKey, ushort scan, bool keyUp)
+	{
+		uint flags = 0x0008; // KEYEVENTF_SCANCODE
+		if (keyUp) flags |= 0x0002; // KEYEVENTF_KEYUP
+		Input scancode = new Input
+		{
+			Type = 1,
+			Union = new InputUnion
+			{
+				Keyboard = new KeyboardInput
+				{
+					VirtualKey = 0,
+					ScanCode = scan,
+					Flags = flags
+				}
+			}
+		};
+		Input vk = new Input
+		{
+			Type = 1,
+			Union = new InputUnion
+			{
+				Keyboard = new KeyboardInput
+				{
+					VirtualKey = virtualKey,
+					ScanCode = scan,
+					Flags = keyUp ? 0x0002u : 0u
+				}
+			}
+		};
+		SendInput(2u, new[] { scancode, vk }, Marshal.SizeOf<Input>());
+	}
+
+	public bool TryDeliverGiftName(string giftName, int repeatCount, out string method)
+	{
+		method = string.Empty;
+		if (!TryGetWindow(out nint hwnd, out string _))
+		{
+			return false;
+		}
+		GiftPayload value = new GiftPayload
+		{
+			GiftName = giftName,
+			RepeatCount = repeatCount
+		};
+		string json = JsonSerializer.Serialize(value);
+		try
+		{
+			SetForegroundWindow(hwnd);
+			Thread.Sleep(120);
+			if (TrySendCopyData(hwnd, json))
+			{
+				method = "wm-copydata";
+			}
+			for (int i = 0; i < Math.Max(1, repeatCount); i++)
+			{
+				ClipboardSetText(giftName);
+				Thread.Sleep(50);
+				SendChord(17, 86);
+				Thread.Sleep(50);
+				SendKey(13);
+				Thread.Sleep(180);
+			}
+			method = (string.IsNullOrEmpty(method) ? "gift-name+enter" : (method + "+gift-name"));
+			return true;
+		}
+		catch
+		{
+			return false;
+		}
+	}
+
+	private static bool TrySendCopyData(nint hwnd, string json)
+	{
+		byte[] bytes = Encoding.UTF8.GetBytes(json);
+		nint num = Marshal.AllocHGlobal(bytes.Length);
+		try
+		{
+			Marshal.Copy(bytes, 0, num, bytes.Length);
+			nint[] array = new nint[8] { 1, 2, 100, 20049, 22851, 15500, 12922, 8888 };
+			nint[] array2 = array;
+			nint[] array3 = array2;
+			nint[] array4 = array3;
+			foreach (nint dwData in array4)
+			{
+				CopyDataStruct lParam = new CopyDataStruct
+				{
+					DwData = dwData,
+					CbData = bytes.Length,
+					LpData = num
+				};
+				SendMessage(hwnd, 74, IntPtr.Zero, ref lParam);
+			}
+			return true;
+		}
+		catch
+		{
+			return false;
+		}
+		finally
+		{
+			Marshal.FreeHGlobal(num);
+		}
+	}
+
+	private nint FindGameWindow()
+	{
+		GameProfile profile;
+		lock (_lock)
+		{
+			profile = _profile;
+		}
+		nint found = IntPtr.Zero;
+
+		foreach (string processName in profile.ProcessNames)
+		{
+			if (string.IsNullOrWhiteSpace(processName)) continue;
+			try
+			{
+				foreach (Process process in Process.GetProcessesByName(processName))
+				{
+					try
+					{
+						if (process.MainWindowHandle != IntPtr.Zero && IsWindowVisible(process.MainWindowHandle))
+						{
+							return process.MainWindowHandle;
+						}
+					}
+					catch
+					{
+					}
+				}
+			}
+			catch
+			{
+			}
+		}
+
+		if (profile.TitleContains.Length == 0 && profile.ProcessNames.Length == 0)
+		{
+			return IntPtr.Zero;
+		}
+
+		EnumWindows(delegate(nint hwnd, nint _)
+		{
+			if (!IsWindowVisible(hwnd))
+			{
+				return true;
+			}
+			string windowTitle = GetWindowTitle(hwnd);
+			if (string.IsNullOrWhiteSpace(windowTitle))
+			{
+				return true;
+			}
+			foreach (string needle in profile.TitleContains)
+			{
+				if (!string.IsNullOrWhiteSpace(needle) &&
+				    (windowTitle.Equals(needle, StringComparison.OrdinalIgnoreCase) ||
+				     windowTitle.Contains(needle, StringComparison.OrdinalIgnoreCase)))
+				{
+					found = hwnd;
+					return false;
+				}
+			}
+			return true;
+		}, IntPtr.Zero);
+		return found;
+	}
+
+	/// <summary>
+	/// Force-close every known/running game so the streamer must reopen manually.
+	/// Closes all catalog games + custom process — not only the currently selected one.
+	/// </summary>
+	public (bool Ok, int Killed, string Detail, string GameName) TryCloseSelectedGame()
+	{
+		HashSet<int> killedIds = new HashSet<int>();
+		List<string> details = new List<string>();
+		HashSet<string> processNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		HashSet<string> titleNeedles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+		void KillOne(Process process)
+		{
+			if (process == null || !killedIds.Add(process.Id)) return;
+			try
+			{
+				string name = process.ProcessName;
+				// ห้ามฆ่าตัวแอปเอง
+				if (name.Equals("TempleGiftRelay", StringComparison.OrdinalIgnoreCase) ||
+				    name.Equals("Monkeyeffect", StringComparison.OrdinalIgnoreCase) ||
+				    name.Equals("MonkeyeffectSetup", StringComparison.OrdinalIgnoreCase))
+				{
+					killedIds.Remove(process.Id);
+					return;
+				}
+				string label = name + ":" + process.Id;
+				process.Kill(entireProcessTree: true);
+				details.Add(label);
+			}
+			catch
+			{
+				killedIds.Remove(process.Id);
+			}
+			finally
+			{
+				try { process.Dispose(); } catch { }
+			}
+		}
+
+		foreach (GameProfile p in GameCatalog.BuiltIn)
+		{
+			if (p.Id is "auto" or "custom") continue;
+			foreach (string n in p.ProcessNames)
+			{
+				if (!string.IsNullOrWhiteSpace(n)) processNames.Add(n.Trim());
+			}
+			foreach (string t in p.TitleContains)
+			{
+				if (!string.IsNullOrWhiteSpace(t)) titleNeedles.Add(t.Trim());
+			}
+		}
+
+		GameSelection selection;
+		lock (_lock)
+		{
+			selection = _selection;
+		}
+		if (!string.IsNullOrWhiteSpace(selection.CustomProcess))
+		{
+			processNames.Add(selection.CustomProcess.Trim().Replace(".exe", "", StringComparison.OrdinalIgnoreCase));
+		}
+		if (!string.IsNullOrWhiteSpace(selection.CustomTitle))
+		{
+			titleNeedles.Add(selection.CustomTitle.Trim());
+		}
+
+		// 1) ปิดทุกโปรเซสตามชื่อเกมในแคตตาล็อก
+		foreach (string processName in processNames)
+		{
+			try
+			{
+				foreach (Process process in Process.GetProcessesByName(processName))
+				{
+					KillOne(process);
+				}
+			}
+			catch
+			{
+			}
+		}
+
+		// 2) สแกนหน้าต่างที่เปิด — ชื่อตรงเกม / Unreal *Win64-Shipping ที่รู้จัก
+		try
+		{
+			foreach (Process process in Process.GetProcesses())
+			{
+				try
+				{
+					nint hwnd = process.MainWindowHandle;
+					if (hwnd == IntPtr.Zero || !IsWindowVisible(hwnd)) continue;
+					string title = GetWindowTitle(hwnd);
+					if (string.IsNullOrWhiteSpace(title) || IsSystemNoiseTitle(title)) continue;
+
+					string pname = process.ProcessName;
+					bool nameHit = processNames.Contains(pname);
+					bool titleHit = titleNeedles.Any(n =>
+						title.Equals(n, StringComparison.OrdinalIgnoreCase) ||
+						title.Contains(n, StringComparison.OrdinalIgnoreCase));
+					bool shippingKnown =
+						pname.Contains("Win64-Shipping", StringComparison.OrdinalIgnoreCase) &&
+						(titleHit || nameHit);
+
+					if (nameHit || titleHit || shippingKnown)
+					{
+						KillOne(process);
+					}
+					else
+					{
+						try { process.Dispose(); } catch { }
+					}
+				}
+				catch
+				{
+					try { process.Dispose(); } catch { }
+				}
+			}
+		}
+		catch
+		{
+		}
+
+		Refresh();
+		string detail = details.Count > 0 ? string.Join(", ", details) : "";
+		return (details.Count > 0, details.Count, detail, "ทุกเกมที่เปิดอยู่");
+	}
+
+	public List<object> ListRunningCandidates()
+	{
+		var results = new List<(string processName, string windowTitle, int pid, int rank)>();
+		var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		try
+		{
+			foreach (Process process in Process.GetProcesses())
+			{
+				try
+				{
+					nint hwnd = process.MainWindowHandle;
+					if (hwnd == IntPtr.Zero || !IsWindowVisible(hwnd)) continue;
+					string title = GetWindowTitle(hwnd);
+					if (string.IsNullOrWhiteSpace(title) || title.Length < 2) continue;
+					if (IsSystemNoiseTitle(title)) continue;
+					string name = process.ProcessName;
+					bool shipping = name.Contains("Win64-Shipping", StringComparison.OrdinalIgnoreCase);
+					bool known = GameCatalog.BuiltIn.Any(p =>
+						p.TitleContains.Any(t => !string.IsNullOrWhiteSpace(t) && title.Contains(t, StringComparison.OrdinalIgnoreCase)) ||
+						p.ProcessNames.Any(pn => name.Equals(pn, StringComparison.OrdinalIgnoreCase)));
+					if (!shipping && !known && title.Length < 3) continue;
+					string key = name + "|" + title;
+					if (!seen.Add(key)) continue;
+					int rank = shipping ? 0 : (known ? 1 : 2);
+					results.Add((name, title, process.Id, rank));
+				}
+				catch
+				{
+				}
+			}
+		}
+		catch
+		{
+		}
+		return results
+			.OrderBy(r => r.rank)
+			.ThenBy(r => r.windowTitle)
+			.Take(80)
+			.Select(r => (object)new { processName = r.processName, windowTitle = r.windowTitle, pid = r.pid })
+			.ToList();
+	}
+
+	private static bool IsSystemNoiseTitle(string title)
+	{
+		string[] noise =
+		{
+			"Program Manager", "Settings", "Microsoft Text Input Application",
+			"Windows Input Experience", "Cursor", "Task Manager", "File Explorer"
+		};
+		foreach (string n in noise)
+		{
+			if (title.Equals(n, StringComparison.OrdinalIgnoreCase)) return true;
+		}
+		return false;
+	}
+
+	private static string GetWindowTitle(nint hwnd)
+	{
+		StringBuilder stringBuilder = new StringBuilder(512);
+		GetWindowText(hwnd, stringBuilder, stringBuilder.Capacity);
+		return stringBuilder.ToString();
+	}
+
+	[DllImport("user32.dll")]
+	private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, nint lParam);
+
+	[DllImport("user32.dll", CharSet = CharSet.Unicode)]
+	private static extern int GetWindowText(nint hWnd, StringBuilder lpString, int nMaxCount);
+
+	[DllImport("user32.dll")]
+	private static extern bool IsWindowVisible(nint hWnd);
+
+	[DllImport("user32.dll")]
+	private static extern uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
+
+	[DllImport("user32.dll")]
+	private static extern bool SetForegroundWindow(nint hWnd);
+
+	[DllImport("user32.dll")]
+	private static extern nint GetForegroundWindow();
+
+	[DllImport("user32.dll")]
+	private static extern bool BringWindowToTop(nint hWnd);
+
+	[DllImport("user32.dll")]
+	private static extern bool SetActiveWindow(nint hWnd);
+
+	[DllImport("user32.dll")]
+	private static extern bool ShowWindow(nint hWnd, int nCmdShow);
+
+	[DllImport("user32.dll")]
+	private static extern bool AllowSetForegroundWindow(int dwProcessId);
+
+	[DllImport("user32.dll")]
+	private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+	[DllImport("kernel32.dll")]
+	private static extern uint GetCurrentThreadId();
+
+	[DllImport("user32.dll")]
+	private static extern bool PostMessage(nint hWnd, int msg, nint wParam, nint lParam);
+
+	[DllImport("user32.dll")]
+	private static extern uint MapVirtualKey(uint uCode, uint uMapType);
+
+	[DllImport("user32.dll", SetLastError = true)]
+	private static extern uint SendInput(uint count, Input[] inputs, int size);
+
+	[DllImport("user32.dll", CharSet = CharSet.Unicode)]
+	private static extern nint SendMessage(nint hWnd, int msg, nint wParam, ref CopyDataStruct lParam);
+
+	[DllImport("user32.dll", SetLastError = true)]
+	private static extern bool OpenClipboard(nint hWnd);
+
+	[DllImport("user32.dll", SetLastError = true)]
+	private static extern bool CloseClipboard();
+
+	[DllImport("user32.dll", SetLastError = true)]
+	private static extern bool EmptyClipboard();
+
+	[DllImport("user32.dll", SetLastError = true)]
+	private static extern nint SetClipboardData(uint format, nint hMem);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	private static extern nint GlobalAlloc(uint flags, nuint bytes);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	private static extern nint GlobalLock(nint hMem);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	private static extern bool GlobalUnlock(nint hMem);
+
+	private static void SendKey(byte virtualKey)
+	{
+		Input input = KeyDown(virtualKey);
+		Input input2 = KeyUp(virtualKey);
+		SendInput(2u, new Input[2] { input, input2 }, Marshal.SizeOf<Input>());
+	}
+
+	private static void SendChord(byte modifier, byte key)
+	{
+		SendInput(4u, new Input[4]
+		{
+			KeyDown(modifier),
+			KeyDown(key),
+			KeyUp(key),
+			KeyUp(modifier)
+		}, Marshal.SizeOf<Input>());
+	}
+
+	private static Input KeyDown(byte virtualKey)
+	{
+		return new Input
+		{
+			Type = 1u,
+			Union = new InputUnion
+			{
+				Keyboard = new KeyboardInput
+				{
+					VirtualKey = virtualKey
+				}
+			}
+		};
+	}
+
+	private static Input KeyUp(byte virtualKey)
+	{
+		return new Input
+		{
+			Type = 1u,
+			Union = new InputUnion
+			{
+				Keyboard = new KeyboardInput
+				{
+					VirtualKey = virtualKey,
+					Flags = 2u
+				}
+			}
+		};
+	}
+
+	private static void ClipboardSetText(string text)
+	{
+		if (!OpenClipboard(IntPtr.Zero))
+		{
+			throw new InvalidOperationException("OpenClipboard failed");
+		}
+		try
+		{
+			EmptyClipboard();
+			byte[] bytes = Encoding.Unicode.GetBytes(text + "\0");
+			nint num = GlobalAlloc(2u, (nuint)bytes.Length);
+			if (num == IntPtr.Zero)
+			{
+				throw new OutOfMemoryException();
+			}
+			nint destination = GlobalLock(num);
+			try
+			{
+				Marshal.Copy(bytes, 0, destination, bytes.Length);
+			}
+			finally
+			{
+				GlobalUnlock(num);
+			}
+			if (SetClipboardData(13u, num) == IntPtr.Zero)
+			{
+				throw new InvalidOperationException("SetClipboardData failed");
+			}
+		}
+		finally
+		{
+			CloseClipboard();
+		}
+	}
+}
