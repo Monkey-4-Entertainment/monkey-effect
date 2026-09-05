@@ -150,7 +150,7 @@ public static class GameCatalog
 			Id = "roblox",
 			Name = "Roblox",
 			ProcessNames = new[] { "RobloxPlayerBeta", "RobloxPlayer", "Roblox" },
-			TitleContains = new[] { "Roblox", "JOJO MATRIX" },
+			TitleContains = new[] { "Roblox" },
 			KeyMapFile = "roblox-keymap.json"
 		},
 		new GameProfile

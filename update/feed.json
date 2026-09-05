@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.12",
-    "notes":  "Monkeyeffect 1.0.7.12 - find real Roblox window and keep focus through AskLink",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.12-update.zip",
-    "sha256":  "edf45f927f63f4c89c5d9947e2ec73e985fd3cd9d54754ec782c288e40eeec0f",
+    "version":  "1.0.7.13",
+    "notes":  "Monkeyeffect 1.0.7.13 - Send Test keys go to Roblox process, not Edge JOJO Matrix tab",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.13-update.zip",
+    "sha256":  "d4d5893edbd98e8ea27b1c719c7f6d6977324e02e940204c647567484776c06e",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

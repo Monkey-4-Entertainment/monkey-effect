@@ -350,6 +350,26 @@ public sealed class GameWindowService
 		}
 	}
 
+	private static readonly HashSet<string> BlockedWindowProcesses = new(StringComparer.OrdinalIgnoreCase)
+	{
+		"msedge", "chrome", "firefox", "brave", "opera", "iexplore",
+		"Cursor", "Code", "devenv", "AskLink", "AskLinkSession",
+		"TempleGiftRelay", "TikTokLIVEStudio"
+	};
+
+	private static bool IsBlockedProcess(uint pid)
+	{
+		try
+		{
+			using Process p = Process.GetProcessById((int)pid);
+			return BlockedWindowProcesses.Contains(p.ProcessName);
+		}
+		catch
+		{
+			return false;
+		}
+	}
+
 	private nint FindGameWindow()
 	{
 		GameProfile profile;
@@ -376,6 +396,9 @@ public sealed class GameWindowService
 			catch { }
 		}
 
+		// If the game process is running, never pick a browser tab that happens
+		// to contain the same words (e.g. Edge "JOJO Matrix - Lark Docs").
+		bool requirePid = pids.Count > 0;
 		nint best = IntPtr.Zero;
 		int bestScore = -1;
 		EnumWindows(delegate(nint hwnd, nint _)
@@ -383,6 +406,10 @@ public sealed class GameWindowService
 			if (!IsWindowVisible(hwnd) || IsIconic(hwnd))
 				return true;
 			GetWindowThreadProcessId(hwnd, out uint pid);
+			if (IsBlockedProcess(pid))
+				return true;
+			if (requirePid && !pids.Contains(pid))
+				return true;
 			string title = GetWindowTitle(hwnd);
 			if (IsSystemNoiseTitle(title))
 				return true;
@@ -406,7 +433,7 @@ public sealed class GameWindowService
 			int area = Math.Max(0, rc.Right - rc.Left) * Math.Max(0, rc.Bottom - rc.Top);
 			if (area < 200 * 150)
 				return true;
-			int score = area + (titleMatch ? 8_000_000 : 0) + (pidMatch ? 1_000_000 : 0);
+			int score = area + (pidMatch ? 8_000_000 : 0) + (titleMatch ? 1_000_000 : 0);
 			if (score > bestScore)
 			{
 				bestScore = score;
@@ -590,11 +617,13 @@ public sealed class GameWindowService
 		string[] noise =
 		{
 			"Program Manager", "Settings", "Microsoft Text Input Application",
-			"Windows Input Experience", "Cursor", "Task Manager", "File Explorer"
+			"Windows Input Experience", "Cursor", "Task Manager", "File Explorer",
+			"Microsoft Edge", "Lark Docs", "- Google Chrome", "Mozilla Firefox"
 		};
 		foreach (string n in noise)
 		{
-			if (title.Equals(n, StringComparison.OrdinalIgnoreCase)) return true;
+			if (title.Equals(n, StringComparison.OrdinalIgnoreCase) ||
+			    title.Contains(n, StringComparison.OrdinalIgnoreCase)) return true;
 		}
 		return false;
 	}

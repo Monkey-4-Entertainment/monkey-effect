@@ -43,7 +43,7 @@ public sealed class UpdateConfig
 
 public static class AppVersion
 {
-	public const string Current = "1.0.7.12";
+	public const string Current = "1.0.7.13";
 
 	public const string DefaultFeedUrl =
 		"https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json";

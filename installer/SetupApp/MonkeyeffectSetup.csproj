@@ -9,9 +9,9 @@
     <ApplicationIcon>..\..\monkeyeffect.ico</ApplicationIcon>
     <AssemblyName>Monkeyeffect-Setup</AssemblyName>
     <RootNamespace>MonkeyeffectSetup</RootNamespace>
-    <Version>1.0.7.12</Version>
-    <FileVersion>1.0.7.12</FileVersion>
-    <InformationalVersion>1.0.7.12</InformationalVersion>
+    <Version>1.0.7.13</Version>
+    <FileVersion>1.0.7.13</FileVersion>
+    <InformationalVersion>1.0.7.13</InformationalVersion>
     <Product>Monkeyeffect Setup</Product>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>

@@ -943,10 +943,14 @@ public sealed class KeyMapDeliveryService
 
 		try
 		{
+			_webhookExclusive = true;
 			int count = Math.Max(1, payload.RepeatCount);
 			int holdMs = Math.Max(20, rule.HoldMs);
 			if (!_gameWindow.TrySendVirtualKey((byte)vk, count, holdMs, out string detail))
 			{
+				_lastWebhookDetail = detail == "no-window"
+					? "ไม่เจอหน้าต่างเกม — เปิด Roblox / เกมที่เลือกไว้ แล้วคลิกจอเกมก่อนเทส"
+					: detail;
 				AppPaths.Log($"keymap miss {gift}: {detail}");
 				return false;
 			}
