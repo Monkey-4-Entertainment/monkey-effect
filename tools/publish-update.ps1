@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.7.7",
-  [string]$Notes = "Monkeyeffect 1.0.7.7 - หน้าเอฟเฟกต์เกมมีปุ่มนำเข้าพรีเซ็ตได้ทุกเกม",
+  [string]$Ver = "1.0.7.8",
+  [string]$Notes = "Monkeyeffect 1.0.7.8 - Roblox keymap and self-serve preset import",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 

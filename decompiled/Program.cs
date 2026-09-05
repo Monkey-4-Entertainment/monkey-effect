@@ -891,7 +891,7 @@ public class Program
 				byte[] bytes = System.Text.Encoding.UTF8.GetBytes(km.ExportJson());
 				return Results.File(bytes, "application/json", "THE-RIDER-preset.json");
 			});
-			app.MapPost("/api/keymap/import", async (HttpRequest request, KeyMapDeliveryService km) =>
+			app.MapPost("/api/keymap/import", async (HttpRequest request, KeyMapDeliveryService km, GameWindowService gameWindow) =>
 			{
 				using var reader = new StreamReader(request.Body);
 				string text = await reader.ReadToEndAsync();
@@ -912,17 +912,29 @@ public class Program
 				{
 					return Results.Json(new { ok = false, error });
 				}
+				string fileName = request.Query["file"].ToString();
+				if (string.IsNullOrWhiteSpace(fileName))
+					fileName = Uri.UnescapeDataString(request.Headers["X-Preset-Filename"].ToString() ?? "");
+				string gameId = km.PrepareImportTarget(cfg, fileName);
 				km.Save(cfg);
-				return Results.Json(new { ok = true, rules = cfg.Rules.Count, events = cfg.Events.Count });
+				string displayName = gameId == "roblox"
+					? KeyMapDeliveryService.DisplayNameForPreset(gameId, fileName)
+					: "THE RIDER";
+				gameWindow.SetSelection(new GameSelection { Id = gameId, DisplayName = displayName });
+				km.AutoActivateFromGame(gameWindow.GetSelection());
+				return Results.Json(new { ok = true, rules = cfg.Rules.Count, events = cfg.Events.Count, game = gameId, displayName });
 			});
-			app.MapPost("/api/keymap/import-default", (KeyMapDeliveryService km) =>
+			app.MapPost("/api/keymap/import-default", (KeyMapDeliveryService km, GameWindowService gameWindow) =>
 			{
 				if (!km.TryImportDefaultPack(out var cfg, out string error))
 				{
 					return Results.Json(new { ok = false, error });
 				}
+				km.PrepareImportTarget(cfg, "THE-RIDER-v2.json");
 				km.Save(cfg);
-				return Results.Json(new { ok = true, rules = cfg.Rules.Count, events = cfg.Events.Count });
+				gameWindow.SetSelection(new GameSelection { Id = "the-rider", DisplayName = "THE RIDER" });
+				km.AutoActivateFromGame(gameWindow.GetSelection());
+				return Results.Json(new { ok = true, rules = cfg.Rules.Count, events = cfg.Events.Count, game = "the-rider", displayName = "THE RIDER" });
 			});
 			app.MapPost("/api/keymap/test", async (HttpRequest request, KeyMapDeliveryService km) =>
 			{

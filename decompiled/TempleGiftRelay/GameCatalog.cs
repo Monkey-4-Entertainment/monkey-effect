@@ -139,6 +139,14 @@ public static class GameCatalog
 		},
 		new GameProfile
 		{
+			Id = "roblox",
+			Name = "Roblox",
+			ProcessNames = new[] { "RobloxPlayerBeta", "RobloxPlayer", "Roblox" },
+			TitleContains = new[] { "Roblox", "JOJO MATRIX" },
+			KeyMapFile = "roblox-keymap.json"
+		},
+		new GameProfile
+		{
 			Id = "auto",
 			Name = "ตรวจจับอัตโนมัติ (ทุกเกมในรายการ)",
 			ProcessNames = Array.Empty<string>(),

@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.7",
-    "notes":  "Monkeyeffect 1.0.7.7 - หน้าเอฟเฟกต์เกมมีปุ่มนำเข้าพรีเซ็ตได้ทุกเกม",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.7-update.zip",
-    "sha256":  "65dcde173f71693242dd63d1fe64b57b7bdab784a7e1417264b9d26b7a58a26e",
+    "version":  "1.0.7.8",
+    "notes":  "Monkeyeffect 1.0.7.8 - Roblox keymap and self-serve preset import",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.8-update.zip",
+    "sha256":  "eea689e62c39f864259bf5ddbe786b2cab0ea03118dfd894c5e3527d5668af29",
     "mandatory":  false,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

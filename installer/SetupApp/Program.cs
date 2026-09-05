@@ -24,7 +24,7 @@ internal sealed class SetupForm : Form
 
 	public SetupForm()
 	{
-		Text = "Monkeyeffect Setup 1.0.7.7";
+		Text = "Monkeyeffect Setup 1.0.7.8";
 		Width = 520;
 		Height = 240;
 		StartPosition = FormStartPosition.CenterScreen;
@@ -111,12 +111,19 @@ internal sealed class SetupForm : Form
 			}
 			catch { }
 
-			CreateShortcut(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Monkeyeffect.lnk"), bat, ico, InstallDir);
-			string startMenu = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "Monkeyeffect");
-			Directory.CreateDirectory(startMenu);
-			CreateShortcut(Path.Combine(startMenu, "Monkeyeffect.lnk"), bat, ico, InstallDir);
+			try
+			{
+				CreateShortcut(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "Monkeyeffect.lnk"), bat, ico, InstallDir);
+				string startMenu = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", "Monkeyeffect");
+				Directory.CreateDirectory(startMenu);
+				CreateShortcut(Path.Combine(startMenu, "Monkeyeffect.lnk"), bat, ico, InstallDir);
+			}
+			catch
+			{
+				/* shortcuts are optional — install is still complete */
+			}
 
-			File.WriteAllText(Path.Combine(InstallDir, "VERSION.txt"), "Monkeyeffect 1.0.7.7 build " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+			File.WriteAllText(Path.Combine(InstallDir, "VERSION.txt"), "Monkeyeffect 1.0.7.8 build " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 			try
 			{
 				// Clear leftover Program Files install that caused WebView2 write errors
@@ -158,46 +165,12 @@ internal sealed class SetupForm : Form
 
 	private static void StopMonkeyeffectBeforeInstall()
 	{
-		string installDir = InstallDir;
-		string[] names = { "TempleGiftRelay", "Monkeyeffect-Setup" };
-		for (int attempt = 0; attempt < 3; attempt++)
-		{
-			foreach (string name in names)
-			{
-				foreach (Process p in Process.GetProcessesByName(name))
-				{
-					try
-					{
-						if (p.Id == Environment.ProcessId) continue;
-						p.Kill(entireProcessTree: true);
-						p.WaitForExit(5000);
-					}
-					catch { }
-				}
-			}
-
-			// TTS / Playwright spawn node.exe under the install folder
-			foreach (Process p in Process.GetProcessesByName("node"))
-			{
-				try
-				{
-					string? path = p.MainModule?.FileName;
-					if (path != null &&
-						(path.StartsWith(installDir, StringComparison.OrdinalIgnoreCase) ||
-						 path.Contains("\\Monkeyeffect\\", StringComparison.OrdinalIgnoreCase) ||
-						 path.Contains("\\TempleGiftRelay", StringComparison.OrdinalIgnoreCase)))
-					{
-						p.Kill(entireProcessTree: true);
-						p.WaitForExit(3000);
-					}
-				}
-				catch { }
-			}
-
-			ForceKillByPort(3847);
-			ForceKillByPort(3848);
-			System.Threading.Thread.Sleep(1200);
-		}
+		RunHidden("taskkill.exe", "/F /IM TempleGiftRelay.exe /T");
+		RunHidden("taskkill.exe", "/F /IM Monkeyeffect.exe /T");
+		ForceKillByPort(3847);
+		ForceKillByPort(3848);
+		ForceKillByPort(12922);
+		System.Threading.Thread.Sleep(800);
 	}
 
 	private static void ForceKillByPort(int port)
@@ -206,14 +179,30 @@ internal sealed class SetupForm : Form
 		{
 			var psi = new ProcessStartInfo
 			{
-				FileName = "powershell.exe",
-				Arguments =
-					$"-NoProfile -Command \"Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue | ForEach-Object {{ if ($_.OwningProcess -ne {Environment.ProcessId}) {{ Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }} }}\"",
+				FileName = "cmd.exe",
+				Arguments = "/c for /f \"tokens=5\" %a in ('netstat -ano ^| findstr \":" + port + "\"') do @if not %a==" + Environment.ProcessId + " taskkill /F /PID %a >nul 2>&1",
 				CreateNoWindow = true,
 				UseShellExecute = false
 			};
 			using Process? p = Process.Start(psi);
-			p?.WaitForExit(8000);
+			p?.WaitForExit(4000);
+		}
+		catch { }
+	}
+
+	private static void RunHidden(string fileName, string arguments)
+	{
+		try
+		{
+			var psi = new ProcessStartInfo
+			{
+				FileName = fileName,
+				Arguments = arguments,
+				CreateNoWindow = true,
+				UseShellExecute = false
+			};
+			using Process? p = Process.Start(psi);
+			p?.WaitForExit(5000);
 		}
 		catch { }
 	}
@@ -304,23 +293,8 @@ internal sealed class SetupForm : Form
 				src.CopyTo(dst);
 			}
 
-			if (Directory.Exists(InstallDir))
-			{
-				for (int i = 0; i < 3; i++)
-				{
-					try
-					{
-						Directory.Delete(InstallDir, true);
-						break;
-					}
-					catch when (i < 2)
-					{
-						StopMonkeyeffectBeforeInstall();
-					}
-				}
-			}
 			Directory.CreateDirectory(InstallDir);
-			ZipFile.ExtractToDirectory(tempZip, InstallDir, overwriteFiles: true);
+			ExtractZipOverwrite(tempZip, InstallDir);
 
 			if (!File.Exists(Path.Combine(InstallDir, "TempleGiftRelay.exe")))
 			{

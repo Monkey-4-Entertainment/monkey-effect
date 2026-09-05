@@ -32,6 +32,7 @@ const GAME_STORAGE_KEY = "tgr_selected_game";
 const GAME_CHANNEL = "tgr-selected-game";
 const TEMPLE_GAME_ID = "temple-escape";
 let currentSelectedGame = { id: TEMPLE_GAME_ID, displayName: "Temple Escape (神庙跑跑跑)" };
+let lastGameWindowTitle = "";
 const gameChannel =
   typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(GAME_CHANNEL) : null;
 let gameCatalog = [];
@@ -6248,6 +6249,7 @@ function updateStatus(data) {
     }
   }
 
+  lastGameWindowTitle = data.gameWindowTitle || "";
   if (gameWindowStatus) {
     gameWindowStatus.textContent = data.gameWindowFound
       ? data.gameWindowTitle || data.selectedGameName || "พบแล้ว"
@@ -6421,8 +6423,6 @@ document.getElementById("effectsExportBtn")?.addEventListener("click", exportEff
 document.getElementById("effectsImportBtn")?.addEventListener("click", openEffectsPresetPicker);
 document.getElementById("effectsNoDefaultsImportBtn")?.addEventListener("click", openEffectsPresetPicker);
 document.getElementById("effectsImportFile")?.addEventListener("change", importEffectsKeymapFile);
-document.getElementById("effectsImportDefaultBtn")?.addEventListener("click", importEffectsKeymapDefault);
-document.getElementById("effectsNoDefaultsDefaultBtn")?.addEventListener("click", importEffectsKeymapDefault);
 clearBtn.addEventListener("click", () => {
   renderLog([]);
   seenGiftKeys = new Set();
@@ -6507,8 +6507,8 @@ function syncEffectsPanelForGame(game) {
   const showKeymap = hasKeymap || effectsKeymapUiForced;
   defaultsCard?.classList.toggle("hidden", !isTemple);
   noDefaultsCard?.classList.toggle("hidden", isTemple || showKeymap);
-  keymapCard?.classList.toggle("hidden", !showKeymap);
-  eventsCard?.classList.toggle("hidden", !showKeymap);
+  keymapCard?.classList.add("hidden");
+  eventsCard?.classList.add("hidden");
   importCard?.classList.remove("hidden");
   syncGiftChipsForGame(hasKeymap || effectsKeymapUiForced);
   if (keymapTitle) keymapTitle.textContent = `Actions — ${name}`;
@@ -6522,20 +6522,28 @@ function syncEffectsPanelForGame(game) {
     if (testHint) {
       testHint.textContent = `ส่งของทดสอบเข้า ${name} — กดคีย์ตาม Keyboard Mapping เข้าหน้าต่างเกม`;
     }
-    loadEffectsKeymapUI();
+    loadEffectsKeymapUI().then(() => {
+      const hasRows = (keymapDraftRules || []).length > 0;
+      keymapCard?.classList.toggle("hidden", !hasRows);
+      eventsCard?.classList.toggle("hidden", !hasRows);
+      if (!hasRows) {
+        setImportMsg("ยังไม่มีพรีเซ็ต — กดนำเข้าพรีเซ็ตแล้วเลือกไฟล์ที่จะใช้");
+        syncGiftChipsForGame(false);
+      }
+    });
   } else if (effectsKeymapUiForced) {
     if (testHint) {
       testHint.textContent = `ส่งของทดสอบเข้า ${name} — พรีเซ็ตที่นำเข้าจะยิงคีย์เมื่อเกมรองรับ Keyboard Mapping`;
     }
   } else if (noDefaultsHint) {
-    noDefaultsHint.textContent = `${name} ยังไม่มีแพ็กค่าตั้งต้นในแอพ — นำเข้าพรีเซ็ต หรือใช้ Send Test เพื่อยิงของเข้าเกมผ่าน /livemsg ได้ตามปกติ`;
+    noDefaultsHint.textContent = `${name} ยังไม่มีพรีเซ็ต — กดนำเข้าพรีเซ็ตแล้วอัปโหลดไฟล์เอง`;
   }
 }
 
-/** Keyboard mapping UI + delivery only for THE RIDER, or custom/auto that actually names RIDER. */
+/** Keyboard mapping UI + delivery for THE RIDER / Roblox, or custom/auto that names them. */
 function isRiderKeymapGame(game) {
   const id = (game?.id || "").toLowerCase();
-  if (id === "the-rider") return true;
+  if (id === "the-rider" || id === "roblox") return true;
   if (id !== "custom" && id !== "auto") return false;
   const blob = [
     game?.displayName,
@@ -6543,8 +6551,9 @@ function isRiderKeymapGame(game) {
     game?.customTitle,
     id === "custom" ? customGameProcess?.value : "",
     id === "custom" ? customGameTitle?.value : "",
+    id === "auto" ? lastGameWindowTitle : "",
   ].join(" ").toUpperCase();
-  return blob.includes("RIDER");
+  return blob.includes("RIDER") || blob.includes("ROBLOX") || blob.includes("JOJO");
 }
 
 const TEMPLE_GIFT_CHIPS = [
@@ -6573,10 +6582,40 @@ const RIDER_GIFT_CHIPS = [
   { gift: "Follow", type: "SendFollow", label: "Follow" },
 ];
 
+function keymapGiftChips() {
+  const chips = [];
+  const seen = new Set();
+  for (const e of keymapDraftEvents || []) {
+    if ((e.trigger || "gift") !== "gift" || !e.giftName) continue;
+    const gift = String(e.giftName).trim();
+    const key = gift.toLowerCase();
+    if (!gift || seen.has(key)) continue;
+    seen.add(key);
+    const act = String(e.action || "").trim();
+    chips.push({ gift, type: "SendGift", label: act ? `${gift} · ${act}` : gift });
+  }
+  if (chips.length) {
+    chips.push({ gift: "Like", type: "SendLike", label: "Like" });
+    chips.push({ gift: "Follow", type: "SendFollow", label: "Follow" });
+    return chips;
+  }
+  return currentSelectedGame?.id === "roblox"
+    ? [
+        { gift: "Rose", type: "SendGift", label: "Rose" },
+        { gift: "Heart Me", type: "SendGift", label: "Heart Me" },
+        { gift: "Balloon Gift Box", type: "SendGift", label: "Balloon Gift Box" },
+        { gift: "Like", type: "SendLike", label: "Like" },
+        { gift: "Follow", type: "SendFollow", label: "Follow" },
+      ]
+    : RIDER_GIFT_CHIPS;
+}
+
 function syncGiftChipsForGame(hasKeymap) {
   const host = document.getElementById("giftChips");
   if (!host) return;
-  const chips = hasKeymap ? RIDER_GIFT_CHIPS : TEMPLE_GIFT_CHIPS;
+  const chips = !hasKeymap ? TEMPLE_GIFT_CHIPS
+    : currentSelectedGame?.id === "roblox" ? keymapGiftChips()
+    : RIDER_GIFT_CHIPS;
   const signature = chips.map((c) => c.gift).join("|");
   if (host.dataset.chipSet === signature) return;
   host.dataset.chipSet = signature;
@@ -6638,6 +6677,12 @@ function keyToVk(key) {
     if (c >= 65 && c <= 90) return c;
     if (c >= 48 && c <= 57) return c;
     return { "-": 189, "=": 187, ",": 188, ".": 190, "/": 191, ";": 186, "'": 222, "[": 219, "]": 221, "\\": 220, "`": 192 }[k] || 0;
+  }
+  if (k.startsWith("NUMPAD") || k.startsWith("NUM ")) {
+    const tail = (k.startsWith("NUMPAD") ? k.slice(6) : k.slice(3)).replace(/^[_ ]/, "");
+    const pad = { 0: 96, 1: 97, 2: 98, 3: 99, 4: 100, 5: 101, 6: 102, 7: 103, 8: 104, 9: 105 };
+    if (tail in pad) return pad[tail];
+    return { "*": 106, "+": 107, "-": 109, ".": 110, "/": 111 }[tail] || 0;
   }
   const named = { SPACE: 32, ENTER: 13, TAB: 9, ESC: 27, SHIFT: 16, CTRL: 17, ALT: 18 };
   return named[k] || 0;
@@ -6828,10 +6873,13 @@ async function exportEffectsKeymap() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "THE-RIDER-preset.json";
+    const slug = (currentSelectedGame?.displayName || currentSelectedGame?.id || "preset")
+      .replace(/[\\/:*?"<>|]+/g, " ")
+      .trim() || "preset";
+    a.download = `${slug}-preset.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setImportMsg("ส่งออกแล้ว — ไฟล์ THE-RIDER-preset.json");
+    setImportMsg(`ส่งออกแล้ว — ไฟล์ ${a.download}`);
   } catch (e) {
     setImportMsg(e.message || "ส่งออกไม่สำเร็จ", true);
   }
@@ -6849,32 +6897,72 @@ function parseImportedKeymapText(text) {
   return null;
 }
 
-async function applyImportedEffectsPreset(data, rawText) {
+function displayNameForPresetGame(gameId, fileName, serverName) {
+  if (serverName) return serverName;
+  if (gameId !== "roblox") return "THE RIDER";
+  const base = String(fileName || "").replace(/\.[^.]+$/, "").replace(/\s*\(\d+\)\s*$/, "").trim();
+  if (!base || /^roblox$/i.test(base)) return "Roblox";
+  return `Roblox · ${base}`;
+}
+
+function resolveImportedPresetGame(fileName, text, data) {
+  const name = String(fileName || "").toUpperCase();
+  const body = String(text || "").toUpperCase();
+  if (name.includes("RIDER") || /"GAME"\s*:\s*"THE-RIDER"/.test(body)) {
+    return { id: "the-rider", displayName: "THE RIDER" };
+  }
+  const serverId = data?.game || "";
+  if (name.includes("JOJO") || name.includes("ROBLOX") || name.includes("MATRIX") ||
+      name.endsWith(".TFC") || body.includes("NUMPAD") || body.includes("JOJO") ||
+      serverId === "roblox") {
+    return { id: "roblox", displayName: displayNameForPresetGame("roblox", fileName, data?.displayName) };
+  }
+  if (serverId === "the-rider") return { id: "the-rider", displayName: "THE RIDER" };
+  return { id: "roblox", displayName: displayNameForPresetGame("roblox", fileName, data?.displayName) };
+}
+
+async function applyImportedEffectsPreset(data, rawText, preferGame, fileName) {
   revealEffectsKeymapCards();
+  const detected = resolveImportedPresetGame(fileName, rawText, data);
+  const target = preferGame
+    ? { id: preferGame, displayName: displayNameForPresetGame(preferGame, fileName, data?.displayName) }
+    : detected;
+  await activateKeymapGameForImportedPreset(target.id, target.displayName);
   const local = rawText ? parseImportedKeymapText(rawText) : null;
   if (local) {
     renderEffectsKeymapTable(local.rules, true);
     renderEffectsEventsTable(local.events);
-  } else if (isRiderKeymapGame(currentSelectedGame)) {
-    await loadEffectsKeymapUI();
   } else {
-    await activateRiderForImportedPreset();
+    await loadEffectsKeymapUI();
   }
+  syncGiftChipsForGame(true);
   const filled = (keymapDraftRules || []).filter((r) => r.key).length;
   const total = data.rules || keymapDraftRules.length || 0;
   const empty = Math.max(0, total - filled);
   const nEvents = data.events || keymapDraftEvents.length || 0;
-  return { filled, empty, nEvents, total };
+  return { filled, empty, nEvents, total, gameName: currentSelectedGame?.displayName || target.displayName };
 }
 
-async function activateRiderForImportedPreset() {
-  const riderOpt = [...(gameSelect?.options || [])].find((o) => o.value === "the-rider");
-  if (!riderOpt || !gameSelect) {
-    await loadEffectsKeymapUI();
+async function activateKeymapGameForImportedPreset(gameId, displayName) {
+  const id = gameId === "roblox" ? "roblox" : "the-rider";
+  const label = displayName || (id === "roblox" ? "Roblox" : "THE RIDER");
+  if (!gameSelect) {
+    currentSelectedGame = { id, displayName: label };
+    syncEffectsPanelForGame(currentSelectedGame);
     return;
   }
-  gameSelect.value = "the-rider";
-  await saveSelectedGame({ id: "the-rider", displayName: riderOpt.textContent || "THE RIDER" });
+  localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify({ id, displayName: label }));
+  if (![...gameSelect.options].some((o) => o.value === id)) {
+    try { await loadGames(); } catch { /* keep going */ }
+  }
+  if (![...gameSelect.options].some((o) => o.value === id)) {
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = id === "roblox" ? "Roblox" : "THE RIDER";
+    gameSelect.appendChild(opt);
+  }
+  gameSelect.value = id;
+  await saveSelectedGame({ id, displayName: label, force: true });
 }
 
 async function importEffectsKeymapFile(ev) {
@@ -6884,7 +6972,8 @@ async function importEffectsKeymapFile(ev) {
   setImportMsg(`กำลังนำเข้า ${file.name}…`);
   try {
     const text = await file.text();
-    const res = await fetch("/api/keymap/import", {
+    const qs = new URLSearchParams({ file: file.name }).toString();
+    const res = await fetch("/api/keymap/import?" + qs, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: text,
@@ -6894,41 +6983,14 @@ async function importEffectsKeymapFile(ev) {
       setImportMsg(data.error || "นำเข้าไม่สำเร็จ", true);
       return;
     }
-    const info = await applyImportedEffectsPreset(data, text);
+    const info = await applyImportedEffectsPreset(data, text, "", file.name);
     setImportMsg(
       info.empty
-        ? `นำเข้าแล้ว ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ · คีย์มี ${info.filled} แถว ที่ว่าง ${info.empty} แถว ให้คลิกช่องคีย์แล้วกดปุ่มตาม TikFinity`
-        : `นำเข้าแล้ว ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ · คีย์ครบ ${info.filled} แถว — ใช้ตอนไลฟ์ได้เลย`
+        ? `นำเข้าแล้วสำหรับ ${info.gameName} · ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ · คีย์มี ${info.filled} แถว ที่ว่าง ${info.empty} แถว`
+        : `นำเข้าแล้วสำหรับ ${info.gameName} · ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ — ใช้ตอนไลฟ์ได้เลย`
     );
   } catch (e) {
     setImportMsg(e.message || "นำเข้าไม่สำเร็จ", true);
-  }
-}
-
-async function importEffectsKeymapDefault() {
-  setImportMsg("กำลังโหลดพรีเซ็ต THE RIDER v2…");
-  try {
-    const res = await fetch("/api/keymap/import-default", { method: "POST" });
-    const data = await res.json();
-    if (!data.ok) {
-      setImportMsg(data.error || "โหลดพรีเซ็ตไม่สำเร็จ", true);
-      return;
-    }
-    let rawText = "";
-    try {
-      const pack = await fetch("/defaults/rider-v2.json");
-      if (pack.ok) rawText = await pack.text();
-    } catch {
-      /* UI will fall back to /api/keymap */
-    }
-    const info = await applyImportedEffectsPreset(data, rawText);
-    setImportMsg(
-      info.empty
-        ? `ใช้พรีเซ็ตแล้ว ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ · คีย์มี ${info.filled} แถว ที่ว่าง ${info.empty} แถว ให้คลิกช่องคีย์แล้วกดปุ่มตามตาราง Actions ของ TikFinity`
-        : `ใช้พรีเซ็ตแล้ว ${info.total} แอคชัน · ${info.nEvents} อีเวนต์ · คีย์ครบ — ใช้ตอนไลฟ์ได้เลย`
-    );
-  } catch (e) {
-    setImportMsg(e.message || "โหลดพรีเซ็ตไม่สำเร็จ", true);
   }
 }
 
@@ -6970,30 +7032,21 @@ async function loadEffectsKeymapUI() {
     renderEffectsKeymapTable(rules, cfg.enabled !== false && cfg.Enabled !== false);
     renderEffectsEventsTable(events);
   } catch {
-    renderEffectsKeymapTable([
-      { giftName: "Rose", key: "G", label: "หมา" },
-      { giftName: "Perfume", key: "B", label: "ยายสปีด" },
-      { giftName: "Flower Garland", key: "C", label: "ควาย" },
-      { giftName: "Doughnut", key: "T", label: "พายุ" },
-      { giftName: "Rosa", key: "P", label: "สุ่ม" },
-    ], true);
-    renderEffectsEventsTable([
-      { trigger: "gift", giftName: "Rose", action: "หมา", enabled: true },
-      { trigger: "gift", giftName: "Perfume", action: "ยายสปีด", enabled: true },
-    ]);
+    renderEffectsKeymapTable([], true);
+    renderEffectsEventsTable([]);
   }
 }
 
 async function saveSelectedGame(extra = {}) {
-  if (!gameSelect || savingGame) return;
+  if (!gameSelect) return;
+  if (savingGame && !extra.force) return;
   savingGame = true;
   try {
     const payload = {
-      id: gameSelect.value || "temple-escape",
+      id: extra.id || gameSelect.value || "temple-escape",
       customProcess: customGameProcess?.value?.trim() || null,
       customTitle: customGameTitle?.value?.trim() || null,
       displayName: extra.displayName || null,
-      ...extra,
     };
     if (!payload.displayName) {
       const opt = gameSelect.selectedOptions?.[0];

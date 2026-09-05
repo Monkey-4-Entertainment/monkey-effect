@@ -163,6 +163,9 @@ public sealed class KeyMapDeliveryService
 		string blob = string.Join(" ", proc, title, display);
 		if (blob.Contains("RIDER", StringComparison.OrdinalIgnoreCase))
 			return "rider-keymap.json";
+		if (blob.Contains("ROBLOX", StringComparison.OrdinalIgnoreCase) ||
+		    blob.Contains("JOJO", StringComparison.OrdinalIgnoreCase))
+			return "roblox-keymap.json";
 
 		foreach (GameProfile g in GameCatalog.BuiltIn)
 		{
@@ -226,6 +229,7 @@ public sealed class KeyMapDeliveryService
 
 	public void Load()
 	{
+		KeyMapConfig? loaded = null;
 		try
 		{
 			if (File.Exists(ConfigPath))
@@ -238,18 +242,22 @@ public sealed class KeyMapDeliveryService
 				if (cfg != null)
 				{
 					Normalize(cfg);
-					lock (_lock) { _config = cfg; }
+					loaded = cfg;
 					AppPaths.Log($"keymap loaded {cfg.Rules.Count} rules, {cfg.Events.Count} events from {ConfigPath}");
 				}
 			}
 			else
 			{
-				AppPaths.Log("keymap config not found: " + ConfigPath);
+				AppPaths.Log("keymap empty (no preset yet): " + ConfigPath);
 			}
 		}
 		catch (Exception ex)
 		{
 			AppPaths.Log("keymap load error: " + ex.Message);
+		}
+		lock (_lock)
+		{
+			_config = loaded ?? new KeyMapConfig { Enabled = true };
 		}
 	}
 
@@ -698,6 +706,70 @@ public sealed class KeyMapDeliveryService
 		}
 	}
 
+	/// <summary>
+	/// Pick rider-keymap.json vs roblox-keymap.json before Save so a JOJO / Roblox
+	/// TikFinity import does not overwrite THE RIDER, and vice versa.
+	/// </summary>
+	public string PrepareImportTarget(KeyMapConfig cfg, string? fileName = null)
+	{
+		string hint = (fileName ?? "").ToUpperInvariant();
+		if (hint.Contains("RIDER"))
+		{
+			_activeFile = "rider-keymap.json";
+			return "the-rider";
+		}
+		if (LooksLikeRobloxKeymap(cfg) ||
+		    hint.Contains("JOJO") ||
+		    hint.Contains("ROBLOX") ||
+		    hint.Contains("MATRIX") ||
+		    hint.EndsWith(".TFC"))
+		{
+			_activeFile = "roblox-keymap.json";
+			return "roblox";
+		}
+		string? file = ResolveKeyMapFile(_gameWindow.GetSelection());
+		if (!string.IsNullOrWhiteSpace(file))
+		{
+			_activeFile = file;
+			return file.StartsWith("roblox", StringComparison.OrdinalIgnoreCase) ? "roblox" : "the-rider";
+		}
+		_activeFile = "rider-keymap.json";
+		return "the-rider";
+	}
+
+	public static string DisplayNameForPreset(string gameId, string? fileName)
+	{
+		if (!gameId.Equals("roblox", StringComparison.OrdinalIgnoreCase))
+			return "THE RIDER";
+		string baseName = Path.GetFileNameWithoutExtension(fileName ?? "");
+		if (baseName.Length > 0)
+		{
+			int paren = baseName.LastIndexOf(" (");
+			if (paren > 0 && baseName.EndsWith(")"))
+				baseName = baseName[..paren];
+			baseName = baseName.Trim();
+		}
+		if (string.IsNullOrWhiteSpace(baseName) ||
+		    baseName.Equals("Roblox", StringComparison.OrdinalIgnoreCase))
+			return "Roblox";
+		return "Roblox · " + baseName;
+	}
+
+	private static bool LooksLikeRobloxKeymap(KeyMapConfig cfg)
+	{
+		foreach (KeyMapRule r in cfg.Rules ?? new List<KeyMapRule>())
+		{
+			string k = (r.Key ?? "").ToUpperInvariant();
+			if (k.Contains("NUMPAD") || k.StartsWith("NUM"))
+				return true;
+			int vk = r.Vk > 0 ? r.Vk : ParseVirtualKey(r.Key);
+			if (vk >= 96 && vk <= 111)
+				return true;
+		}
+		string comment = (cfg.Comment ?? "").ToUpperInvariant();
+		return comment.Contains("ROBLOX") || comment.Contains("JOJO");
+	}
+
 	public void Save(KeyMapConfig config)
 	{
 		Normalize(config);
@@ -810,6 +882,7 @@ public sealed class KeyMapDeliveryService
 		("Friendship Necklace", "Cuddle"),
 		("Heart Me", "Hand Heart"),
 		("Lots of Bread", "Super GG"),
+		("Balloon Gift Box", "Balloon Box"),
 	};
 
 	private static bool GiftNamesMatch(string mapped, string incoming)
@@ -878,7 +951,24 @@ public sealed class KeyMapDeliveryService
 				_ => 0
 			};
 		}
-		return k.ToUpperInvariant() switch
+		string named = k.ToUpperInvariant();
+		if (named.StartsWith("NUMPAD") || named.StartsWith("NUM "))
+		{
+			string tail = named.StartsWith("NUMPAD") ? named[6..] : named[3..];
+			tail = tail.TrimStart('_', ' ');
+			return tail switch
+			{
+				"0" => 96, "1" => 97, "2" => 98, "3" => 99, "4" => 100,
+				"5" => 101, "6" => 102, "7" => 103, "8" => 104, "9" => 105,
+				"*" or "MULTIPLY" => 106,
+				"+" or "ADD" => 107,
+				"-" or "SUBTRACT" => 109,
+				"." or "DECIMAL" => 110,
+				"/" or "DIVIDE" => 111,
+				_ => 0
+			};
+		}
+		return named switch
 		{
 			"SPACE" or "SPACEBAR" => 32,
 			"ENTER" or "RETURN" => 13,
