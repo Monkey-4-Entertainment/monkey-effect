@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.7.15",
-  [string]$Notes = "Monkeyeffect 1.0.7.15 - hide app so Roblox can take focus through AskLink",
+  [string]$Ver = "1.0.7.16",
+  [string]$Notes = "Monkeyeffect 1.0.7.16 - do not restore the app window when sending Roblox keys",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 

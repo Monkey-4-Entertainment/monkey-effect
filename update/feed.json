@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.15",
-    "notes":  "Monkeyeffect 1.0.7.15 - hide app so Roblox can take focus through AskLink",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.15-update.zip",
-    "sha256":  "ca099a0fff0cbb0606791134e57c83e75e52756e912521c5d4732aba29a60f51",
+    "version":  "1.0.7.16",
+    "notes":  "Monkeyeffect 1.0.7.16 - do not restore the app window when sending Roblox keys",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.16-update.zip",
+    "sha256":  "a42b3bd59715815f6caf76475050c8d19814b063b2347cd33430eb80090dc87a",
     "mandatory":  true,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

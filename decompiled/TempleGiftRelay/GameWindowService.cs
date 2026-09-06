@@ -195,31 +195,6 @@ public sealed class GameWindowService
 
 		string fgBefore = DescribeForeground();
 		ActivateGameWindow(hwnd);
-		if (!IsGameForeground(hwnd))
-		{
-			ClickWindowCenter(hwnd);
-			Thread.Sleep(80);
-			ActivateGameWindow(hwnd);
-		}
-		List<nint> hiddenOwn = new List<nint>();
-		if (!IsGameForeground(hwnd))
-		{
-			// AskLink-injected clicks do not give this process foreground rights.
-			// Hide our own windows so Windows hands focus to the next app (Roblox).
-			hiddenOwn = HideOwnWindows();
-			Thread.Sleep(80);
-			ActivateGameWindow(hwnd);
-		}
-
-		if (!IsGameForeground(hwnd))
-		{
-			RestoreOwnWindows(hiddenOwn);
-			string fgTitle = DescribeForeground();
-			detail = "โฟกัสไม่ได้อยู่ที่ Roblox — คีย์จะไม่เข้าเกม ตอนนี้โฟกัสอยู่ที่: " + fgTitle +
-			         " · เปิด Monkeyeffect บนเครื่องเดียวกับเกม แล้วคลิกจอ Roblox ก่อนเทส";
-			AppPaths.Log($"keymap blocked focus hwnd={hwnd:X} title={title} before={fgBefore} now={fgTitle}");
-			return false;
-		}
 
 		GetWindowThreadProcessId(hwnd, out uint destPid);
 		uint destTid = GetWindowThreadProcessId(hwnd, out _);
@@ -261,7 +236,6 @@ public sealed class GameWindowService
 			if (attachedFg) AttachThreadInput(fgTid, destTid, false);
 		}
 
-		RestoreOwnWindows(hiddenOwn);
 		string fgAfter = DescribeForeground();
 		detail = $"vk{virtualKey}/sc{scan} x{count} hwnd={hwnd:X} pid={destPid} title={title} fg={fgAfter}";
 		AppPaths.Log($"keymap key {detail} before={fgBefore}");
@@ -288,36 +262,6 @@ public sealed class GameWindowService
 		catch
 		{
 			return "(error)";
-		}
-	}
-
-	private static List<nint> HideOwnWindows()
-	{
-		List<nint> ours = new List<nint>();
-		uint self = (uint)Environment.ProcessId;
-		try
-		{
-			EnumWindows(delegate(nint h, nint _)
-			{
-				GetWindowThreadProcessId(h, out uint pid);
-				if (pid == self && IsWindowVisible(h))
-				{
-					ours.Add(h);
-					ShowWindow(h, 6); // SW_MINIMIZE
-				}
-				return true;
-			}, IntPtr.Zero);
-		}
-		catch { }
-		return ours;
-	}
-
-	private static void RestoreOwnWindows(List<nint> hwnds)
-	{
-		if (hwnds == null) return;
-		foreach (nint h in hwnds)
-		{
-			try { ShowWindow(h, 9); } catch { } // SW_RESTORE
 		}
 	}
 
