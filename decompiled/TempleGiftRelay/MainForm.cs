@@ -27,7 +27,7 @@ public sealed class MainForm : Form
 
 	public MainForm()
 	{
-		Text = "Monkeyeffect 1.0.7.16";
+		Text = "Monkeyeffect 1.0.7.17";
 		base.StartPosition = FormStartPosition.CenterScreen;
 		MinimumSize = new Size(960, 640);
 		base.Size = new Size(1280, 800);
@@ -56,7 +56,7 @@ public sealed class MainForm : Form
 	{
 		try
 		{
-			_keepAliveTimer.Interval = WindowState == FormWindowState.Minimized ? 350 : 1000;
+			_keepAliveTimer.Interval = 2000;
 		}
 		catch { }
 	}
@@ -67,8 +67,7 @@ public sealed class MainForm : Form
 		{
 			SetThreadExecutionState(EsContinuous | EsSystemRequired);
 			if (_webView.CoreWebView2 == null) return;
-			SyncKeepAliveInterval();
-			// Force JS turns + interrupt drain even when HWND is occluded / minimized.
+			if (WindowState == FormWindowState.Minimized) return;
 			_ = _webView.CoreWebView2.ExecuteScriptAsync(
 				"(function(){try{if(typeof window.__tgrKeepAlive==='function')window.__tgrKeepAlive();else if(typeof fetchStatus==='function')fetchStatus();}catch(e){}})();");
 		}

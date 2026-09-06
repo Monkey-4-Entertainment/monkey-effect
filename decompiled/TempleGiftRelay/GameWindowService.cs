@@ -562,9 +562,8 @@ public sealed class GameWindowService
 		int bestScore = -1;
 		EnumWindows(delegate(nint hwnd, nint _)
 		{
-			if (!IsWindowVisible(hwnd))
+			if (!IsWindowVisible(hwnd) || IsIconic(hwnd))
 				return true;
-			if (IsIconic(hwnd)) ShowWindow(hwnd, 9);
 			GetWindowThreadProcessId(hwnd, out uint pid);
 			if (IsBlockedProcess(pid))
 				return true;
@@ -611,7 +610,6 @@ public sealed class GameWindowService
 					nint main = process.MainWindowHandle;
 					if (main != IntPtr.Zero && IsWindow(main) && !IsBlockedProcess(pid))
 					{
-						if (IsIconic(main)) ShowWindow(main, 9);
 						best = main;
 						break;
 					}

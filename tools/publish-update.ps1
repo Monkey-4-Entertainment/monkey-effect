@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.7.16",
-  [string]$Notes = "Monkeyeffect 1.0.7.16 - do not restore the app window when sending Roblox keys",
+  [string]$Ver = "1.0.7.17",
+  [string]$Notes = "Monkeyeffect 1.0.7.17 - stop restoring minimized windows every 2 seconds",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 

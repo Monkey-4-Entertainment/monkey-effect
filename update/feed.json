@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.16",
-    "notes":  "Monkeyeffect 1.0.7.16 - do not restore the app window when sending Roblox keys",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.16-update.zip",
-    "sha256":  "a42b3bd59715815f6caf76475050c8d19814b063b2347cd33430eb80090dc87a",
+    "version":  "1.0.7.17",
+    "notes":  "Monkeyeffect 1.0.7.17 - stop restoring minimized windows every 2 seconds",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.17-update.zip",
+    "sha256":  "ee01d1d0d629ace0b42704a7a904249f989fa74b629f21edae7f7ffca7016ce0",
     "mandatory":  true,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
