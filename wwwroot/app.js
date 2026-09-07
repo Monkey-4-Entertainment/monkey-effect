@@ -247,7 +247,7 @@ if (usernameInput) {
 
 /* ========== Nav ========== */
 const WORKSPACE_META = {
-  connect: { title: "เชื่อมต่อ", sub: "อ่าน Gift / Like / Follow จาก TikTok LIVE แล้วส่งต่อให้เกมที่เลือก" },
+  connect: { title: "หน้าหลัก", sub: "เชื่อมต่อไลฟ์ · ดูของขวัญล่าสุดพร้อมรูป · ส่งต่อเข้าเกมที่เลือก" },
   effects: { title: "เอฟเฟกต์เกม", sub: "ทดสอบส่งของเข้าเกม · ดูว่าของขวัญแต่ละชิ้นทำอะไร" },
   roulette: { title: "กล่องสุ่มเอฟเฟกต์", sub: "เปิด–ปิดได้ · ของต้นทางไม่เข้าเกม จนกว่าจะหมุนจบแล้วส่งผลลัพธ์" },
   music: { title: "ฟังก์ชันเพลง", sub: "เมื่อได้ของขวัญตามกฎ โปรแกรมจะเปิดเพลงอัตโนมัติ" },
@@ -255,8 +255,7 @@ const WORKSPACE_META = {
   interrupt: { title: "ขัดขวางจอ", sub: "แสดงภาพ/วิดีโอขัดจอเมื่อได้ของขวัญ Like หรือ Follow" },
   win: { title: "นับ Win", sub: "นับคะแนน Win บน Overlay แยกต่างหาก" },
   jar: { title: "โหลแก้วสะสมของขวัญ", sub: "โหล 2D ตั้ง สมส่วน · ของขวัญตกตามแรงโน้มถ่วง ล้นออกข้างเมื่อเต็ม · รีเซ็ตเมื่อเริ่มไลฟ์ใหม่" },
-  live: { title: "Overlay Gallery", sub: "เลือก overlay ใส่ OBS เป็น Browser Source — พื้นหลังโปร่งใส พร้อมเอฟเฟกต์และอันดับจากไลฟ์จริง" },
-  stickers: { title: "สติกเกอร์", sub: "ชุดรูปสำหรับเกมวิ่ง Temple — ทั้งแผ่นไม่แยกไอคอน" },
+  live: { title: "Overlay Gallery", sub: "เลือกวิดเจ็ตใส่ OBS เป็น Browser Source — คัดลอกลิงก์ ทดสอบ และตั้งค่าได้จากการ์ด" },
   tts: { title: "อ่านเสียง AI", sub: "อ่านชื่อและของขวัญด้วยเสียงไทยอัตโนมัติ" },
   alerts: { title: "เสียงเตือน", sub: "เล่นไฟล์เสียงทันทีเมื่อมีของขวัญ ไลค์ ฟอล หรือแชท" },
   chatbot: { title: "คำสั่งแชท + บอท", sub: "ผู้ชมพิมพ์ !points / !rank แล้วระบบทำงาน · บอทตอบด้วยเสียง" },
@@ -264,8 +263,7 @@ const WORKSPACE_META = {
   points: { title: "แต้มผู้ชม", sub: "สะสมแต้มรายคน แล้วยศอันดับบน Overlay" },
   profiles: { title: "โปรไฟล์ไลฟ์", sub: "เซฟและสลับชุดตั้งค่าทั้งไลฟ์" },
   minecraft: { title: "Minecraft", sub: "ส่งคำสั่งเข้าเซิร์ฟเวอร์ผ่าน RCON เมื่อได้ของขวัญ" },
-  welcome: { title: "กรอบต้อนรับ", sub: "แสดงกรอบรูปและชื่อเมื่อ Superfan หรือผู้ชมเลเวลเกิน 20 เข้าไลฟ์" },
-  agency: { title: "ครีเอเตอร์", sub: "แดชบอร์ดครีเอเตอร์จาก TikTok LIVE Backstage" },
+  welcome: { title: "กรอบต้อนรับ", sub: "ดึงชื่อ รูป และ LV จากไลฟ์ · เริ่มที่ LV 20 · กรอบหรูตามระดับ" },
   update: { title: "อัปเดต", sub: "ตรวจและติดตั้งอัปเดตออนไลน์จาก GitHub Monkeyeffect" },
   devlog: { title: "Dev Log", sub: "ดู log ภายในสำหรับไล่บั๊กและจับจังหวะอีเวนต์" },
 };
@@ -276,6 +274,10 @@ function setWorkspaceMeta(panel) {
   const subEl = document.querySelector(".workspace-sub");
   if (titleEl) titleEl.textContent = meta.title;
   if (subEl) subEl.textContent = meta.sub;
+}
+
+function goToPanel(panel) {
+  document.querySelector(`.nav-btn[data-panel="${panel}"]`)?.click();
 }
 
 document.querySelectorAll(".nav-btn").forEach((btn) => {
@@ -4694,7 +4696,7 @@ async function openJarOverlay() {
     openedNative = false;
   }
   if (!openedNative) {
-    const url = "/jar-overlay.html?v=jar50";
+    const url = "/jar-overlay.html?v=jar51";
     if (!jarOverlayWin || jarOverlayWin.closed) {
       jarOverlayWin = window.open(
         url,
@@ -5193,7 +5195,43 @@ const ROULETTE_ITEM_W = 128;
 const ROULETTE_OVERLAY_CHANNEL = "tgr-roulette-overlay";
 const ROULETTE_OVERLAY_CMD_KEY = "tgr_roulette_overlay_cmd";
 const ROULETTE_OVERLAY_STATUS_KEY = "tgr_roulette_overlay_status";
-let rouletteConfig = { enabled: true, rules: [] };
+let rouletteConfig = { enabled: true, rules: [], game: "" };
+
+function currentRouletteGame() {
+  const id = (gameSelect?.value || currentSelectedGame?.id || "").toLowerCase();
+  const name = typeof cleanGameDisplayName === "function"
+    ? cleanGameDisplayName(
+        id,
+        gameSelect?.selectedOptions?.[0]?.textContent?.trim() || currentSelectedGame?.displayName || id
+      )
+    : (gameSelect?.selectedOptions?.[0]?.textContent?.trim() || currentSelectedGame?.displayName || id);
+  return { id, displayName: name };
+}
+
+function rouletteStorageKey(gameId) {
+  const id = (gameId || currentRouletteGame().id || "").toLowerCase();
+  return id ? `${ROULETTE_KEY}:${id}` : ROULETTE_KEY;
+}
+
+function setRoulettePresetMsg(text, isErr = false) {
+  const el = document.getElementById("roulettePresetMsg");
+  if (!el) return;
+  el.textContent = text || "";
+  el.style.color = isErr ? "#fda4af" : "";
+}
+
+function applyRouletteConfigObject(config, gameId) {
+  const game = gameId || config?.game || currentRouletteGame().id;
+  rouletteConfig = {
+    enabled: config?.enabled !== false,
+    rules: normalizeRouletteRules(config?.rules),
+    game,
+  };
+  localStorage.setItem(rouletteStorageKey(game), JSON.stringify(rouletteConfig));
+  rouletteImageUrlCache.clear();
+  renderRouletteUi();
+  if (typeof renderGiftActionOverview === "function") renderGiftActionOverview();
+}
 let rouletteBusy = false;
 let rouletteQueue = [];
 let rouletteDraftOutcomes = [];
@@ -5400,7 +5438,7 @@ window.addEventListener("storage", (ev) => {
 });
 
 function defaultRouletteConfig() {
-  return { enabled: true, rules: [] };
+  return { enabled: true, rules: [], game: currentRouletteGame().id || "" };
 }
 
 function normalizeRouletteOutcome(raw) {
@@ -5445,12 +5483,15 @@ function normalizeRouletteRules(rules) {
 
 function loadRouletteConfigLocal() {
   try {
-    const raw = localStorage.getItem(ROULETTE_KEY);
+    const game = currentRouletteGame().id;
+    const raw = localStorage.getItem(rouletteStorageKey(game)) || (!game ? localStorage.getItem(ROULETTE_KEY) : "");
     if (!raw) return defaultRouletteConfig();
     const parsed = JSON.parse(raw);
+    if (parsed.game && game && parsed.game !== game) return defaultRouletteConfig();
     return {
       enabled: parsed.enabled !== false,
       rules: normalizeRouletteRules(parsed.rules),
+      game,
     };
   } catch {
     return defaultRouletteConfig();
@@ -5462,13 +5503,8 @@ async function syncRouletteConfigFromServer() {
     const res = await fetch("/api/roulette/config");
     const data = await res.json();
     if (data?.ok && data.config) {
-      rouletteConfig = {
-        enabled: data.config.enabled !== false,
-        rules: normalizeRouletteRules(data.config.rules),
-      };
-      localStorage.setItem(ROULETTE_KEY, JSON.stringify(rouletteConfig));
+      applyRouletteConfigObject(data.config, data.game || data.config.game);
       if (!rouletteDraftOutcomes.length) resetRouletteDraftOutcomes();
-      renderRouletteUi();
       return;
     }
   } catch {
@@ -5482,7 +5518,8 @@ async function syncRouletteConfigFromServer() {
 
 async function saveRouletteConfigToServer() {
   rouletteConfig.rules = normalizeRouletteRules(rouletteConfig.rules);
-  localStorage.setItem(ROULETTE_KEY, JSON.stringify(rouletteConfig));
+  rouletteConfig.game = currentRouletteGame().id || rouletteConfig.game || "";
+  localStorage.setItem(rouletteStorageKey(rouletteConfig.game), JSON.stringify(rouletteConfig));
   const res = await fetch("/api/roulette/config", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -5493,14 +5530,11 @@ async function saveRouletteConfigToServer() {
     throw new Error(data.error || "บันทึกกล่องสุ่มไม่สำเร็จ");
   }
   if (data.config) {
-    rouletteConfig = {
-      enabled: data.config.enabled !== false,
-      rules: normalizeRouletteRules(data.config.rules),
-    };
-    localStorage.setItem(ROULETTE_KEY, JSON.stringify(rouletteConfig));
+    applyRouletteConfigObject(data.config, data.game || data.config.game);
+  } else {
+    renderRouletteUi();
+    if (typeof renderGiftActionOverview === "function") renderGiftActionOverview();
   }
-  renderRouletteUi();
-  renderGiftActionOverview();
 }
 
 function rouletteDefaultImageUrl(imageId) {
@@ -5572,22 +5606,33 @@ async function ensureRouletteDefaultImages(pack) {
   }
 }
 
+function rouletteDefaultsPackKey(gameId) {
+  return `${ROULETTE_DEFAULTS_PACK_KEY}:${gameId || currentRouletteGame().id || ""}`;
+}
+
 async function applyRouletteDefaultsPack(force = false) {
+  const game = currentRouletteGame();
   const res = await fetch(`/defaults/roulette/config.json?t=${Date.now()}`);
   if (!res.ok) throw new Error("ไม่พบแพ็กกล่องสุ่มเริ่มต้น");
   const pack = await res.json();
+  const packGame = String(pack.game || pack.gameId || "temple-escape").toLowerCase();
+  const packTitle = pack.title || "กล่องสุ่ม Temple Escape";
+  if (game.id && packGame && game.id !== packGame) {
+    throw new Error(`${packTitle} ใช้ได้กับ Temple Escape เท่านั้น — ตอนนี้เลือก ${game.displayName || game.id} อยู่`);
+  }
   await ensureRouletteDefaultImages(pack);
   const next = {
     enabled: pack.enabled !== false,
     rules: normalizeRouletteRules(pack.rules),
+    game: game.id || packGame,
   };
   if (!force && rouletteConfig.rules.length) {
-    localStorage.setItem(ROULETTE_DEFAULTS_PACK_KEY, String(pack.packVersion || "1"));
+    localStorage.setItem(rouletteDefaultsPackKey(game.id), String(pack.packVersion || "1"));
     return { applied: false, reason: "already-has-rules", pack };
   }
   rouletteConfig = next;
   await saveRouletteConfigToServer();
-  localStorage.setItem(ROULETTE_DEFAULTS_PACK_KEY, String(pack.packVersion || "1"));
+  localStorage.setItem(rouletteDefaultsPackKey(game.id), String(pack.packVersion || "1"));
   return { applied: true, pack };
 }
 
@@ -5599,7 +5644,12 @@ async function seedRouletteDefaultsIfNeeded() {
       if (peek.ok) {
         const pack = await peek.json();
         const packVer = String(pack?.packVersion || "");
-        const applied = localStorage.getItem(ROULETTE_DEFAULTS_PACK_KEY) || "";
+        const packGame = String(pack?.game || pack?.gameId || "temple-escape").toLowerCase();
+        const selectedId = currentRouletteGame().id;
+        if (selectedId && packGame && selectedId !== packGame) {
+          return;
+        }
+        const applied = localStorage.getItem(rouletteDefaultsPackKey(selectedId)) || "";
         if (pack?.replaceOnUpdate && packVer && packVer !== applied) {
           const forced = await applyRouletteDefaultsPack(true);
           if (forced.applied) {
@@ -5617,7 +5667,7 @@ async function seedRouletteDefaultsIfNeeded() {
     }
     if (rouletteConfig.rules.length) return;
     const result = await applyRouletteDefaultsPack(true);
-    if (result.applied) console.info("[roulette] seeded กฎ 02 defaults");
+    if (result.applied) console.info("[roulette] seeded กล่องสุ่ม Temple Escape");
   } catch (err) {
     console.warn("[roulette] seed defaults failed", err);
   }
@@ -5728,6 +5778,12 @@ function renderRouletteUi() {
   const enabledEl = document.getElementById("rouletteEnabled");
   const countEl = document.getElementById("rouletteRuleCount");
   const list = document.getElementById("rouletteRulesList");
+  const gameHint = document.getElementById("rouletteGameBindHint");
+  if (gameHint) {
+    const game = currentRouletteGame();
+    const name = game.displayName || game.id || "เกมที่เลือก";
+    gameHint.textContent = `พรีเซ็ตกล่องสุ่มของ ${name} — นำเข้า/ส่งออกเฉพาะเกมนี้ เพราะ mapping แต่ละเกมไม่เหมือนกัน`;
+  }
   if (enabledEl) enabledEl.checked = rouletteConfig.enabled !== false;
   if (countEl) countEl.textContent = `${rouletteConfig.rules.length} กฎ`;
   renderRouletteOutcomeEditor();
@@ -6195,7 +6251,9 @@ function renderLog(items) {
     if ((kind === "gift" || kind === "like" || kind === "follow" || kind === "ui" || kind === "game") && giftMatch) {
       const who = fromMatch ? ` <span class="from-name">จาก ${escapeHtml(fromMatch[1])}</span>` : "";
       const testTag = /^\[TEST\]/i.test(text) ? ' <span class="test-tag">(ทดสอบ)</span>' : "";
-      body = `<span class="gift-name">${escapeHtml(giftMatch[1])}</span> x${giftMatch[2]}${who}${testTag}`;
+      const art = giftIconUrl(giftMatch[1]);
+      const img = art ? `<img class="log-gift-art" alt="" src="${escapeHtml(art)}" />` : "";
+      body = `${img}<span class="gift-name">${escapeHtml(giftMatch[1])}</span> x${giftMatch[2]}${who}${testTag}`;
     } else if (kind === "chat") {
       const chatMatch = text.match(/^(?:Chat|chat|ข้อความ)\s*[:：]\s*(.+?)\s+(?:from|จาก)\s+(.+)$/i);
       if (chatMatch) {
@@ -6274,6 +6332,7 @@ function updateStatus(data) {
     selectedGameLabel.textContent = data.selectedGameName;
   }
   if (httpPort) httpPort.textContent = String(data.gameHttpPort ?? 12922);
+  paintLiveStripStatus(data, live);
 
   connectBtn.disabled = isConnecting || tikTokConnected;
   disconnectBtn.disabled = isConnecting || !tikTokConnected;
@@ -6588,23 +6647,14 @@ function syncEffectsPanelForGame(game) {
   }
 }
 
-/** Keyboard mapping UI + delivery for THE RIDER / ZERO-HOUR / Roblox / Minecraft. */
+/** Keyboard / webhook mapping — built-in keymap games plus any user-added game. */
 function isRiderKeymapGame(game) {
   const id = (game?.id || "").toLowerCase();
   const listed = (gameCatalog || []).find((g) => (g.id || "").toLowerCase() === id);
   if (listed?.keyMapFile) return true;
   if (id === "the-rider" || id === "zero-hour" || id === "roblox" || id === "minecraft") return true;
-  if (id !== "custom" && id !== "auto") return false;
-  const blob = [
-    game?.displayName,
-    game?.customProcess,
-    game?.customTitle,
-    id === "custom" ? customGameProcess?.value : "",
-    id === "custom" ? customGameTitle?.value : "",
-    id === "auto" ? lastGameWindowTitle : "",
-  ].join(" ").toUpperCase();
-  return blob.includes("RIDER") || blob.includes("ZERO-HOUR") || blob.includes("ZERO HOUR") ||
-    blob.includes("ROBLOX") || blob.includes("JOJO");
+  if (id && id !== "custom" && id !== "auto" && id !== TEMPLE_GAME_ID && listed) return !!listed.keyMapFile;
+  return false;
 }
 
 const TEMPLE_GIFT_CHIPS = [
@@ -6670,9 +6720,11 @@ function syncGiftChipsForGame(hasKeymap) {
   const signature = chips.map((c) => c.gift).join("|");
   if (host.dataset.chipSet === signature) return;
   host.dataset.chipSet = signature;
-  host.innerHTML = chips.map((c, i) =>
-    `<button type="button" class="chip-btn${i === 0 ? " active" : ""}" data-gift="${c.gift}" data-type="${c.type}">${c.label}</button>`
-  ).join("");
+  host.innerHTML = chips.map((c, i) => {
+    const art = giftIconUrl(c.gift);
+    const img = art ? `<img alt="" src="${escapeHtml(art)}" />` : "";
+    return `<button type="button" class="chip-btn${i === 0 ? " active" : ""}" data-gift="${c.gift}" data-type="${c.type}">${img}${escapeHtml(c.label)}</button>`;
+  }).join("");
   if (testGiftInput) testGiftInput.value = chips[0].gift;
   const typeInput = document.getElementById("testType");
   if (typeInput) typeInput.value = chips[0].type;
@@ -6753,6 +6805,35 @@ function readKeymapRowsFromDom() {
   });
 }
 
+let giftIconByName = new Map();
+let giftCatalogList = [];
+async function ensureGiftIconMap() {
+  if (giftIconByName.size) return;
+  try {
+    const res = await fetch(`/gifts/jar/catalog.json?t=${Date.now()}`, { cache: "no-store" });
+    const pack = await res.json();
+    giftCatalogList = Array.isArray(pack.gifts) ? pack.gifts : [];
+    for (const g of giftCatalogList) {
+      const url = g.file ? `/gifts/jar/icons/${encodeURIComponent(g.file)}` : "";
+      if (!url) continue;
+      if (g.name) giftIconByName.set(String(g.name).toLowerCase(), url);
+      if (g.key) giftIconByName.set(String(g.key).toLowerCase(), url);
+    }
+    for (const [from, to] of Object.entries(pack.aliases || {})) {
+      const dest = giftIconByName.get(String(to || "").toLowerCase());
+      if (dest) giftIconByName.set(String(from).toLowerCase(), dest);
+    }
+  } catch {
+    /* catalog optional */
+  }
+}
+function giftIconUrl(name) {
+  return giftIconByName.get(String(name || "").trim().toLowerCase()) || "";
+}
+function giftArtFor(name, picture) {
+  return giftIconUrl(name) || picture || "";
+}
+
 function renderEffectsKeymapTable(rules, enabled) {
   const tableEl = document.getElementById("effectsKeymapTable");
   const statusEl = document.getElementById("effectsKeymapStatus");
@@ -6768,31 +6849,46 @@ function renderEffectsKeymapTable(rules, enabled) {
   const onCount = keymapDraftRules.filter((r) => r.enabled && (r.vk > 0 || r.key || r.webhookUrl)).length;
   if (statusEl) statusEl.textContent = enabled === false ? "OFF" : `${onCount} live · ${keymapDraftRules.length} actions`;
   if (!tableEl) return;
-  const rows = keymapDraftRules.map((r, i) =>
-    `<tr data-keymap-row="${i}" style="border-top:1px solid rgba(255,255,255,.08);opacity:${r.enabled ? 1 : .45}">
+  const rows = keymapDraftRules.map((r, i) => {
+    const icon = giftIconUrl(r.giftName);
+    const via = r.webhookUrl ? "webhook" : (r.key ? r.key : "ว่าง");
+    return `<tr data-keymap-row="${i}" style="border-top:1px solid rgba(255,255,255,.08);opacity:${r.enabled ? 1 : .45}">
       <td style="padding:6px 4px;white-space:nowrap">
-        <button type="button" class="btn ghost" data-keymap-play="${i}" title="ทดสอบกดคีย์เข้าเกม" style="padding:2px 8px">▶</button>
+        <button type="button" class="btn ghost" data-keymap-play="${i}" title="ทดสอบส่งเข้าเกม ตามจำนวนคอมโบด้านบน" style="padding:2px 8px">▶</button>
         <button type="button" class="btn ghost" data-keymap-del="${i}" title="ลบ" style="padding:2px 8px;color:#fda4af">✕</button>
       </td>
-      <td style="padding:4px"><input data-f="label" value="${escapeHtml(r.label)}" placeholder="หมา" style="width:7.5rem" /></td>
-      <td style="padding:4px"><input data-f="gift" value="${escapeHtml(r.giftName)}" placeholder="Rose / Like / Follow" style="width:9.5rem" /></td>
+      <td style="padding:4px"><input data-f="label" value="${escapeHtml(r.label)}" placeholder="ชื่อแอคชัน" style="width:7.5rem" /></td>
+      <td style="padding:4px">
+        <div style="display:flex;align-items:center;gap:6px">
+          ${icon ? `<img src="${escapeHtml(icon)}" alt="" width="28" height="28" style="width:28px;height:28px;object-fit:contain;border-radius:6px;background:#111" />` : `<span style="width:28px;height:28px;display:inline-block;border-radius:6px;background:#222"></span>`}
+          <input data-f="gift" class="gift-pick-input" value="${escapeHtml(r.giftName)}" placeholder="Rose / Like / Follow" style="width:9rem" />
+        </div>
+      </td>
       <td style="padding:4px">
         <input data-f="key" value="${escapeHtml(r.key)}" placeholder="${r.webhookUrl ? "HTTP" : "ว่าง"}" maxlength="12" style="width:3.6rem;text-align:center;font-weight:700;opacity:${r.key || r.webhookUrl ? 1 : .45}" title="${r.webhookUrl ? escapeHtml(r.webhookUrl) : "คลิกแล้วกดปุ่มเพื่อจับคีย์"}" />
         <input data-f="webhook" type="hidden" value="${escapeHtml(r.webhookUrl || "")}" />
+        ${r.webhookUrl ? `<div style="font-size:.68rem;opacity:.55;max-width:11rem;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(r.webhookUrl)}">${escapeHtml(via)}</div>` : ""}
       </td>
       <td style="padding:4px"><input data-f="hold" type="number" min="20" max="2000" value="${r.holdMs || 80}" style="width:4.2rem" /></td>
       <td style="padding:4px;text-align:center"><input data-f="on" type="checkbox" ${r.enabled ? "checked" : ""} /></td>
-    </tr>`
-  ).join("");
+    </tr>`;
+  }).join("");
   tableEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.85rem">
     <thead><tr style="text-align:left;opacity:.6">
       <th style="padding:4px 8px"></th>
-      <th style="padding:4px 8px">ชื่อ</th>
-      <th style="padding:4px 8px">ของขวัญ / ไลค์ / ฟอล</th>
-      <th style="padding:4px 8px">คีย์</th>
+      <th style="padding:4px 8px">แอคชัน</th>
+      <th style="padding:4px 8px">ของขวัญ</th>
+      <th style="padding:4px 8px">คีย์ / webhook</th>
       <th style="padding:4px 8px">ms</th>
       <th style="padding:4px 8px">ไลฟ์</th>
-    </tr></thead><tbody>${rows || `<tr><td colspan="6" style="padding:10px;opacity:.5">ยังไม่มี Action — กดเพิ่ม Action</td></tr>`}</tbody></table>`;
+    </tr></thead><tbody>${rows || `<tr><td colspan="6" style="padding:10px;opacity:.5">ยังไม่มี Action — กดเพิ่ม Action หรือนำเข้าพรีเซ็ต</td></tr>`}</tbody></table>`;
+  if (!giftIconByName.size && !renderEffectsKeymapTable._loadingIcons) {
+    renderEffectsKeymapTable._loadingIcons = true;
+    ensureGiftIconMap().finally(() => {
+      renderEffectsKeymapTable._loadingIcons = false;
+      renderEffectsKeymapTable(readKeymapRowsFromDom().length ? readKeymapRowsFromDom() : keymapDraftRules, true);
+    });
+  }
 
   tableEl.querySelectorAll("[data-f=key]").forEach((inp) => {
     inp.addEventListener("keydown", (ev) => {
@@ -6816,6 +6912,8 @@ function renderEffectsKeymapTable(rules, enabled) {
       renderEffectsKeymapTable(next, true);
     });
   });
+  tableEl.querySelectorAll(".gift-pick-input").forEach(bindGiftPicker);
+  applyKeymapSearchFilter();
 }
 
 async function playKeymapRow(index) {
@@ -6827,7 +6925,8 @@ async function playKeymapRow(index) {
     return;
   }
   const viaWebhook = !!r.webhookUrl;
-  setKeymapMsg(viaWebhook ? `กำลังยิงเข้าเกม… ${r.webhookUrl}` : `กำลังกด ${r.key} เข้าเกม…`);
+  const count = Math.max(1, Math.min(200, Number(document.getElementById("testCount")?.value) || 1));
+  setKeymapMsg(viaWebhook ? `กำลังยิงเข้าเกม ×${count}…` : `กำลังกด ${r.key} ×${count} เข้าเกม…`);
   try {
     const res = await fetch("/api/keymap/test", {
       method: "POST",
@@ -6836,21 +6935,110 @@ async function playKeymapRow(index) {
         key: r.key,
         vk: r.vk || keyToVk(r.key),
         holdMs: r.holdMs || 80,
-        count: 1,
+        count,
+        giftName: r.giftName || "Rose",
         webhookUrl: r.webhookUrl || "",
       }),
     });
     const data = await res.json();
     if (data.ok) {
       setKeymapMsg(viaWebhook
-        ? `ยิงเข้าเกมแล้ว (${r.label || r.giftName || ""})`
-        : `กด ${r.key} แล้ว (${r.label || r.giftName || ""})`);
+        ? `ยิงเข้าเกมแล้ว ×${data.count || count} (${r.label || r.giftName || ""}) — ส่งชื่อ รูป เหรียญด้วย`
+        : `กด ${r.key} ×${count} แล้ว (${r.label || r.giftName || ""})`);
     } else {
       setKeymapMsg(data.error || "ส่งเข้าเกมไม่สำเร็จ — เปิดเกม / ตัวช่วย ZERO-HOUR ไว้", true);
     }
   } catch (e) {
     setKeymapMsg(e.message || "กดไม่สำเร็จ", true);
   }
+}
+
+function applyKeymapSearchFilter() {
+  const q = (document.getElementById("keymapSearch")?.value || "").trim().toLowerCase();
+  const rows = [...document.querySelectorAll("#effectsKeymapTable tr[data-keymap-row]")];
+  let shown = 0;
+  for (const tr of rows) {
+    const blob = tr.innerText.toLowerCase();
+    const on = !q || blob.includes(q);
+    tr.style.display = on ? "" : "none";
+    if (on) shown++;
+  }
+  const chip = document.getElementById("keymapFilterCount");
+  if (chip) chip.textContent = q ? `${shown}/${rows.length}` : "";
+}
+
+async function playEventRow(index) {
+  const ev = readEventsFromDom()[index];
+  if (!ev) return;
+  const count = Math.max(1, Math.min(200, Number(document.getElementById("testCount")?.value) || 1));
+  const type = ev.trigger === "like" ? "SendLike" : ev.trigger === "follow" ? "SendFollow" : "SendGift";
+  const giftName = ev.giftName || (type === "SendLike" ? "Like" : type === "SendFollow" ? "Follow" : "Rose");
+  const eventsMsg = document.getElementById("effectsEventsMsg");
+  if (eventsMsg) eventsMsg.textContent = `กำลังทดสอบ ${ev.trigger} ${giftName} ×${count}…`;
+  try {
+    await fetch("/api/test-gift", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ giftName, repeatCount: count, messageType: type, nickname: "Test User" }),
+    });
+    if (eventsMsg) eventsMsg.textContent = `ส่งทดสอบแล้ว — ${giftName} ×${count} ควรยิงแอคชัน ${ev.action || "ที่ผูกไว้"}`;
+  } catch (e) {
+    if (eventsMsg) eventsMsg.textContent = e.message || "ทดสอบไม่สำเร็จ";
+  }
+}
+
+function hideGiftPicker() {
+  const box = document.getElementById("giftPicker");
+  if (!box) return;
+  box.hidden = true;
+  box.classList.add("hidden");
+  box.innerHTML = "";
+}
+
+function showGiftPicker(input) {
+  const box = document.getElementById("giftPicker");
+  if (!box || !input) return;
+  const q = (input.value || "").trim().toLowerCase();
+  const hits = giftCatalogList.filter((g) => {
+    const name = String(g.name || "").toLowerCase();
+    const key = String(g.key || "").toLowerCase();
+    return !q || name.includes(q) || key.includes(q);
+  }).slice(0, 14);
+  if (!hits.length) {
+    hideGiftPicker();
+    return;
+  }
+  box.innerHTML = hits.map((g) => {
+    const url = g.file ? `/gifts/jar/icons/${encodeURIComponent(g.file)}` : "";
+    return `<button type="button" class="gift-pick" data-name="${escapeHtml(g.name)}">
+      ${url ? `<img alt="" src="${escapeHtml(url)}" />` : ""}
+      <span>${escapeHtml(g.name)}</span>
+      <em>◆${Number(g.coins) || 0}</em>
+    </button>`;
+  }).join("");
+  const rect = input.getBoundingClientRect();
+  box.style.left = `${Math.max(8, rect.left + window.scrollX)}px`;
+  box.style.top = `${rect.bottom + window.scrollY + 4}px`;
+  box.hidden = false;
+  box.classList.remove("hidden");
+  box.querySelectorAll(".gift-pick").forEach((btn) => {
+    btn.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      input.value = btn.getAttribute("data-name") || "";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      hideGiftPicker();
+    });
+  });
+}
+
+function bindGiftPicker(input) {
+  if (!input || input.dataset.pickerBound) return;
+  input.dataset.pickerBound = "1";
+  input.addEventListener("focus", () => {
+    ensureGiftIconMap().then(() => showGiftPicker(input));
+  });
+  input.addEventListener("input", () => showGiftPicker(input));
+  input.addEventListener("blur", () => setTimeout(hideGiftPicker, 180));
 }
 
 function readEventsFromDom() {
@@ -6899,6 +7087,7 @@ function renderEffectsEventsTable(events) {
     const giftPh = e.trigger === "chat" ? "1 = แดง · 2 = น้ำเงิน" : "Rose / Perfume";
     return `<tr data-event-row="${i}" style="border-top:1px solid rgba(255,255,255,.08);opacity:${e.enabled ? 1 : .45}">
       <td style="padding:6px 4px;white-space:nowrap">
+        <button type="button" class="btn ghost" data-event-play="${i}" title="ทดสอบทริกเกอร์นี้ ตามจำนวนคอมโบด้านบน" style="padding:2px 8px">▶</button>
         <button type="button" class="btn ghost" data-event-del="${i}" title="ลบ" style="padding:2px 8px;color:#fda4af">✕</button>
       </td>
       <td style="padding:4px;text-align:center"><input data-f="on" type="checkbox" ${e.enabled ? "checked" : ""} /></td>
@@ -6910,7 +7099,7 @@ function renderEffectsEventsTable(events) {
           <option value="follow" ${e.trigger === "follow" ? "selected" : ""}>ฟอลโลว์</option>
         </select>
       </td>
-      <td style="padding:4px"><input data-f="gift" value="${escapeHtml(e.giftName)}" placeholder="${giftPh}" ${giftDisabled} style="width:11rem" /></td>
+      <td style="padding:4px"><input data-f="gift" class="gift-pick-input" value="${escapeHtml(e.giftName)}" placeholder="${giftPh}" ${giftDisabled} style="width:11rem" /></td>
       <td style="padding:4px"><select data-f="action" style="min-width:8rem">${actionOptionsHtml(e.action)}</select></td>
     </tr>`;
   }).join("");
@@ -6932,6 +7121,9 @@ function renderEffectsEventsTable(events) {
       }
     });
   });
+  tableEl.querySelectorAll("[data-event-play]").forEach((btn) => {
+    btn.addEventListener("click", () => playEventRow(Number(btn.getAttribute("data-event-play"))));
+  });
   tableEl.querySelectorAll("[data-event-del]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const next = readEventsFromDom();
@@ -6939,6 +7131,7 @@ function renderEffectsEventsTable(events) {
       renderEffectsEventsTable(next);
     });
   });
+  tableEl.querySelectorAll(".gift-pick-input").forEach(bindGiftPicker);
 }
 
 async function exportEffectsKeymap() {
@@ -7042,6 +7235,10 @@ async function importEffectsKeymapFile(ev) {
       if (data.mismatch) window.alert(msg);
       return;
     }
+    if (data.game) {
+      await restoreSelectedGame(data.game, data.displayName || keep.displayName);
+      await loadGames();
+    }
     const info = await applyImportedEffectsPreset(data, text);
     setImportMsg(
       info.empty
@@ -7134,6 +7331,7 @@ async function saveSelectedGame(extra = {}) {
     };
     syncEffectsPanelForGame(snap);
     broadcastSelectedGame(snap);
+    await syncRouletteConfigFromServer();
     await fetchStatus();
   } catch {
     /* ignore */
@@ -7218,23 +7416,49 @@ async function scanRunningWindows() {
   }
 }
 
+async function addUserGame(payload) {
+  const res = await fetch("/api/games/user", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!data.ok) throw new Error(data.error || "เพิ่มเกมไม่สำเร็จ");
+  gameCatalog = Array.isArray(data.games) ? data.games : gameCatalog;
+  if (gameSelect) {
+    gameSelect.innerHTML = "";
+    for (const g of gameCatalog) {
+      const opt = document.createElement("option");
+      opt.value = g.id;
+      opt.textContent = g.name;
+      gameSelect.appendChild(opt);
+    }
+    if (data.game?.id) gameSelect.value = data.game.id;
+  }
+  toggleCustomGameFields();
+  await saveSelectedGame({
+    id: data.game?.id,
+    displayName: data.game?.name,
+    customProcess: payload.processName || "",
+    customTitle: payload.windowTitle || "",
+    force: true,
+  });
+  return data.game;
+}
+
 async function useScannedWindow() {
   if (!scannedWindowSelect?.value) return;
   try {
     const picked = JSON.parse(scannedWindowSelect.value);
-    if (gameSelect) gameSelect.value = "custom";
-    if (customGameProcess) customGameProcess.value = picked.processName || "";
-    if (customGameTitle) customGameTitle.value = picked.windowTitle || "";
-    toggleCustomGameFields();
-    await saveSelectedGame({
-      id: "custom",
-      customProcess: picked.processName,
-      customTitle: picked.windowTitle,
-      displayName: picked.windowTitle || picked.processName,
+    const game = await addUserGame({
+      name: picked.windowTitle || picked.processName,
+      processName: picked.processName,
+      windowTitle: picked.windowTitle,
     });
     if (scanGamesPanel) scanGamesPanel.classList.add("hidden");
-  } catch {
-    /* ignore */
+    alert(`เพิ่มเกม ${game?.name || picked.windowTitle} แล้ว — นำเข้าพรีเซ็ตได้เลย`);
+  } catch (err) {
+    alert(err.message || "เพิ่มเกมจากหน้าต่างไม่สำเร็จ");
   }
 }
 
@@ -7246,6 +7470,26 @@ customGameProcess?.addEventListener("change", () => saveSelectedGame());
 customGameTitle?.addEventListener("change", () => saveSelectedGame());
 scanGamesBtn?.addEventListener("click", scanRunningWindows);
 useScannedGameBtn?.addEventListener("click", useScannedWindow);
+document.getElementById("addGameBtn")?.addEventListener("click", () => {
+  const panel = document.getElementById("addGamePanel");
+  panel?.classList.toggle("hidden");
+});
+document.getElementById("addGameSaveBtn")?.addEventListener("click", async () => {
+  const name = document.getElementById("addGameName")?.value?.trim() || "";
+  const processName = document.getElementById("addGameProcess")?.value?.trim() || "";
+  const windowTitle = document.getElementById("addGameTitle")?.value?.trim() || "";
+  if (!name && !processName && !windowTitle) {
+    alert("ใส่ชื่อเกม หรือชื่อหน้าต่างก่อน");
+    return;
+  }
+  try {
+    const game = await addUserGame({ name, processName, windowTitle });
+    document.getElementById("addGamePanel")?.classList.add("hidden");
+    alert(`เพิ่มเกม ${game?.name || name} แล้ว — นำเข้าพรีเซ็ตได้เลย`);
+  } catch (err) {
+    alert(err.message || "เพิ่มเกมไม่สำเร็จ");
+  }
+});
 
 document.getElementById("giftChips")?.addEventListener("click", (e) => {
   const btn = e.target.closest(".chip-btn");
@@ -7425,13 +7669,68 @@ document.getElementById("rouletteCloseOverlayBtn")?.addEventListener("click", ()
   closeRouletteOverlay().catch(() => {});
 });
 document.getElementById("rouletteRestoreDefaultsBtn")?.addEventListener("click", async () => {
-  if (!confirm("ใช้กฎเริ่มต้น กฎ 02 (little hippo 16 ช่อง + Game Controller + Balloon Box) แทนกฎปัจจุบัน?\nจะทับกฎกล่องสุ่มในแอพ")) return;
+  const game = currentRouletteGame();
+  if (!confirm(`ใส่กล่องสุ่ม Temple Escape (little hippo 16 ช่อง + Game Controller + Balloon Box) แทนกฎปัจจุบันของ ${game.displayName || game.id || "เกมนี้"}?\nใช้ได้กับ Temple Escape เท่านั้น — เกมอื่นไม่ถูกแตะ`)) return;
   try {
     await applyRouletteDefaultsPack(true);
-    alert("ใส่กฎเริ่มต้น กฎ 02 แล้ว");
+    setRoulettePresetMsg("ใส่กล่องสุ่ม Temple Escape แล้ว");
+    alert("ใส่กล่องสุ่ม Temple Escape แล้ว");
   } catch (err) {
+    setRoulettePresetMsg(err.message || String(err), true);
     alert(err.message || String(err));
   }
+});
+async function exportRoulettePreset() {
+  const game = currentRouletteGame();
+  setRoulettePresetMsg(`กำลังส่งออกพรีเซ็ตของ ${game.displayName || game.id}…`);
+  const res = await fetch("/api/roulette/export");
+  if (!res.ok) throw new Error("ส่งออกไม่สำเร็จ");
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const slug = (game.displayName || game.id || "roulette")
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .trim() || "roulette";
+  a.download = `${slug}-กล่องสุ่ม.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  setRoulettePresetMsg(`ส่งออกแล้วสำหรับ ${game.displayName || game.id} — ไฟล์ ${a.download}`);
+}
+
+async function importRoulettePresetFile(ev) {
+  const file = ev.target?.files?.[0];
+  ev.target.value = "";
+  if (!file) return;
+  const game = currentRouletteGame();
+  setRoulettePresetMsg(`กำลังนำเข้า ${file.name} สำหรับ ${game.displayName || game.id}…`);
+  const text = await file.text();
+  const qs = new URLSearchParams({ file: file.name, game: game.id || "" }).toString();
+  const res = await fetch("/api/roulette/import?" + qs, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: text,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!data.ok) {
+    const msg = data.error || "นำเข้าไม่สำเร็จ";
+    setRoulettePresetMsg(msg, true);
+    if (data.mismatch) window.alert(msg);
+    return;
+  }
+  applyRouletteConfigObject(data.config, data.game || data.config?.game);
+  const name = data.displayName || game.displayName || game.id;
+  setRoulettePresetMsg(`นำเข้าแล้วสำหรับ ${name} · ${data.rules || rouletteConfig.rules.length} กฎ — ใช้ตอนไลฟ์ได้เลย`);
+}
+
+document.getElementById("rouletteImportBtn")?.addEventListener("click", () => {
+  document.getElementById("rouletteImportFile")?.click();
+});
+document.getElementById("rouletteExportBtn")?.addEventListener("click", () => {
+  exportRoulettePreset().catch((err) => setRoulettePresetMsg(err.message || String(err), true));
+});
+document.getElementById("rouletteImportFile")?.addEventListener("change", (ev) => {
+  importRoulettePresetFile(ev).catch((err) => setRoulettePresetMsg(err.message || String(err), true));
 });
 document.getElementById("rouletteAddOutcomeBtn")?.addEventListener("click", () => {
   rouletteDraftOutcomes.push({ giftName: "", label: "", imageId: "" });
@@ -7590,13 +7889,15 @@ renderVideoUiState();
 renderWinUiState();
 syncWinScoreToOverlay();
 renderTtsUiState();
-seedRouletteDefaultsIfNeeded();
 seedDefaultWinIfNeeded();
 setInterval(refreshTtsStatus, 5000);
 setInterval(syncWinScoreToOverlay, 3000);
 
 pollTimer = setInterval(fetchStatus, 1500);
-loadGames().finally(() => fetchStatus());
+loadGames().finally(() => {
+  fetchStatus();
+  seedRouletteDefaultsIfNeeded();
+});
 
 /** Host (MainForm) calls this while minimized so gift→interrupt/music keep moving. */
 window.__tgrKeepAlive = function tgrKeepAlive() {
@@ -7628,6 +7929,15 @@ function applyStatusPollInterval() {
   }
 }
 document.addEventListener("visibilitychange", applyStatusPollInterval);
+
+document.getElementById("keymapSearch")?.addEventListener("input", applyKeymapSearchFilter);
+bindGiftPicker(document.getElementById("testGift"));
+ensureGiftIconMap().then(() => {
+  const host = document.getElementById("giftChips");
+  if (host) delete host.dataset.chipSet;
+  syncGiftChipsForGame(isRiderKeymapGame(currentSelectedGame));
+  refreshLiveStatsPreview();
+});
 
 seedDefaultMusicIfNeeded()
   .then((seeded) => {
@@ -7690,57 +8000,105 @@ loadJarCatalogUi();
 renderJarUiState();
 
 const LIVE_OVERLAY_BASE = "http://127.0.0.1:3847/live-overlay.html";
-const LIVE_OVERLAY_VER = "gal9";
+const LIVE_OVERLAY_VER = "gal18";
 let _liveStatsLastRev = "";
 let _liveLastCountTimer = 0;
 let _liveSettingsTimer = 0;
 
 const OVERLAY_GALLERY_SECTIONS = [
-  { cat: "ต้อนรับ", title: "Welcome" },
-  { cat: "เล่น", title: "Games" },
-  { cat: "เอฟเฟกต์", title: "Effects" },
-  { cat: "ข้อมูล", title: "Info" },
-  { cat: "อันดับ", title: "Leaderboards" },
-  { cat: "ยูทิลิตี้", title: "Utilities" },
-  { cat: "ตัวละคร", title: "Characters" },
-  { cat: "พิเศษ", title: "Monkeyeffect" },
+  { cat: "เล่น", title: "Games", theme: "games" },
+  { cat: "เอฟเฟกต์", title: "Effects", theme: "fx" },
+  { cat: "ข้อมูล", title: "Info", theme: "info" },
+  { cat: "อันดับ", title: "Leaderboards", theme: "rank" },
+  { cat: "ยูทิลิตี้", title: "Utilities", theme: "util" },
+  { cat: "ตัวละคร", title: "Characters", theme: "char" },
+  { cat: "พิเศษ", title: "Monkeyeffect", theme: "special" },
 ];
 
+const OVERLAY_FEATURED = [
+  {
+    id: "studio",
+    kicker: "FEATURED",
+    title: "สตูดิโอไลฟ์",
+    desc: "วิดเจ็ตเด่นสำหรับ OBS / TikTok LIVE Studio — คัดลอกลิงก์ แล้ววางเป็น Browser Source",
+    theme: "studio",
+    ids: ["welcome", "coinmatch", "coinjar"],
+  },
+];
+
+const LIVE_FIELD_IDS = {
+  lastCount: "liveLastCount",
+  goal: "liveGoal",
+  timerSeconds: "liveTimerSeconds",
+  streamer: "liveStreamer",
+  song: "liveSong",
+  socials: "liveSocials",
+  commands: "liveCommands",
+};
+
+const OVERLAY_SETTINGS = {
+  welcome: { hint: "ตั้งเลเวลขั้นต่ำและเวลาแสดงที่หน้ากรอบต้อนรับ", panel: "welcome", panelLabel: "เปิดหน้ากรอบต้อนรับ" },
+  coinmatch: { fields: ["goal"], hint: "เมื่อเพชรไลฟ์ถึงเป้า แถบจะเต็มแล้วโชว์ MATCH" },
+  coinjar: { fields: ["goal"], hint: "โหลเติมตามเพชรที่สะสม จนถึงเป้าที่ตั้ง" },
+  slider: { fields: ["goal"], hint: "สไลเดอร์เดินตามเพชรไลฟ์เทียบกับเป้า" },
+  gifters: { fields: ["lastCount"], hint: "จำนวนคนส่งของขวัญล่าสุดที่โชว์บนจอ" },
+  feed: { fields: ["lastCount"], hint: "จำนวนรายการของขวัญในฟีด" },
+  chat: { fields: ["lastCount"], hint: "จำนวนบรรทัดแชทที่โชว์" },
+  timer: { fields: ["timer"], hint: "นาฬิกานับถอยหลังบนจอไลฟ์" },
+  subathon: { fields: ["timer"], hint: "ยืดเวลาเมื่อมีของขวัญ — กฎละเอียดอยู่ที่หน้า Subathon", panel: "subathon", panelLabel: "เปิดหน้า Subathon" },
+  tiny: { fields: ["streamer"], hint: "ชื่อที่โชว์ใต้ลิงน้อย" },
+  songs: { fields: ["song"], hint: "ชื่อเพลงที่โชว์บนจอ" },
+  social: { fields: ["socials"], hint: "ข้อความโซเชียลหมุนทีละบรรทัด" },
+  commands: { fields: ["commands"], hint: "รายการคำสั่งที่โชว์บนจอ" },
+  jar: { hint: "รูปโหล ของขวัญ และฟิสิกส์ตั้งที่หน้าโหลแก้ว", panel: "jar", panelLabel: "เปิดหน้าโหลแก้ว" },
+  roulette: { hint: "รายการของรางวัลและกฎสุ่มตั้งที่หน้ากล่องสุ่ม", panel: "roulette", panelLabel: "เปิดหน้ากล่องสุ่ม" },
+  points: { hint: "แต้มผู้ชมตั้งที่หน้าแต้ม", panel: "points", panelLabel: "เปิดหน้าแต้มผู้ชม" },
+  pointsboard: { hint: "อันดับแต้มดึงจากหน้าแต้มผู้ชม", panel: "points", panelLabel: "เปิดหน้าแต้มผู้ชม" },
+  bot: { hint: "คำตอบบอทตั้งที่หน้าคำสั่งแชท", panel: "chatbot", panelLabel: "เปิดหน้าคำสั่งแชท" },
+  cannon: { hint: "ยิงเมื่อมีของขวัญ — วาง Browser Source แล้วคีย์เขียวได้ด้วย &chroma=1" },
+  likes: { hint: "น้ำพุหัวใจเมื่อมีไลค์ — ใช้ &chroma=1 ถ้าต้องการคีย์เขียว" },
+  firework: { hint: "พลุเมื่อมีของขวัญ — ใช้ &chroma=1 ถ้าต้องการคีย์เขียว" },
+  snow: { hint: "หิมะตกต่อเนื่อง — ใช้ &chroma=1 ถ้าต้องการคีย์เขียว" },
+  emojify: { hint: "อิโมจิจากแชทและของขวัญ — ใช้ &chroma=1 ถ้าต้องการคีย์เขียว" },
+  drop: { hint: "เหรียญตกเมื่อมีของขวัญ — ใช้ &chroma=1 ถ้าต้องการคีย์เขียว" },
+  buddies: { hint: "ตัวละครผู้ชมลอยบนจอ — ใช้ &chroma=1 ถ้าต้องการคีย์เขียว" },
+};
+
 const OVERLAY_GALLERY = [
-  { id: "welcome", name: "กรอบต้อนรับ Superfan", cat: "ต้อนรับ", w: 720, h: 420 },
-  { id: "coinmatch", name: "Coin Match", cat: "เล่น", w: 520, h: 280 },
-  { id: "coinjar", name: "Coin Jar", cat: "เล่น", w: 360, h: 480 },
-  { id: "actions", name: "Wheel Of Actions", cat: "เล่น", w: 480, h: 480 },
-  { id: "fortune", name: "Wheel of Fortune", cat: "เล่น", w: 480, h: 480 },
-  { id: "slider", name: "Interaction Slider", cat: "เล่น", w: 560, h: 240 },
-  { id: "cannon", name: "Gift Cannon", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
-  { id: "likes", name: "Like Fountain", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
-  { id: "firework", name: "Gift Firework", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
-  { id: "snow", name: "Falling Snow", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
-  { id: "emojify", name: "Emojify", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
-  { id: "drop", name: "Points Drop", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
-  { id: "social", name: "Social Media Rotator", cat: "ข้อมูล", w: 720, h: 160 },
-  { id: "chat", name: "Chat", cat: "ข้อมูล", w: 420, h: 560 },
-  { id: "feed", name: "Gift Feed", cat: "ข้อมูล", w: 420, h: 520 },
-  { id: "gifters", name: "Last Gifters", cat: "ข้อมูล", w: 360, h: 420 },
-  { id: "points", name: "Points Animation", cat: "ข้อมูล", w: 480, h: 240 },
-  { id: "coins", name: "เพชรไลฟ์นี้", cat: "ข้อมูล", w: 420, h: 220 },
-  { id: "userinfo", name: "User Info Screen", cat: "ข้อมูล", w: 420, h: 360 },
-  { id: "commands", name: "Command Info Screen", cat: "ข้อมูล", w: 480, h: 360 },
-  { id: "myactions", name: "My Actions", cat: "ข้อมูล", w: 420, h: 360 },
-  { id: "topgifters", name: "Top Gifters", cat: "อันดับ", w: 420, h: 520 },
-  { id: "topliker", name: "Top Liker", cat: "อันดับ", w: 420, h: 520 },
-  { id: "ranking", name: "Ranking List", cat: "อันดับ", w: 420, h: 520 },
-  { id: "viewers", name: "Viewer Count", cat: "อันดับ", w: 420, h: 220 },
-  { id: "timer", name: "Timer", cat: "ยูทิลิตี้", w: 420, h: 240 },
-  { id: "subathon", name: "Subathon Timer", cat: "ยูทิลิตี้", w: 420, h: 260 },
-  { id: "pointsboard", name: "Points Leaderboard", cat: "อันดับ", w: 420, h: 520 },
-  { id: "bot", name: "Chatbot Replies", cat: "ข้อมูล", w: 420, h: 360 },
-  { id: "songs", name: "Song Requests", cat: "ยูทิลิตี้", w: 520, h: 240 },
-  { id: "buddies", name: "Stream Buddies", cat: "ตัวละคร", w: 1280, h: 720, fx: 1 },
-  { id: "tiny", name: "Tiny Diny", cat: "ตัวละคร", w: 360, h: 360 },
-  { id: "jar", name: "โหลแก้ว (ฟิสิกส์)", cat: "พิเศษ", w: 720, h: 1080, url: "http://127.0.0.1:3847/jar-overlay.html?v=jar50" },
-  { id: "roulette", name: "กล่องสุ่มเกม", cat: "พิเศษ", w: 720, h: 720, url: "http://127.0.0.1:3847/roulette-overlay.html" },
+  { id: "welcome", name: "กรอบต้อนรับ Superfan", desc: "กรอบหรูตามเลเวลจากไลฟ์ — ดึงชื่อ รูปโปรไฟล์ และ LV จริง", cat: "ต้อนรับ", w: 720, h: 420, demo: "fan" },
+  { id: "coinmatch", name: "Coin Match", desc: "แถบเป้าเพชรไลฟ์นี้ พอถึงเป้าโชว์ MATCH", cat: "เล่น", w: 520, h: 280 },
+  { id: "coinjar", name: "Coin Jar", desc: "โหลเหรียญเติมตามเพชรที่สะสมในไลฟ์", cat: "เล่น", w: 360, h: 480 },
+  { id: "actions", name: "Wheel Of Actions", desc: "วงล้อสุ่มแอ็กชันเมื่อมีของขวัญ", cat: "เล่น", w: 480, h: 480 },
+  { id: "fortune", name: "Wheel of Fortune", desc: "วงล้อหมุนตามของขวัญล่าสุด", cat: "เล่น", w: 480, h: 480 },
+  { id: "slider", name: "Interaction Slider", desc: "สไลเดอร์ปฏิสัมพันธ์ตามเป้าเพชร", cat: "เล่น", w: 560, h: 240 },
+  { id: "cannon", name: "Gift Cannon", desc: "ยิงของขวัญเป็นกระสุนข้ามจอ", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "likes", name: "Like Fountain", desc: "น้ำพุหัวใจเมื่อมีคนกดไลค์", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "firework", name: "Gift Firework", desc: "พลุของขวัญเต็มจอ", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "snow", name: "Falling Snow", desc: "หิมะตกต่อเนื่องบนจอไลฟ์", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "emojify", name: "Emojify", desc: "อิโมจิจากแชทและของขวัญลอยขึ้นจอ", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "drop", name: "Points Drop", desc: "เหรียญแต้มตกจากด้านบน", cat: "เอฟเฟกต์", w: 1280, h: 720, fx: 1 },
+  { id: "social", name: "Social Media Rotator", desc: "หมุนข้อความโซเชียลที่ตั้งไว้", cat: "ข้อมูล", w: 720, h: 200, stage: 1 },
+  { id: "chat", name: "Chat", desc: "แชทไลฟ์ล่าสุดแบบโปร่งใส", cat: "ข้อมูล", w: 480, h: 640, stage: 1 },
+  { id: "feed", name: "Gift Feed", desc: "ฟีดของขวัญพร้อมจำนวนเพชร", cat: "ข้อมูล", w: 480, h: 620, stage: 1 },
+  { id: "gifters", name: "Last Gifters", desc: "รายชื่อคนส่งของขวัญล่าสุด", cat: "ข้อมูล", w: 420, h: 560, stage: 1 },
+  { id: "points", name: "Points Animation", desc: "แอนิเมชันแต้มที่เพิ่งได้", cat: "ข้อมูล", w: 520, h: 260, stage: 1 },
+  { id: "coins", name: "เพชรไลฟ์นี้", desc: "ยอดเพชรสะสมของไลฟ์นี้", cat: "ข้อมูล", w: 520, h: 260, stage: 1 },
+  { id: "userinfo", name: "User Info Screen", desc: "ชื่อ รูป และของขวัญผู้ชมคนล่าสุด", cat: "ข้อมูล", w: 480, h: 480, stage: 1 },
+  { id: "commands", name: "Command Info Screen", desc: "รายการคำสั่งที่ตั้งไว้บนจอ", cat: "ข้อมูล", w: 520, h: 480, stage: 1 },
+  { id: "myactions", name: "My Actions", desc: "อีเวนต์ล่าสุดจากไลฟ์", cat: "ข้อมูล", w: 480, h: 480, stage: 1 },
+  { id: "topgifters", name: "Top Gifters", desc: "อันดับคนส่งของขวัญ", cat: "อันดับ", w: 560, h: 720 },
+  { id: "topliker", name: "Top Liker", desc: "อันดับคนกดไลค์", cat: "อันดับ", w: 560, h: 720 },
+  { id: "ranking", name: "Ranking List", desc: "อันดับรวมเพชรและไลค์", cat: "อันดับ", w: 560, h: 720 },
+  { id: "viewers", name: "Viewer Count", desc: "จำนวนคนดูตอนนี้", cat: "อันดับ", w: 560, h: 280 },
+  { id: "timer", name: "Timer", desc: "นาฬิกานับถอยหลังบนจอ", cat: "ยูทิลิตี้", w: 420, h: 240 },
+  { id: "subathon", name: "Subathon Timer", desc: "นาฬิกายืดเวลาเมื่อมีของขวัญ", cat: "ยูทิลิตี้", w: 420, h: 260 },
+  { id: "pointsboard", name: "Points Leaderboard", desc: "อันดับแต้มผู้ชม", cat: "อันดับ", w: 560, h: 720 },
+  { id: "bot", name: "Chatbot Replies", desc: "คำตอบล่าสุดของแชทบอท", cat: "ข้อมูล", w: 480, h: 480, stage: 1 },
+  { id: "songs", name: "Song Requests", desc: "เพลงที่กำลังเล่น / คิวขอเพลง", cat: "ยูทิลิตี้", w: 520, h: 240 },
+  { id: "buddies", name: "Stream Buddies", desc: "ตัวละครผู้ชมลอยบนจอ", cat: "ตัวละคร", w: 1280, h: 720, fx: 1 },
+  { id: "tiny", name: "Tiny Diny", desc: "ลิงน้อยกระโดดเมื่อมีของขวัญ", cat: "ตัวละคร", w: 360, h: 360 },
+  { id: "jar", name: "โหลแก้ว (ฟิสิกส์)", desc: "โหลแก้วตั้ง ของขวัญตกกองตามแรงโน้มถ่วง", cat: "พิเศษ", w: 720, h: 1080, url: "http://127.0.0.1:3847/jar-overlay.html?v=jar51" },
+  { id: "roulette", name: "กล่องสุ่มเกม", desc: "หมุนสุ่มผลแล้วค่อยส่งเข้าเกม", cat: "พิเศษ", w: 720, h: 720, url: "http://127.0.0.1:3847/roulette-overlay.html" },
 ];
 
 function liveOverlayUrl(panel, fx) {
@@ -7749,30 +8107,210 @@ function liveOverlayUrl(panel, fx) {
   return `${LIVE_OVERLAY_BASE}?panel=${encodeURIComponent(panel)}&v=${LIVE_OVERLAY_VER}${fx ? "&chroma=1" : ""}`;
 }
 
+function galleryPreviewUrl(item) {
+  if (item.url) {
+    const path = String(item.url).replace(/^https?:\/\/[^/]+/, "");
+    const join = path.includes("?") ? "&" : "?";
+    return `${path}${join}gallery=1`;
+  }
+  const demo = item.demo ? `&demo=${encodeURIComponent(item.demo)}` : "";
+  return `/live-overlay.html?panel=${encodeURIComponent(item.id)}&v=${LIVE_OVERLAY_VER}&gallery=1${demo}`;
+}
+
+function liveStoreValue(key) {
+  const el = document.getElementById(LIVE_FIELD_IDS[key]);
+  return el ? el.value : "";
+}
+
+function overlayPopFieldHtml(kind) {
+  if (kind === "goal") {
+    return `<label>เป้าเพชร</label>
+      <input class="field og-pop-input" data-live="goal" type="number" min="1" max="10000000" value="${escapeHtml(liveStoreValue("goal") || "1000")}" />`;
+  }
+  if (kind === "lastCount") {
+    return `<label>จำนวนที่โชว์</label>
+      <input class="field og-pop-input" data-live="lastCount" type="number" min="3" max="15" value="${escapeHtml(liveStoreValue("lastCount") || "8")}" />`;
+  }
+  if (kind === "timer") {
+    return `<label>เวลา (วินาที)</label>
+      <input class="field og-pop-input" data-live="timerSeconds" type="number" min="5" max="86400" value="${escapeHtml(liveStoreValue("timerSeconds") || "300")}" />
+      <div class="og-pop-actions">
+        <button type="button" class="btn primary small og-timer" data-timer="start">เริ่ม</button>
+        <button type="button" class="btn ghost small og-timer" data-timer="stop">หยุด</button>
+        <button type="button" class="btn ghost small og-timer" data-timer="reset">รีเซ็ต</button>
+      </div>`;
+  }
+  if (kind === "streamer") {
+    return `<label>ชื่อที่โชว์บนจอ</label>
+      <input class="field og-pop-input" data-live="streamer" type="text" placeholder="ชื่อสตรีมเมอร์" value="${escapeHtml(liveStoreValue("streamer"))}" />`;
+  }
+  if (kind === "song") {
+    return `<label>เพลงที่กำลังเล่น</label>
+      <input class="field og-pop-input" data-live="song" type="text" placeholder="ชื่อเพลง" value="${escapeHtml(liveStoreValue("song"))}" />`;
+  }
+  if (kind === "socials") {
+    return `<label>โซเชียล (บรรทัดละ 1 อัน)</label>
+      <textarea class="field og-pop-input og-area" data-live="socials" rows="3">${escapeHtml(liveStoreValue("socials"))}</textarea>`;
+  }
+  if (kind === "commands") {
+    return `<label>คำสั่งบนจอ (บรรทัดละ 1)</label>
+      <textarea class="field og-pop-input og-area" data-live="commands" rows="3">${escapeHtml(liveStoreValue("commands"))}</textarea>`;
+  }
+  return "";
+}
+
+function overlaySettingsPop(item) {
+  const spec = OVERLAY_SETTINGS[item.id] || { hint: "วิดเจ็ตนี้ดึงข้อมูลจากไลฟ์โดยตรง ไม่มีค่าเฉพาะ" };
+  const fields = (spec.fields || []).map(overlayPopFieldHtml).join("");
+  const panelBtn = spec.panel
+    ? `<button type="button" class="btn secondary small og-pop-panel" data-panel="${escapeHtml(spec.panel)}">${escapeHtml(spec.panelLabel || "เปิดหน้าตั้งค่า")}</button>`
+    : "";
+  const saveBtn = fields
+    ? `<button type="button" class="btn primary small og-pop-save">บันทึก</button>`
+    : "";
+  return `<div class="og-pop" hidden>
+    <div class="og-pop-head">
+      <strong>ตั้งค่า ${escapeHtml(item.name)}</strong>
+      <button type="button" class="og-pop-close" aria-label="ปิด">×</button>
+    </div>
+    ${spec.hint ? `<p class="og-pop-hint">${escapeHtml(spec.hint)}</p>` : ""}
+    ${fields}
+    ${(saveBtn || panelBtn) ? `<div class="og-pop-actions">${saveBtn}${panelBtn}</div>` : ""}
+  </div>`;
+}
+
+function welcomeGalleryExtras() {
+  return `<div id="welcomeLivePerson" class="welcome-live-person">ยังไม่มีผู้ชมจากไลฟ์ — เชื่อมต่อแล้วกรอบจะดึงชื่อ รูป และ LV จริง</div>
+    <div class="welcome-tier-picks" id="welcomeTierPicks">
+      <button type="button" class="welcome-tier-card is-on" data-welcome-demo="fan"><span>Superfan</span><strong>แฟนคลับ</strong></button>
+      <button type="button" class="welcome-tier-card" data-welcome-demo="silver"><span>LV 20</span><strong>เงิน</strong></button>
+      <button type="button" class="welcome-tier-card" data-welcome-demo="gold"><span>LV 30</span><strong>ทอง</strong></button>
+      <button type="button" class="welcome-tier-card" data-welcome-demo="platinum"><span>LV 40</span><strong>แพลตินัม</strong></button>
+      <button type="button" class="welcome-tier-card" data-welcome-demo="diamond"><span>LV 50</span><strong>เพชร</strong></button>
+    </div>`;
+}
+
+function overlayWidgetCard(item, featured) {
+  const url = liveOverlayUrl(item.id, item.fx);
+  const previewUrl = galleryPreviewUrl(item);
+  const frameId = item.id === "welcome" ? " id=\"welcomeGalleryFrame\"" : "";
+  const extras = item.id === "welcome" ? welcomeGalleryExtras() : "";
+  const preview = featured
+    ? `<div class="og-stage og-stage-${escapeHtml(item.id)}"><iframe${frameId} class="og-stage-frame" title="${escapeHtml(item.name)}" src="${escapeHtml(previewUrl)}" loading="lazy"></iframe></div>`
+    : "";
+  const previewBtn = featured
+    ? ""
+    : `<button type="button" class="btn ghost small og-preview" data-id="${item.id}" data-url="${escapeHtml(previewUrl)}" data-w="${item.w}" data-h="${item.h}">พรีวิว</button>`;
+  const thumb = !featured && item.stage
+    ? `<div class="og-thumb og-thumb-${escapeHtml(item.id)}"><iframe class="og-thumb-frame" title="${escapeHtml(item.name)}" src="${escapeHtml(previewUrl)}" loading="lazy"></iframe></div>`
+    : "";
+  return `<article class="og-widget${featured ? " is-feature" : ""}" data-id="${item.id}">
+    <div class="og-widget-head">
+      <div>
+        <h4>${escapeHtml(item.name)}</h4>
+        <p>${escapeHtml(item.desc || "")}</p>
+      </div>
+      <span class="og-dim">${item.w}×${item.h}${item.fx ? " · chroma" : ""}</span>
+    </div>
+    ${thumb}
+    <div class="og-url-row">
+      <input class="field og-url" type="text" readonly value="${escapeHtml(url)}" />
+      <button type="button" class="btn secondary small og-copy" data-url="${escapeHtml(url)}">คัดลอก URL</button>
+      <button type="button" class="btn ghost small og-test" data-id="${item.id}">ทดสอบ</button>
+      <button type="button" class="btn ghost small og-customize" data-id="${item.id}" aria-expanded="false">ตั้งค่า</button>
+      ${previewBtn}
+    </div>
+    ${overlaySettingsPop(item)}
+    ${extras}
+    ${preview}
+  </article>`;
+}
+
 function renderOverlayGallery() {
   const host = document.getElementById("overlayGallery");
   if (!host) return;
-  const card = (item) => {
-    const url = liveOverlayUrl(item.id, item.fx);
-    return `<article class="og-row" data-id="${item.id}">
-      <div class="og-row-main">
-        <div class="og-name">${escapeHtml(item.name)}</div>
-        <div class="og-size">${item.w}×${item.h}${item.fx ? " · chroma" : ""}</div>
-      </div>
-      <div class="og-row-actions">
-        <button type="button" class="btn ghost og-copy" data-url="${escapeHtml(url)}">คัดลอก</button>
-        <button type="button" class="btn secondary og-preview" data-id="${item.id}" data-url="${escapeHtml(url)}" data-w="${item.w}" data-h="${item.h}">พรีวิว</button>
-      </div>
-    </article>`;
-  };
-  host.innerHTML = OVERLAY_GALLERY_SECTIONS.map((sec) => {
-    const items = OVERLAY_GALLERY.filter((x) => x.cat === sec.cat);
+  const featuredIds = new Set(OVERLAY_FEATURED.flatMap((pack) => pack.ids));
+  const featuredHtml = OVERLAY_FEATURED.map((pack) => {
+    const items = pack.ids.map((id) => OVERLAY_GALLERY.find((x) => x.id === id)).filter(Boolean);
     if (!items.length) return "";
-    return `<section class="og-section">
-      <h3 class="og-section-head">${escapeHtml(sec.title)} <span>${escapeHtml(sec.cat)}</span></h3>
-      <div class="og-rows">${items.map(card).join("")}</div>
+    const [hero, ...rest] = items;
+    return `<section class="og-feature og-theme-${escapeHtml(pack.theme)}">
+      <header class="og-feature-head">
+        <div>
+          <p class="og-feature-kicker">${escapeHtml(pack.kicker)}</p>
+          <h3>${escapeHtml(pack.title)}</h3>
+          <p>${escapeHtml(pack.desc)}</p>
+        </div>
+        <div class="og-feature-mascot" aria-hidden="true">
+          <img src="/logo.png?v=logo2" alt="" width="120" height="120" />
+        </div>
+      </header>
+      <div class="og-feature-stack">
+        ${overlayWidgetCard(hero, true)}
+        ${rest.length ? `<div class="og-feature-grid">${rest.map((item) => overlayWidgetCard(item, true)).join("")}</div>` : ""}
+      </div>
     </section>`;
   }).join("");
+  const sectionsHtml = OVERLAY_GALLERY_SECTIONS.map((sec) => {
+    const items = OVERLAY_GALLERY.filter((x) => x.cat === sec.cat && !featuredIds.has(x.id));
+    if (!items.length) return "";
+    return `<section class="og-section og-theme-${escapeHtml(sec.theme || "info")}">
+      <h3 class="og-section-head">${escapeHtml(sec.title)} <span>${escapeHtml(sec.cat)}</span></h3>
+      <div class="og-grid">${items.map((item) => overlayWidgetCard(item, false)).join("")}</div>
+    </section>`;
+  }).join("");
+  host.innerHTML = featuredHtml + sectionsHtml;
+}
+
+function closeOverlayPops(except) {
+  document.querySelectorAll(".og-widget.is-set").forEach((card) => {
+    if (except && card === except) return;
+    card.classList.remove("is-set");
+    const pop = card.querySelector(".og-pop");
+    const btn = card.querySelector(".og-customize");
+    if (pop) pop.hidden = true;
+    if (btn) {
+      btn.classList.remove("is-on");
+      btn.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
+function fillOverlayPop(card) {
+  card?.querySelectorAll(".og-pop-input").forEach((el) => {
+    const key = el.dataset.live;
+    const val = liveStoreValue(key);
+    if (document.activeElement === el) return;
+    if (val !== undefined && val !== null) el.value = String(val);
+  });
+}
+
+function openOverlayPop(card) {
+  if (!card) return;
+  const already = card.classList.contains("is-set");
+  closeOverlayPops();
+  if (already) return;
+  card.classList.add("is-set");
+  const pop = card.querySelector(".og-pop");
+  const btn = card.querySelector(".og-customize");
+  if (pop) pop.hidden = false;
+  if (btn) {
+    btn.classList.add("is-on");
+    btn.setAttribute("aria-expanded", "true");
+  }
+  fillOverlayPop(card);
+  pop?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  pop?.querySelector(".og-pop-input")?.focus();
+}
+
+function syncPopInputToStore(input) {
+  const key = input?.dataset.live;
+  const storeId = LIVE_FIELD_IDS[key];
+  const store = storeId ? document.getElementById(storeId) : null;
+  if (store) store.value = input.value;
+  document.querySelectorAll(`.og-pop-input[data-live="${key}"]`).forEach((el) => {
+    if (el !== input && document.activeElement !== el) el.value = input.value;
+  });
 }
 
 async function copyFieldValue(id, fallback) {
@@ -7800,6 +8338,13 @@ function fillLiveSettings(data) {
   set("liveSong", c.song);
   set("liveSocials", c.socials);
   set("liveCommands", c.commands);
+  document.querySelectorAll(".og-pop-input").forEach((el) => {
+    if (document.activeElement === el) return;
+    const key = el.dataset.live;
+    const val = key === "lastCount" ? (c.lastCount || data.lastCount) : c[key];
+    if (val === undefined || val === null) return;
+    el.value = String(val);
+  });
 }
 
 function paintLiveStatsPreview(data) {
@@ -7821,11 +8366,89 @@ function paintLiveStatsPreview(data) {
         const gift = escapeHtml(row.gift || "Gift");
         const count = Number(row.count) || 1;
         const av = String(row.avatar || "").trim();
-        const img = av ? `<img alt="" referrerpolicy="no-referrer" src="${escapeHtml(av)}" />` : "";
+        const art = giftArtFor(row.gift, row.giftPicture);
+        const img = art
+          ? `<img alt="" src="${escapeHtml(art)}" />`
+          : (av ? `<img alt="" referrerpolicy="no-referrer" src="${escapeHtml(av)}" />` : "");
         return `<div class="live-gifter-line">${img}<span>${nick} · ${gift} ×${count}</span></div>`;
       }).join("");
     }
   }
+}
+
+function paintLiveStripStatus(data, live) {
+  const userEl = document.getElementById("liveStripUser");
+  const gameEl = document.getElementById("liveStripGame");
+  const user = data.tikTokUsername || data.tiktokUsername || "";
+  if (userEl) {
+    userEl.textContent = user
+      ? (live ? `@${user} · LIVE` : `@${user}`)
+      : "ยังไม่เชื่อมต่อ";
+  }
+  if (gameEl) {
+    gameEl.textContent = data.selectedGameName
+      ? `เกม ${data.selectedGameName}`
+      : (currentSelectedGame?.displayName ? `เกม ${currentSelectedGame.displayName}` : "เกม —");
+  }
+}
+
+function paintWelcomeLive(data) {
+  const person = data.welcome || data.lastUser;
+  const html = (!person || !(person.nick || person.user))
+    ? `ยังไม่มีผู้ชมจากไลฟ์ — เชื่อมต่อแล้วกรอบจะดึงชื่อ รูป และ LV จริง`
+    : `${person.avatar ? `<img alt="" referrerpolicy="no-referrer" src="${escapeHtml(person.avatar)}" />` : ""}<strong>${escapeHtml(person.nick || person.user)}</strong><span>LV ${Number(person.level) || "—"}</span>${person.superFan ? `<em>Superfan</em>` : ""}`;
+  document.querySelectorAll("#welcomeLivePerson, #welcomeLivePersonPanel").forEach((el) => {
+    el.innerHTML = html;
+  });
+}
+
+function paintHomeDashboard(data) {
+  const coins = Number(data.coins) || 0;
+  const likes = Number(data.likes) || 0;
+  const follows = Number(data.follows) || 0;
+  const viewers = data.viewersKnown ? Number(data.viewers) || 0 : null;
+  const setTxt = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+  setTxt("liveStripCoins", `◆ ${coins.toLocaleString()}`);
+  setTxt("liveStripLikes", `♡ ${likes.toLocaleString()}`);
+  setTxt("liveStripFollows", `+ ${follows.toLocaleString()}`);
+  setTxt("liveStripViewers", viewers == null ? "◎ —" : `◎ ${viewers.toLocaleString()}`);
+
+  const chip = document.getElementById("homeLiveChip");
+  if (chip) chip.textContent = data.live ? "LIVE" : (data.connected ? "CONNECTED" : "OFFLINE");
+
+  const rows = Array.isArray(data.gifters) ? data.gifters : [];
+  const last = rows[0] || data.lastUser;
+  const lastEl = document.getElementById("liveStripLast");
+  if (lastEl) {
+    if (!last || !last.gift) {
+      lastEl.textContent = "ยังไม่มีของขวัญ";
+    } else {
+      const art = giftArtFor(last.gift, last.giftPicture);
+      lastEl.innerHTML = `${art ? `<img alt="" src="${escapeHtml(art)}" />` : ""}<span>${escapeHtml(last.gift)} ×${Number(last.count) || 1} · ${escapeHtml(last.nick || last.user || "")}</span>`;
+    }
+  }
+
+  paintWelcomeLive(data);
+  const host = document.getElementById("homeLastGifts");
+  if (!host) return;
+  if (!rows.length) {
+    host.innerHTML = `<div class="home-gift-empty">ยังไม่มีของขวัญ — เชื่อมต่อไลฟ์ หรือไปเอฟเฟกต์เกมแล้วกด Send Test</div>`;
+    return;
+  }
+  host.innerHTML = rows.slice(0, 8).map((row) => {
+    const art = giftArtFor(row.gift, row.giftPicture);
+    const av = String(row.avatar || "").trim();
+    const img = art
+      ? `<img alt="" src="${escapeHtml(art)}" />`
+      : (av ? `<img alt="" referrerpolicy="no-referrer" src="${escapeHtml(av)}" />` : "");
+    return `<div class="home-gift-card">${img}<div>
+      <span class="who">${escapeHtml(row.nick || row.user || "ผู้ชม")}</span>
+      <span class="what">${escapeHtml(row.gift || "Gift")} ×${Number(row.count) || 1}${row.coins ? ` · ◆${Number(row.coins).toLocaleString()}` : ""}</span>
+    </div></div>`;
+  }).join("");
 }
 
 async function refreshLiveStatsPreview() {
@@ -7837,6 +8460,7 @@ async function refreshLiveStatsPreview() {
     if (rev === _liveStatsLastRev) return;
     _liveStatsLastRev = rev;
     paintLiveStatsPreview(data);
+    paintHomeDashboard(data);
   } catch {
     /* overlay poll is best-effort */
   }
@@ -7851,6 +8475,7 @@ async function resetLiveStats(payload) {
   const data = await res.json().catch(() => ({}));
   _liveStatsLastRev = "";
   paintLiveStatsPreview(data);
+  paintHomeDashboard(data);
 }
 
 async function saveLiveSettings(extra) {
@@ -7872,48 +8497,167 @@ async function saveLiveSettings(extra) {
   const data = await res.json();
   _liveStatsLastRev = "";
   paintLiveStatsPreview(data);
+  paintHomeDashboard(data);
 }
 
 renderOverlayGallery();
 document.getElementById("overlayGallery")?.addEventListener("click", async (e) => {
+  const urlField = e.target.closest(".og-url");
+  if (urlField) urlField.select();
+  const demoBtn = e.target.closest("[data-welcome-demo]");
   const copyBtn = e.target.closest(".og-copy");
+  const testBtn = e.target.closest(".og-test");
   const prevBtn = e.target.closest(".og-preview");
+  const customBtn = e.target.closest(".og-customize");
+  if (demoBtn) {
+    showWelcomeDemo(demoBtn.getAttribute("data-welcome-demo"));
+    return;
+  }
   if (copyBtn) {
     try {
       await navigator.clipboard.writeText(copyBtn.dataset.url || "");
       copyBtn.textContent = "คัดลอกแล้ว";
-      setTimeout(() => { copyBtn.textContent = "คัดลอก"; }, 900);
+      setTimeout(() => { copyBtn.textContent = "คัดลอก URL"; }, 900);
     } catch {
       alert(copyBtn.dataset.url || "");
     }
   }
-  if (prevBtn) {
-    if (prevBtn.dataset.id === "welcome") {
-      showWelcomeDemo("gold");
-      document.querySelector(".welcome-inline-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
+  if (testBtn) {
+    try {
+      testBtn.disabled = true;
+      await fetch("/api/test-gift", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ giftName: "Rose", repeatCount: 1, messageType: "SendGift", nickname: "Test User" }),
+      });
+      testBtn.textContent = "ส่งแล้ว";
+      setTimeout(() => { testBtn.textContent = "ทดสอบ"; }, 900);
+    } catch {
+      testBtn.textContent = "ไม่สำเร็จ";
+      setTimeout(() => { testBtn.textContent = "ทดสอบ"; }, 1200);
+    } finally {
+      testBtn.disabled = false;
     }
-    const w = Math.min(900, Number(prevBtn.dataset.w) || 480);
-    const h = Math.min(800, Number(prevBtn.dataset.h) || 360);
-    window.open(prevBtn.dataset.url, "me-ov-" + prevBtn.dataset.id, `width=${w},height=${h}`);
+  }
+  if (customBtn) {
+    e.stopPropagation();
+    openOverlayPop(customBtn.closest(".og-widget"));
+    return;
+  }
+  const popClose = e.target.closest(".og-pop-close");
+  if (popClose) {
+    closeOverlayPops();
+    return;
+  }
+  const popSave = e.target.closest(".og-pop-save");
+  if (popSave) {
+    const pop = popSave.closest(".og-pop");
+    pop?.querySelectorAll(".og-pop-input").forEach(syncPopInputToStore);
+    popSave.textContent = "บันทึกแล้ว";
+    saveLiveSettings().catch((err) => alert(err.message || String(err)));
+    setTimeout(() => { popSave.textContent = "บันทึก"; }, 900);
+    return;
+  }
+  const timerBtn = e.target.closest(".og-timer");
+  if (timerBtn) {
+    const pop = timerBtn.closest(".og-pop");
+    pop?.querySelectorAll(".og-pop-input").forEach(syncPopInputToStore);
+    saveLiveSettings({ timer: timerBtn.dataset.timer }).catch((err) => alert(err.message || String(err)));
+    return;
+  }
+  const panelBtn = e.target.closest(".og-pop-panel");
+  if (panelBtn) {
+    goToPanel(panelBtn.dataset.panel || "");
+    return;
+  }
+  if (prevBtn) {
+    const id = prevBtn.dataset.id || "";
+    let url = prevBtn.dataset.url || liveOverlayUrl(id);
+    if (id === "welcome") url = `${LIVE_OVERLAY_BASE}?panel=welcome&v=${LIVE_OVERLAY_VER}&gallery=1&demo=gold&t=${Date.now()}`;
+    openOverlayPreview(url, Number(prevBtn.dataset.w) || 720, Number(prevBtn.dataset.h) || 420, id);
+    if (id === "welcome") showWelcomeDemo("gold");
   }
 });
+
+document.getElementById("overlayGallery")?.addEventListener("change", (e) => {
+  const input = e.target.closest(".og-pop-input");
+  if (!input) return;
+  syncPopInputToStore(input);
+  clearTimeout(_liveSettingsTimer);
+  _liveSettingsTimer = setTimeout(() => saveLiveSettings().catch(() => {}), 200);
+});
+document.getElementById("overlayGallery")?.addEventListener("input", (e) => {
+  const input = e.target.closest(".og-pop-input");
+  if (!input || input.type === "number") return;
+  syncPopInputToStore(input);
+  clearTimeout(_liveSettingsTimer);
+  _liveSettingsTimer = setTimeout(() => saveLiveSettings().catch(() => {}), 450);
+});
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".og-customize, .og-pop")) return;
+  closeOverlayPops();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeOverlayPops();
+});
+
+function openOverlayPreview(url, w, h, id) {
+  let modal = document.getElementById("ogPreviewModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "ogPreviewModal";
+    modal.className = "og-preview-modal hidden";
+    modal.innerHTML = `<div class="og-preview-dialog">
+      <div class="og-preview-bar">
+        <strong>พรีวิว Overlay</strong>
+        <button type="button" class="btn ghost small" id="ogPreviewClose">ปิด</button>
+      </div>
+      <iframe id="ogPreviewFrame" class="og-preview-iframe" title="พรีวิว Overlay"></iframe>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (ev) => {
+      if (ev.target === modal) modal.classList.add("hidden");
+    });
+    modal.querySelector("#ogPreviewClose")?.addEventListener("click", () => modal.classList.add("hidden"));
+  }
+  const frame = modal.querySelector("#ogPreviewFrame");
+  const box = modal.querySelector(".og-preview-dialog");
+  if (box) {
+    box.style.width = Math.min(960, Math.max(420, Number(w) || 720)) + "px";
+    box.style.height = Math.min(860, Math.max(380, Number(h) || 420) + 56) + "px";
+  }
+  if (frame) frame.src = url;
+  modal.dataset.id = id || "";
+  modal.classList.remove("hidden");
+}
 
 function showWelcomeDemo(kind) {
   const key = String(kind || "gold").toLowerCase();
   const frame = document.getElementById("welcomeGalleryFrame") || document.getElementById("welcomePreviewFrame");
   if (frame) {
-    frame.src = `/live-overlay.html?panel=welcome&v=${LIVE_OVERLAY_VER}&demo=${encodeURIComponent(key)}&t=${Date.now()}`;
+    frame.src = `/live-overlay.html?panel=welcome&v=${LIVE_OVERLAY_VER}&gallery=1&demo=${encodeURIComponent(key)}&t=${Date.now()}`;
   }
-  document.querySelectorAll(".welcome-demo-btn").forEach((btn) => {
-    btn.classList.toggle("primary", btn.getAttribute("data-welcome-demo") === key);
-    btn.classList.toggle("secondary", btn.getAttribute("data-welcome-demo") !== key);
+  document.querySelectorAll("[data-welcome-demo]").forEach((btn) => {
+    btn.classList.toggle("is-on", btn.getAttribute("data-welcome-demo") === key);
   });
 }
-
-document.querySelectorAll(".welcome-demo-btn").forEach((btn) => {
-  btn.addEventListener("click", () => showWelcomeDemo(btn.getAttribute("data-welcome-demo")));
-});
+(() => {
+  const urlEl = document.getElementById("welcomeObsUrl");
+  if (urlEl) urlEl.value = liveOverlayUrl("welcome");
+  document.getElementById("welcomeCopyObsUrl")?.addEventListener("click", async () => {
+    const url = document.getElementById("welcomeObsUrl")?.value || liveOverlayUrl("welcome");
+    const btn = document.getElementById("welcomeCopyObsUrl");
+    try {
+      await navigator.clipboard.writeText(url);
+      if (btn) {
+        btn.textContent = "คัดลอกแล้ว";
+        setTimeout(() => { btn.textContent = "คัดลอกลิงก์"; }, 900);
+      }
+    } catch {
+      document.getElementById("welcomeObsUrl")?.select();
+    }
+  });
+})();
 document.getElementById("liveResetCoinsBtn")?.addEventListener("click", () => {
   resetLiveStats({ coins: true, gifters: false, likes: false }).catch((err) => alert(err.message || String(err)));
 });
@@ -7923,13 +8667,7 @@ document.getElementById("liveResetGiftersBtn")?.addEventListener("click", () => 
 document.getElementById("liveResetAllBtn")?.addEventListener("click", () => {
   resetLiveStats({ all: true }).catch((err) => alert(err.message || String(err)));
 });
-document.getElementById("liveSaveSettingsBtn")?.addEventListener("click", () => {
-  saveLiveSettings().catch((err) => alert(err.message || String(err)));
-});
-document.getElementById("liveTimerStartBtn")?.addEventListener("click", () => saveLiveSettings({ timer: "start" }).catch((err) => alert(err.message || String(err))));
-document.getElementById("liveTimerStopBtn")?.addEventListener("click", () => saveLiveSettings({ timer: "stop" }).catch((err) => alert(err.message || String(err))));
-document.getElementById("liveTimerResetBtn")?.addEventListener("click", () => saveLiveSettings({ timer: "reset" }).catch((err) => alert(err.message || String(err))));
-["liveLastCount", "liveGoal", "liveTimerSeconds"].forEach((id) => {
+["liveLastCount", "liveGoal", "liveTimerSeconds", "liveStreamer", "liveSong", "liveSocials", "liveCommands"].forEach((id) => {
   document.getElementById(id)?.addEventListener("change", () => {
     clearTimeout(_liveSettingsTimer);
     _liveSettingsTimer = setTimeout(() => saveLiveSettings().catch(() => {}), 250);
@@ -7937,25 +8675,6 @@ document.getElementById("liveTimerResetBtn")?.addEventListener("click", () => sa
 });
 refreshLiveStatsPreview();
 
-async function openAgencyDashboard() {
-  try {
-    const res = await fetch("/api/agency/dashboard/open", { method: "POST" });
-    if (!res.ok) throw new Error("เปิด Dashboard ไม่สำเร็จ");
-  } catch (err) {
-    alert(err.message || String(err));
-  }
-}
-
-async function closeAgencyDashboard() {
-  try {
-    await fetch("/api/agency/dashboard/close", { method: "POST" });
-  } catch {
-    /* ignore */
-  }
-}
-
-document.getElementById("agencyOpenDashboardBtn")?.addEventListener("click", () => openAgencyDashboard());
-document.getElementById("agencyCloseDashboardBtn")?.addEventListener("click", () => closeAgencyDashboard());
 document.getElementById("winSaveRuleBtn")?.addEventListener("click", () => {
   const gift = (document.getElementById("winGiftName")?.value || "").trim();
   const delta = Number(document.getElementById("winGiftDelta")?.value);

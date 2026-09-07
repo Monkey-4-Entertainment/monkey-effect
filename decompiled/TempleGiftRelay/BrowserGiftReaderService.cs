@@ -1374,6 +1374,7 @@ public sealed class BrowserGiftReaderService
 			GroupId = src.GroupId,
 			Timestamp = src.Timestamp,
 			DiamondCount = src.DiamondCount,
+			GiftPictureUrl = src.GiftPictureUrl,
 			RoomUserSeq = src.RoomUserSeq,
 			UserLevel = src.UserLevel,
 			IsSuperFan = src.IsSuperFan,
@@ -1411,6 +1412,8 @@ public sealed class BrowserGiftReaderService
 		if (string.IsNullOrEmpty(best.AvatarUrl) && !string.IsNullOrEmpty(prev.AvatarUrl)) best.AvatarUrl = prev.AvatarUrl;
 		if (best.DiamondCount <= 0 && prev.DiamondCount > 0) best.DiamondCount = prev.DiamondCount;
 		else if (prev.DiamondCount > best.DiamondCount) best.DiamondCount = prev.DiamondCount;
+		if (string.IsNullOrEmpty(best.GiftPictureUrl) && !string.IsNullOrEmpty(prev.GiftPictureUrl))
+			best.GiftPictureUrl = prev.GiftPictureUrl;
 		if (best.RoomUserSeq <= 0 && prev.RoomUserSeq > 0) best.RoomUserSeq = prev.RoomUserSeq;
 		else if (incoming.RoomUserSeq > 0) best.RoomUserSeq = incoming.RoomUserSeq;
 		if (incoming.UserLevel > best.UserLevel) best.UserLevel = incoming.UserLevel;
@@ -2494,6 +2497,7 @@ public sealed class BrowserGiftReaderService
 				GroupId = e.GroupId,
 				Timestamp = e.TimeStamp > 0 ? e.TimeStamp : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
 				DiamondCount = LiveEventValue.ReadInt(e.Gift, "DiamondCount", "DiamondCountValue", "FanTicketCount"),
+				GiftPictureUrl = LiveEventValue.ReadString(e.Gift, "Image", "Icon", "PictureUrl", "GiftPictureUrl", "ImageUrl"),
 				RoomUserSeq = LiveEventValue.ReadLong(e, "RoomUserSeq", "UserCount", "ViewerCount")
 			};
 			TikTokUserRank.Apply(giftPayload, e.User);

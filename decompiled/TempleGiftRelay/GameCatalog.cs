@@ -177,10 +177,42 @@ public static class GameCatalog
 		}
 	};
 
+	private static readonly object UserGate = new object();
+	private static List<GameProfile>? _userGames;
+
 	public static string ConfigPath => Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
 		"Monkeyeffect",
 		"game-config.json");
+
+	public static string UserGamesAppDataPath => Path.Combine(
+		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+		"Monkeyeffect",
+		"user-games.json");
+
+	public static string UserGamesPortablePath => Path.Combine(AppPaths.UserDataDir, "user-games.json");
+
+	public static IReadOnlyList<GameProfile> UserGames
+	{
+		get
+		{
+			EnsureUserGamesLoaded();
+			lock (UserGate) return _userGames!.ToList();
+		}
+	}
+
+	public static IEnumerable<GameProfile> All
+	{
+		get
+		{
+			foreach (GameProfile g in BuiltIn) yield return g;
+			foreach (GameProfile g in UserGames)
+			{
+				if (BuiltIn.Any(b => b.Id.Equals(g.Id, StringComparison.OrdinalIgnoreCase))) continue;
+				yield return g;
+			}
+		}
+	}
 
 	/// <summary>
 	/// Built-in games keep their catalog name. Never persist
@@ -193,7 +225,7 @@ public static class GameCatalog
 		    !profile.Id.Equals("custom", StringComparison.OrdinalIgnoreCase) &&
 		    !profile.Id.Equals("auto", StringComparison.OrdinalIgnoreCase))
 		{
-			return profile.Name;
+			return string.IsNullOrWhiteSpace(profile.Name) ? (current ?? id ?? "") : profile.Name;
 		}
 		if (!string.IsNullOrWhiteSpace(current))
 		{
@@ -242,7 +274,135 @@ public static class GameCatalog
 		{
 			return null;
 		}
-		return BuiltIn.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		GameProfile? built = BuiltIn.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		if (built != null) return built;
+		EnsureUserGamesLoaded();
+		lock (UserGate)
+		{
+			return _userGames!.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		}
+	}
+
+	public static string SlugFromName(string? raw)
+	{
+		string s = (raw ?? "").Trim().ToLowerInvariant();
+		if (s.Length == 0) return "";
+		var chars = new List<char>(s.Length);
+		bool dash = false;
+		foreach (char c in s)
+		{
+			if (c is >= 'a' and <= 'z' or >= '0' and <= '9')
+			{
+				chars.Add(c);
+				dash = false;
+			}
+			else if (!dash && chars.Count > 0)
+			{
+				chars.Add('-');
+				dash = true;
+			}
+		}
+		string slug = new string(chars.ToArray()).Trim('-');
+		if (slug.Length > 60) slug = slug[..60].Trim('-');
+		if (slug is "auto" or "custom" or "") return "game-" + Guid.NewGuid().ToString("N")[..8];
+		return slug;
+	}
+
+	public static string KeyMapFileFor(string? gameId)
+	{
+		GameProfile? profile = FindById(gameId);
+		if (!string.IsNullOrWhiteSpace(profile?.KeyMapFile))
+			return profile!.KeyMapFile!;
+		string slug = SlugFromName(gameId);
+		if (string.IsNullOrWhiteSpace(slug)) slug = "user-game";
+		return slug + "-keymap.json";
+	}
+
+	/// <summary>Create or update a user-added game. Does not overwrite built-in ids.</summary>
+	public static GameProfile UpsertUserGame(string? name, string? processName, string? windowTitle, string? requestedId = null)
+	{
+		string display = (name ?? "").Trim();
+		if (display.Length == 0) display = (windowTitle ?? "").Trim();
+		if (display.Length == 0) display = (processName ?? "").Trim();
+		if (display.Length == 0) display = "เกมใหม่";
+		string id = SlugFromName(requestedId);
+		if (id.Length == 0) id = SlugFromName(display);
+		GameProfile? built = BuiltIn.FirstOrDefault(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+		if (built != null && built.Id is not ("auto" or "custom"))
+		{
+			return built;
+		}
+		if (id is "auto" or "custom") id = SlugFromName(display);
+
+		string proc = (processName ?? "").Trim().Replace(".exe", "", StringComparison.OrdinalIgnoreCase);
+		string title = (windowTitle ?? "").Trim();
+		var next = new GameProfile
+		{
+			Id = id,
+			Name = display,
+			ProcessNames = string.IsNullOrWhiteSpace(proc) ? Array.Empty<string>() : new[] { proc },
+			TitleContains = string.IsNullOrWhiteSpace(title) ? new[] { display } : new[] { title },
+			KeyMapFile = id + "-keymap.json"
+		};
+		EnsureUserGamesLoaded();
+		lock (UserGate)
+		{
+			int idx = _userGames!.FindIndex(p => p.Id.Equals(id, StringComparison.OrdinalIgnoreCase));
+			if (idx >= 0) _userGames[idx] = next;
+			else _userGames.Add(next);
+			SaveUserGamesUnlocked();
+		}
+		AppPaths.Log($"user-game upsert id={id} name={display} keymap={next.KeyMapFile}");
+		return next;
+	}
+
+	private static void EnsureUserGamesLoaded()
+	{
+		if (_userGames != null) return;
+		lock (UserGate)
+		{
+			if (_userGames != null) return;
+			_userGames = new List<GameProfile>();
+			foreach (string path in new[] { UserGamesPortablePath, UserGamesAppDataPath })
+			{
+				try
+				{
+					if (!File.Exists(path)) continue;
+					List<GameProfile>? list = JsonSerializer.Deserialize<List<GameProfile>>(File.ReadAllText(path), JsonOpts);
+					if (list == null || list.Count == 0) continue;
+					foreach (GameProfile g in list)
+					{
+						if (string.IsNullOrWhiteSpace(g.Id) || g.Id is "auto" or "custom") continue;
+						if (_userGames.Any(x => x.Id.Equals(g.Id, StringComparison.OrdinalIgnoreCase))) continue;
+						if (string.IsNullOrWhiteSpace(g.KeyMapFile))
+							g.KeyMapFile = g.Id + "-keymap.json";
+						_userGames.Add(g);
+					}
+					break;
+				}
+				catch (Exception ex)
+				{
+					AppPaths.Log("user-games load failed: " + ex.Message);
+				}
+			}
+		}
+	}
+
+	private static void SaveUserGamesUnlocked()
+	{
+		string json = JsonSerializer.Serialize(_userGames ?? new List<GameProfile>(), JsonOpts);
+		foreach (string path in new[] { UserGamesPortablePath, UserGamesAppDataPath })
+		{
+			try
+			{
+				Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+				File.WriteAllText(path, json);
+			}
+			catch (Exception ex)
+			{
+				AppPaths.Log("user-games save failed: " + ex.Message);
+			}
+		}
 	}
 
 	public static GameProfile ResolveEffective(GameSelection selection)
@@ -272,7 +432,7 @@ public static class GameCatalog
 		{
 			List<string> procs = new List<string>();
 			List<string> titles = new List<string>();
-			foreach (GameProfile p in BuiltIn)
+			foreach (GameProfile p in All)
 			{
 				if (p.Id is "auto" or "custom") continue;
 				procs.AddRange(p.ProcessNames);

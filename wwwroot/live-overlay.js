@@ -1,16 +1,26 @@
 (() => {
   const params = new URLSearchParams(location.search);
   const panel = (params.get("panel") || "gifters").toLowerCase();
+  const demo = (params.get("demo") || "").toLowerCase();
+  const gallery = params.get("gallery") === "1";
   const chroma = params.get("chroma") === "1";
   const html = document.documentElement;
   const root = document.getElementById("root");
   const canvas = document.getElementById("fx");
   const ctx = canvas.getContext("2d");
   html.classList.toggle("chroma", chroma);
-  const CENTER = new Set(["coins", "points", "viewers", "coinmatch", "coinjar", "slider", "timer", "fortune", "actions", "tiny", "songs", "userinfo", "social"]);
+  html.classList.toggle("demo", !!demo || gallery);
+  const CENTER = new Set(["coins", "points", "viewers", "coinmatch", "coinjar", "slider", "timer", "subathon", "fortune", "actions", "tiny", "songs", "userinfo", "social", "welcome"]);
   const FX_ONLY = new Set(["cannon", "likes", "snow", "firework", "emojify", "drop"]);
+  const BOARD = new Set(["topgifters", "topliker", "ranking", "pointsboard"]);
+  const INFO_LIST = new Set(["chat", "feed", "gifters", "userinfo", "commands", "myactions", "bot"]);
+  const INFO_WIDE = new Set(["social", "points", "coins"]);
   if (CENTER.has(panel)) html.classList.add("center");
   if (FX_ONLY.has(panel)) html.classList.add("fx-only");
+  if (BOARD.has(panel)) html.classList.add("board");
+  if (INFO_LIST.has(panel)) html.classList.add("info-panel");
+  if (INFO_WIDE.has(panel)) html.classList.add("info-wide");
+  if (panel === "viewers") html.classList.add("stat-hero");
 
   const seen = new Set();
   let lastKey = "";
@@ -40,6 +50,15 @@
   function cfg(data) {
     return data.config || {};
   }
+  function studio(data) {
+    const raw = cfg(data).studioJson;
+    if (!raw) return data.studio || {};
+    try {
+      return typeof raw === "string" ? JSON.parse(raw) : raw;
+    } catch {
+      return data.studio || {};
+    }
+  }
   function av(row) {
     const nick = row.nick || row.user || "?";
     const letter = esc(initial(nick));
@@ -48,15 +67,55 @@
     return `<span class="av-wrap"><img class="av" alt="" referrerpolicy="no-referrer" src="${esc(url)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="av-fallback" style="display:none">${letter}</span></span>`;
   }
   function medal(i) {
-    return i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `<span class="score">${i + 1}</span>`;
+    const kind = i === 0 ? "gold" : i === 1 ? "silver" : i === 2 ? "bronze" : "";
+    if (kind) return `<img class="medal-art" alt="${i + 1}" src="/overlay/rank/medal-${kind}.png?v=png3" />`;
+    return `<span class="place"><img class="place-art" alt="" src="/overlay/rank/rank-plate.png?v=png3" /><b>${i + 1}</b></span>`;
+  }
+  function boardShell(inner) {
+    return `<div class="board-wrap"><img class="board-panel-art" alt="" src="/overlay/rank/board-panel.png?v=png3" /><div class="board-inner">${inner}</div></div>`;
+  }
+  function infoShell(kind, title, body) {
+    const art = kind === "wide" ? "info-wide.png" : "info-panel.png";
+    return `<div class="info-wrap info-${kind}"><img class="info-frame-art" alt="" src="/overlay/info/${art}?v=png1" /><div class="info-inner"><div class="info-head"><span class="kicker">${esc(title)}</span></div>${body}</div></div>`;
+  }
+  function takeN(data, rows, fallback) {
+    const n = Math.max(3, Math.min(15, Number(cfg(data).lastCount) || fallback));
+    return (Array.isArray(rows) ? rows : []).slice(0, n);
+  }
+  function infoRows(rows, htmlFn, empty) {
+    if (!rows.length) return `<div class="info-empty">${esc(empty)}</div>`;
+    return `<div class="info-list">${rows.map(htmlFn).join("")}</div>`;
+  }
+  function personRow(row, sub) {
+    return `<div class="info-row">${av(row)}<div class="meta"><span class="nick">${esc(row.nick || row.user || "ผู้ชม")}</span><span class="gift">${esc(sub)}</span></div></div>`;
   }
   function rankList(rows, field) {
-    const list = Array.isArray(rows) ? rows : [];
-    if (!list.length) return `<div class="card"><span class="kicker"><i></i>รอผู้เล่น</span><div class="sub">ยังไม่มีอันดับ</div></div>`;
-    return `<div class="card rank">${list.map((row, i) => {
-      const score = field === "likes" ? row.likes : field === "rank" ? (Number(row.coins) || 0) * 10 + (Number(row.likes) || 0) : row.coins;
-      return `<div class="rank-row"><div class="medal">${medal(i)}</div>${av(row)}<div class="meta"><span class="nick">${esc(row.nick || row.user || "ผู้ชม")}</span><span class="gift">${field === "likes" ? "♥ " + fmt(row.likes) : "◆ " + fmt(row.coins)}</span></div><div class="score">${fmt(score)}</div></div>`;
-    }).join("")}</div>`;
+    const list = (Array.isArray(rows) ? rows : []).slice(0, 8);
+    const titles = { coins: "TOP GIFTERS", likes: "TOP LIKER", rank: "RANKING", points: "POINTS" };
+    const head = titles[field] || "LEADERBOARD";
+    const title = `<div class="board-head"><img class="board-header-art" alt="" src="/overlay/rank/board-header.png?v=png3" /><span class="kicker">${esc(head)}</span></div>`;
+    if (!list.length) return boardShell(`${title}<div class="board-empty">ยังไม่มีอันดับ</div>`);
+    return boardShell(`${title}<div class="board-list">${list.map((row, i) => {
+        let score;
+        let sub;
+        if (field === "likes") {
+          score = row.likes;
+          sub = "♥ " + fmt(row.likes);
+        } else if (field === "rank") {
+          score = (Number(row.coins) || 0) * 10 + (Number(row.likes) || 0);
+          sub = "◆ " + fmt(row.coins);
+        } else if (field === "points") {
+          score = row.points;
+          sub = fmt(row.points) + " แต้ม";
+        } else {
+          score = row.coins;
+          sub = "◆ " + fmt(row.coins);
+        }
+        const portrait = row.avatar || row.user || row.nick
+          ? av({ nick: row.nick || row.user, avatar: row.avatar })
+          : `<span class="av-fallback">${esc(initial(row.nick || row.user))}</span>`;
+        return `<div class="rank-row${i < 3 ? ` is-top is-top${i + 1}` : ""}"><div class="medal">${medal(i)}</div>${portrait}<div class="meta"><span class="nick">${esc(row.nick || row.user || "ผู้ชม")}</span><span class="gift">${esc(sub)}</span></div><div class="score">${fmt(score)}</div></div>`;
+      }).join("")}</div>`);
   }
   function goalPct(data) {
     const goal = Math.max(1, Number(cfg(data).goal) || 1000);
@@ -68,6 +127,127 @@
       return Math.max(0, Math.ceil((c.timerEndsAt - Date.now()) / 1000));
     }
     return Math.max(0, Number(c.timerSeconds) || 0);
+  }
+  function welcomeTier(card) {
+    if (card.tier && !card._liveTier) return card.tier;
+    const level = Number(card.level) || 0;
+    if (level >= 50) return "diamond";
+    if (level >= 40) return "platinum";
+    if (level >= 30) return "gold";
+    if (level >= 20) return "silver";
+    return card.superFan ? "fan" : "silver";
+  }
+  const WELCOME_DEMOS = {
+    fan: { nick: "ผู้ชม Superfan", level: 20, superFan: true, fanLevel: 1, tier: "fan" },
+    silver: { nick: "ผู้ชม LV 20", level: 20, superFan: false, fanLevel: 0, tier: "silver" },
+    gold: { nick: "ผู้ชม LV 30", level: 30, superFan: false, fanLevel: 0, tier: "gold" },
+    platinum: { nick: "ผู้ชม LV 40", level: 40, superFan: true, fanLevel: 6, tier: "platinum" },
+    diamond: { nick: "ผู้ชม LV 50", level: 50, superFan: true, fanLevel: 10, tier: "diamond" },
+  };
+  const TIER_TH = { fan: "Superfan", silver: "เงิน", gold: "ทอง", platinum: "แพลตินัม", diamond: "เพชร" };
+  function liveWelcomePerson(data) {
+    const wel = data?.welcome;
+    const last = data?.lastUser;
+    if (wel && (wel.nick || wel.user)) return wel;
+    if (last && (last.nick || last.user)) return last;
+    return null;
+  }
+  function welcomeDemoCard(data) {
+    const base = WELCOME_DEMOS[demo];
+    if (!base) return null;
+    const live = liveWelcomePerson(data);
+    if (!live) return { ...base };
+    const level = Number(live.level) || Number(base.level) || 20;
+    return {
+      ...base,
+      nick: live.nick || live.user || base.nick,
+      user: live.user || live.nick || base.user,
+      avatar: live.avatar || base.avatar || "",
+      level,
+      superFan: !!(live.superFan || live.fanLevel || base.superFan),
+      fanLevel: Number(live.fanLevel) || base.fanLevel || 0,
+      tier: base.tier,
+    };
+  }
+  const GALLERY_SEED = {
+    coins: 420,
+    likes: 1288,
+    viewers: 86,
+    viewersKnown: true,
+    live: true,
+    gifters: [
+      { nick: "สตอรี่", user: "story", gift: "Rose", count: 20, coins: 1050, likes: 420 },
+      { nick: "Test User", user: "test", gift: "GG", count: 8, coins: 860, likes: 310 },
+      { nick: "lekzaza", user: "lek", gift: "Rose", count: 6, coins: 640, likes: 220 },
+      { nick: "Mew", user: "mew", gift: "Finger Heart", count: 4, coins: 480, likes: 180 },
+      { nick: "Ploy", user: "ploy", gift: "TikTok", count: 3, coins: 320, likes: 140 },
+      { nick: "Emma", user: "emma", gift: "Rose", count: 2, coins: 210, likes: 96 },
+      { nick: "Nong", user: "nong", gift: "GG", count: 1, coins: 120, likes: 54 },
+      { nick: "Alex", user: "alex", gift: "Rose", count: 1, coins: 80, likes: 28 },
+    ],
+  };
+  function seedGallery(data) {
+    if (!gallery) return data || {};
+    const src = data || {};
+    const gifters = (src.gifters && src.gifters.length) ? src.gifters : GALLERY_SEED.gifters;
+    const studio = { ...(src.studio || {}) };
+    if (!(studio.pointsUsers || []).length) {
+      studio.pointsUsers = gifters.map((row, i) => ({ nick: row.nick, points: 140 - i * 28 }));
+    }
+    if (!(studio.botReplies || []).length) {
+      studio.botReplies = [{ nick: "Alex", text: "!points", reply: "คุณมี 80 แต้ม" }];
+    }
+    return {
+      ...src,
+      coins: Number(src.coins) || GALLERY_SEED.coins,
+      likes: Number(src.likes) || GALLERY_SEED.likes,
+      viewers: src.viewersKnown ? src.viewers : GALLERY_SEED.viewers,
+      viewersKnown: true,
+      live: src.live || GALLERY_SEED.live,
+      gifters,
+      topGifters: (src.topGifters && src.topGifters.length) ? src.topGifters : gifters,
+      topLikers: (src.topLikers && src.topLikers.length) ? src.topLikers : gifters,
+      ranking: (src.ranking && src.ranking.length) ? src.ranking : gifters,
+      chats: (src.chats && src.chats.length) ? src.chats : [
+        { nick: "Alex", text: "สู้ๆ ค่ะ!" },
+        { nick: "Nong", text: "ส่งกุหลาบแล้ว" },
+        { nick: "Mew", text: "สวยมากกก" },
+        { nick: "Ploy", text: "เอาอีกไหม" },
+        { nick: "Emma", text: "ฮาๆๆ" },
+        { nick: "lekzaza", text: "ของขวัญมาแล้ว" },
+        { nick: "สตอรี่", text: "ไลฟ์ดีมาก" },
+        { nick: "Test User", text: "Hello!" },
+      ],
+      lastUser: src.lastUser || gifters[0],
+      events: (src.events && src.events.length) ? src.events : gifters.map((row, i) => ({ id: "gal" + i, kind: "gift", ...row })),
+      studio,
+      config: {
+        goal: 1000,
+        song: "เพลงตัวอย่าง",
+        streamer: "Monkeyeffect",
+        socials: "TikTok @yourname\nInstagram @yourname",
+        commands: "!gift ส่งของขวัญเข้าเกม\n!song ขอเพลง\n!rank ดูอันดับ",
+        ...(src.config || {}),
+      },
+    };
+  }
+  function welcomeVisible(data) {
+    const shown = welcomeDemoCard(data);
+    if (shown) return shown;
+    const c = cfg(data);
+    const st = studio(data).welcome || {};
+    if (c.welcomeEnabled === false || st.enabled === false) return null;
+    const fromLive = data.welcome;
+    const fromStudio = studio(data).welcomeCard;
+    const card = (!fromLive && !fromStudio)
+      ? null
+      : (!fromLive || (fromStudio && Number(fromStudio.at || 0) >= Number(fromLive.at || 0)))
+        ? fromStudio
+        : fromLive;
+    if (!card || !(card.nick || card.user)) return null;
+    const dur = Math.max(2, Number(c.welcomeDurationSec || st.durationSec) || 8) * 1000;
+    if (Number(card.at || 0) > 0 && Date.now() - Number(card.at) > dur) return null;
+    return card;
   }
   function clock(sec) {
     const s = Math.max(0, sec | 0);
@@ -82,44 +262,93 @@
     const last = data.lastUser || giftRows[0] || null;
     switch (panel) {
       case "coins":
-        return `<div class="card" style="text-align:center"><span class="kicker"><i></i>เพชรไลฟ์นี้</span><div class="hero">${fmt(data.coins)}</div><div class="sub">สะสมจากของขวัญจริง</div></div>`;
+        return infoShell("wide", "เพชรไลฟ์นี้", `<div class="info-hero"><img class="info-gem" alt="" src="/overlay/info/info-gem.png?v=png1" /><div class="hero">${fmt(data.coins)}</div></div><div class="sub">สะสมจากของขวัญจริง</div>`);
       case "points": {
         const flash = last && last.kind === "gift" ? `+${fmt(last.coins || last.count || 1)}` : "";
-        return `<div class="card" style="text-align:center"><span class="kicker"><i></i>POINTS</span><div class="hero">${fmt(data.coins)}</div><div class="sub">${flash || "สะสมจากของขวัญจริง"}</div></div>`;
+        return infoShell("wide", "POINTS", `<div class="info-hero"><img class="info-gem" alt="" src="/overlay/info/info-gem.png?v=png1" /><div class="hero">${fmt(data.coins)}</div></div><div class="sub">${flash || "สะสมจากของขวัญจริง"}</div>`);
       }
       case "viewers":
-        return `<div class="card" style="text-align:center"><span class="kicker"><i></i>คนดูตอนนี้</span><div class="hero">${data.viewersKnown ? fmt(data.viewers) : "—"}</div><div class="sub">${data.live ? "LIVE" : "รอเชื่อมต่อไลฟ์"}</div></div>`;
-      case "gifters":
-        if (!giftRows.length) return "";
-        return `<div>${giftRows.map((row) => `<div class="row feed-item">${av(row)}<div class="meta"><span class="nick">${esc(row.nick || row.user || "ผู้ชม")}</span><span class="gift">${esc(row.gift || "Gift")} ×${Number(row.count) || 1}</span></div></div>`).join("")}</div>`;
-      case "feed":
-        if (!giftRows.length) return "";
-        return `<div>${giftRows.slice(0, 6).map((row) => `<div class="card feed-item row" style="min-width:0;margin:8px 0">${av(row)}<div class="meta"><span class="nick">${esc(row.nick || "ผู้ชม")}</span><span class="gift">${esc(row.gift)} ×${row.count || 1} · ◆${fmt(row.coins)}</span></div></div>`).join("")}</div>`;
+        return `<div class="stat-wrap"><img class="stat-frame-art" alt="" src="/overlay/rank/viewers-frame.png?v=png3" /><div class="stat-inner"><span class="kicker">VIEWERS</span><div class="hero">${data.viewersKnown ? fmt(data.viewers) : "—"}</div><div class="sub">${data.live ? "LIVE ตอนนี้" : "รอเชื่อมต่อไลฟ์"}</div></div></div>`;
+      case "gifters": {
+        const rows = takeN(data, giftRows, 8);
+        if (!rows.length && !gallery) return "";
+        return infoShell("list", "LAST GIFTERS", infoRows(rows, (row) => personRow(row, `${row.gift || "Gift"} ×${Number(row.count) || 1}`), "ยังไม่มีคนส่งของขวัญ"));
+      }
+      case "feed": {
+        const rows = takeN(data, giftRows, 6);
+        if (!rows.length && !gallery) return "";
+        return infoShell("list", "GIFT FEED", infoRows(rows, (row) => personRow(row, `${row.gift || "Gift"} ×${row.count || 1} · ◆${fmt(row.coins)}`), "ยังไม่มีของขวัญ"));
+      }
       case "topgifters":
         return rankList(data.topGifters, "coins");
       case "topliker":
         return rankList(data.topLikers, "likes");
       case "ranking":
         return rankList(data.ranking, "rank");
-      case "chat":
-        if (!(data.chats || []).length) return "";
-        return `<div>${(data.chats || []).slice(0, 8).map((row) => `<div class="chat-line row feed-item">${av(row)}<div class="meta"><span class="nick">${esc(row.nick || "ผู้ชม")}</span><span class="gift">${esc(row.text)}</span></div></div>`).join("")}</div>`;
+      case "chat": {
+        const rows = takeN(data, data.chats, 8);
+        if (!rows.length && !gallery) return "";
+        return infoShell("list", "CHAT", infoRows(rows, (row) => personRow(row, row.text || ""), "ยังไม่มีแชท"));
+      }
+      case "welcome": {
+        const card = welcomeVisible(data);
+        if (!card) return "";
+        const tier = welcomeTier(card);
+        const level = Number(card.level) || 0;
+        const fanLv = Number(card.fanLevel) || 0;
+        const tierName = TIER_TH[tier] || "ต้อนรับ";
+        const kicker = card.superFan
+          ? `Superfan${fanLv > 0 ? " · คลับ " + fanLv : ""}`
+          : "เข้าไลฟ์";
+        return `<div class="welcome welcome-${esc(tier)}">
+          <div class="welcome-glow"></div>
+          <div class="welcome-card">
+            <div class="welcome-kicker">${esc(kicker)}</div>
+            <div class="welcome-portrait">
+              <div class="welcome-av">${av({ nick: card.nick || card.user, avatar: card.avatar })}</div>
+              <img class="welcome-frame-art" alt="" src="/welcome/frames/${esc(tier)}.png" />
+            </div>
+            <div class="welcome-name">${esc(card.nick || card.user || "ผู้ชม")}</div>
+            <div class="welcome-level">${level > 0 ? `<span>LV</span><b>${level}</b>` : `<b>${esc(tierName)}</b>`}</div>
+            <div class="welcome-sub">${esc(tierName)}</div>
+          </div>
+        </div>`;
+      }
       case "userinfo":
-        if (!last) return `<div class="card"><span class="kicker"><i></i>USER INFO</span><div class="sub">รอผู้ชมคนแรก</div></div>`;
-        return `<div class="card" style="text-align:center">${av(last)}<div class="hero" style="font-size:42px;margin-top:10px">${esc(last.nick || last.user)}</div><div class="sub">${esc(last.kind === "like" ? "เพิ่งกดไลค์" : last.kind === "follow" ? "เพิ่งฟอลโลว์" : last.gift ? last.gift + " ×" + (last.count || 1) : last.text || "ผู้ชม")}</div><div class="sub">◆ ${fmt(last.coins)} · ♥ ${fmt(last.likes)}</div></div>`;
-      case "commands":
-        return `<div class="card"><span class="kicker"><i></i>COMMANDS</span>${lines(c.commands).map((x) => `<div class="cmd">${esc(x)}</div>`).join("") || `<div class="sub">ตั้งคำสั่งใน Overlay Gallery</div>`}</div>`;
-      case "myactions":
-        return `<div class="card"><span class="kicker"><i></i>MY ACTIONS</span>${(data.events || []).slice(0, 6).map((e) => `<div class="row"><div class="meta"><span class="nick">${esc(e.nick)}</span><span class="gift">${esc(e.kind)} ${esc(e.gift || e.text || "")}</span></div></div>`).join("") || `<div class="sub">รออีเวนต์จากไลฟ์</div>`}</div>`;
+        if (!last && !gallery) return "";
+        if (!last) return infoShell("list", "USER INFO", `<div class="info-empty">รอผู้ชมคนแรก</div>`);
+        return infoShell("list", "USER INFO", `<div class="info-user">${av(last)}<div class="hero info-user-name">${esc(last.nick || last.user)}</div><div class="sub">${esc(last.kind === "like" ? "เพิ่งกดไลค์" : last.kind === "follow" ? "เพิ่งฟอลโลว์" : last.gift ? last.gift + " ×" + (last.count || 1) : last.text || "ผู้ชม")}</div><div class="sub">◆ ${fmt(last.coins)} · ♥ ${fmt(last.likes)}</div></div>`);
+      case "commands": {
+        const cmds = lines(c.commands);
+        return infoShell("list", "COMMANDS", cmds.length ? `<div class="info-list">${cmds.map((x) => `<div class="cmd">${esc(x)}</div>`).join("")}</div>` : `<div class="info-empty">ตั้งคำสั่งใน Overlay Gallery</div>`);
+      }
+      case "myactions": {
+        const rows = (data.events || []).slice(0, 6);
+        if (!rows.length && !gallery) return "";
+        return infoShell("list", "MY ACTIONS", infoRows(rows, (e) => `<div class="info-row"><div class="meta"><span class="nick">${esc(e.nick || "ผู้ชม")}</span><span class="gift">${esc(e.kind)} ${esc(e.gift || e.text || "")}</span></div></div>`, "รออีเวนต์จากไลฟ์"));
+      }
       case "social": {
         const items = lines(c.socials);
         const item = items[socialIdx % Math.max(1, items.length)] || "เพิ่มโซเชียลใน Overlay Gallery";
-        return `<div class="social">${esc(item)}</div>`;
+        return infoShell("wide", "SOCIAL", `<div class="social">${esc(item)}</div>`);
       }
       case "songs":
         return `<div class="card" style="text-align:center"><span class="kicker"><i></i>NOW PLAYING</span><div class="hero" style="font-size:clamp(28px,6vw,56px)">${esc(c.song || "ยังไม่มีเพลง")}</div><div class="sub">Song Requests</div></div>`;
       case "timer":
         return `<div class="card" style="text-align:center"><span class="kicker"><i></i>TIMER</span><div class="hero">${clock(remain(data))}</div><div class="sub">${c.timerRunning ? "กำลังนับ" : "พร้อมเริ่ม"}</div></div>`;
+      case "subathon": {
+        const st = studio(data).subathon || {};
+        return `<div class="card" style="text-align:center"><span class="kicker"><i></i>SUBATHON</span><div class="hero">${clock(remain(data))}</div><div class="sub">${c.timerRunning ? (st.enabled !== false ? "ยืดเวลาเมื่อมีของขวัญ" : "กำลังนับ") : "พร้อมเริ่ม"}</div></div>`;
+      }
+      case "pointsboard": {
+        const rows = studio(data).pointsUsers || [];
+        return rankList(rows, "points");
+      }
+      case "bot": {
+        const rows = (studio(data).botReplies || []).slice(0, 6);
+        if (!rows.length && !gallery) return "";
+        return infoShell("list", "CHATBOT", infoRows(rows, (row) => `<div class="info-row"><div class="meta"><span class="nick">${esc(row.nick)}</span><span class="gift">${esc(row.text)} → ${esc(row.reply)}</span></div></div>`, "รอคำตอบจากบอท"));
+      }
       case "slider":
       case "coinmatch": {
         const pct = goalPct(data);
@@ -241,8 +470,13 @@
   async function poll() {
     try {
       const res = await fetch("/api/live-stats?t=" + Date.now(), { cache: "no-store" });
-      if (!res.ok) return;
-      const data = await res.json();
+      if (!res.ok) {
+        if ((panel === "welcome" && WELCOME_DEMOS[demo] && !root.innerHTML) || (gallery && !root.innerHTML)) {
+          root.innerHTML = render(seedGallery({}));
+        }
+        return;
+      }
+      const data = seedGallery(await res.json());
       const evs = data.events || [];
       if (!primed) {
         for (const ev of evs) if (ev.id) seen.add(ev.id);
@@ -283,7 +517,8 @@
         return;
       }
       const htmlOut = render(data);
-      const key = data.rev + ":" + spin + ":" + socialIdx + ":" + remain(data) + ":" + (Date.now() < hopUntil ? "1" : "0");
+      const wel = welcomeVisible(data);
+      const key = data.rev + ":" + spin + ":" + socialIdx + ":" + remain(data) + ":" + (Date.now() < hopUntil ? "1" : "0") + ":" + (wel ? wel.at : "0");
       if (key === lastKey && htmlOut === lastHtml) return;
       lastKey = key;
       lastHtml = htmlOut;
@@ -291,6 +526,16 @@
     } catch {
       /* OBS keeps last frame */
     }
+  }
+  if (panel === "welcome" && WELCOME_DEMOS[demo]) {
+    lastHtml = render({});
+    root.innerHTML = lastHtml;
+  } else if (gallery) {
+    lastHtml = render(seedGallery({}));
+    root.innerHTML = lastHtml;
+    if (panel === "likes") burst("like", { count: 10 });
+    if (panel === "firework" || panel === "cannon" || panel === "drop") burst("gift", { nick: "Emma", gift: "Rose", count: 5 });
+    if (panel === "emojify") burst("chat", { text: "🔥" });
   }
   poll();
   setInterval(poll, 400);

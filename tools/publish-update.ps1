@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.7.17",
-  [string]$Notes = "Monkeyeffect 1.0.7.17 - stop restoring minimized windows every 2 seconds",
+  [string]$Ver = "1.0.8",
+  [string]$Notes = "Monkeyeffect 1.0.8 - Overlay Gallery gold frames and transparent PNG widgets",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 
@@ -34,7 +34,7 @@ if (Test-Path $out) { Remove-Item -Recurse -Force $out }
 New-Item -ItemType Directory -Force -Path (Join-Path $stage "wwwroot") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $stage "tools") | Out-Null
 Copy-Item -Force $dllDst (Join-Path $stage "TempleGiftRelay.dll")
-robocopy (Join-Path $Root "wwwroot") (Join-Path $stage "wwwroot") /E /XD media-cache /NFL /NDL /NJH /NJS /nc /ns /np | Out-Null
+robocopy (Join-Path $Root "wwwroot") (Join-Path $stage "wwwroot") /E /XD media-cache _opaque-src /NFL /NDL /NJH /NJS /nc /ns /np | Out-Null
 # Only ship runtime tools needed by the app (never innosetup / build helpers).
 $toolsSrc = Join-Path $Root "tools"
 $toolsDst = Join-Path $stage "tools"
@@ -51,6 +51,10 @@ foreach ($f in @("Monkeyeffect.bat","Monkeyeffect.vbs","monkeyeffect.ico")) {
   $p = Join-Path $Root $f
   if (Test-Path $p) { Copy-Item -Force $p (Join-Path $stage $f) }
 }
+
+# GitHub git rejects files over 100MB. Music media is already on 1.0.7.x installs; robocopy merge keeps it.
+$musicFiles = Join-Path $stage "wwwroot\defaults\music\files"
+if (Test-Path $musicFiles) { Remove-Item -Recurse -Force $musicFiles }
 
 Write-Host "[3/5] Zip + latest.json..."
 Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -CompressionLevel Optimal

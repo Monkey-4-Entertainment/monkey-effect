@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.7.17",
-    "notes":  "Monkeyeffect 1.0.7.17 - stop restoring minimized windows every 2 seconds",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.7.17-update.zip",
-    "sha256":  "ee01d1d0d629ace0b42704a7a904249f989fa74b629f21edae7f7ffca7016ce0",
+    "version":  "1.0.8",
+    "notes":  "Monkeyeffect 1.0.8 - Overlay Gallery gold frames and transparent PNG widgets",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8-update.zip",
+    "sha256":  "91a8318a295ce25b2d4f0fc61a8e8985a5345560a19310bc0cfd4500f43009ce",
     "mandatory":  true,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

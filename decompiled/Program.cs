@@ -320,10 +320,10 @@ public class Program
 				return Results.Json(new
 				{
 					selected = sel,
-					games = GameCatalog.BuiltIn.Select(g => new { id = g.Id, name = g.Name, processNames = g.ProcessNames, titleContains = g.TitleContains, keyMapFile = g.KeyMapFile })
+					games = GameCatalog.All.Select(g => new { id = g.Id, name = g.Name, processNames = g.ProcessNames, titleContains = g.TitleContains, keyMapFile = g.KeyMapFile })
 				});
 			}));
-			app.MapPut("/api/games/selected", async (HttpRequest request, GameWindowService gameWindow, RelayState state, KeyMapDeliveryService keyMap) =>
+			app.MapPut("/api/games/selected", async (HttpRequest request, GameWindowService gameWindow, RelayState state, KeyMapDeliveryService keyMap, RouletteConfigService roulette) =>
 			{
 				using StreamReader reader = new StreamReader(request.Body);
 				string json = await reader.ReadToEndAsync();
@@ -338,6 +338,7 @@ public class Program
 				gameWindow.SetSelection(sel);
 				// Auto-activate/deactivate keymap based on game profile
 				keyMap.AutoActivateFromGame(sel);
+				roulette.BindToGame(sel.Id);
 				state.PushLog(new LogEntry
 				{
 					Kind = "system",
@@ -349,6 +350,38 @@ public class Program
 					selected = gameWindow.GetSelection(),
 					gameWindowFound = state.GameWindowFound,
 					gameWindowTitle = state.GameWindowTitle
+				});
+			});
+			app.MapPost("/api/games/user", async (HttpRequest request, GameWindowService gameWindow, KeyMapDeliveryService keyMap, RouletteConfigService roulette) =>
+			{
+				using StreamReader reader = new StreamReader(request.Body);
+				string json = await reader.ReadToEndAsync();
+				using JsonDocument doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "{}" : json);
+				JsonElement root = doc.RootElement;
+				string name = root.TryGetProperty("name", out JsonElement n) ? (n.GetString() ?? "") : "";
+				string process = root.TryGetProperty("processName", out JsonElement p) ? (p.GetString() ?? "") : "";
+				string title = root.TryGetProperty("windowTitle", out JsonElement t) ? (t.GetString() ?? "") : "";
+				if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(process))
+				{
+					return Results.BadRequest(new { ok = false, error = "ใส่ชื่อเกม หรือเลือกหน้าต่างที่เปิดอยู่" });
+				}
+				GameProfile created = GameCatalog.UpsertUserGame(name, process, title);
+				var sel = new GameSelection
+				{
+					Id = created.Id,
+					DisplayName = created.Name,
+					CustomProcess = string.IsNullOrWhiteSpace(process) ? null : process,
+					CustomTitle = string.IsNullOrWhiteSpace(title) ? null : title
+				};
+				gameWindow.SetSelection(sel);
+				keyMap.AutoActivateFromGame(sel);
+				roulette.BindToGame(sel.Id);
+				return Results.Json(new
+				{
+					ok = true,
+					game = new { id = created.Id, name = created.Name, keyMapFile = created.KeyMapFile },
+					selected = gameWindow.GetSelection(),
+					games = GameCatalog.All.Select(g => new { id = g.Id, name = g.Name, processNames = g.ProcessNames, titleContains = g.TitleContains, keyMapFile = g.KeyMapFile })
 				});
 			});
 			app.MapGet("/api/games/windows", (Func<GameWindowService, IResult>)(gameWindow =>
@@ -624,8 +657,17 @@ public class Program
 					});
 				}
 			});
-			app.MapGet("/api/roulette/config", (Func<RouletteConfigService, IResult>)((RouletteConfigService roulette) =>
-				Results.Json(new { ok = true, config = roulette.GetSnapshot() })));
+			app.MapGet("/api/roulette/config", (Func<RouletteConfigService, GameWindowService, IResult>)((RouletteConfigService roulette, GameWindowService gameWindow) =>
+			{
+				roulette.BindToGame(gameWindow.GetSelection()?.Id);
+				return Results.Json(new
+				{
+					ok = true,
+					game = roulette.ActiveGameId,
+					gameName = roulette.CurrentGameName(),
+					config = roulette.GetSnapshot()
+				});
+			}));
 			app.MapPut("/api/roulette/config", async (HttpRequest request, RouletteConfigService roulette) =>
 			{
 				try
@@ -639,12 +681,61 @@ public class Program
 						return Results.BadRequest(new { ok = false, error = "invalid body" });
 					}
 					roulette.Save(body);
-					return Results.Json(new { ok = true, config = roulette.GetSnapshot() });
+					return Results.Json(new
+					{
+						ok = true,
+						game = roulette.ActiveGameId,
+						gameName = roulette.CurrentGameName(),
+						config = roulette.GetSnapshot()
+					});
 				}
 				catch (Exception ex)
 				{
 					return Results.BadRequest(new { ok = false, error = ex.Message });
 				}
+			});
+			app.MapGet("/api/roulette/export", (Func<RouletteConfigService, GameWindowService, IResult>)((RouletteConfigService roulette, GameWindowService gameWindow) =>
+			{
+				roulette.BindToGame(gameWindow.GetSelection()?.Id);
+				byte[] bytes = System.Text.Encoding.UTF8.GetBytes(roulette.ExportPresetJson());
+				return Results.File(bytes, "application/json; charset=utf-8", roulette.ExportFileName());
+			}));
+			app.MapPost("/api/roulette/import", async (HttpRequest request, RouletteConfigService roulette) =>
+			{
+				using var reader = new StreamReader(request.Body);
+				string text = await reader.ReadToEndAsync();
+				if (text.TrimStart().StartsWith("{") && text.Contains("\"text\""))
+				{
+					try
+					{
+						using JsonDocument wrap = JsonDocument.Parse(text);
+						if (wrap.RootElement.TryGetProperty("text", out JsonElement t) && t.ValueKind == JsonValueKind.String)
+							text = t.GetString() ?? text;
+					}
+					catch
+					{
+						/* body is the preset itself */
+					}
+				}
+				string fileName = request.Query["file"].ToString();
+				if (string.IsNullOrWhiteSpace(fileName))
+					fileName = Uri.UnescapeDataString(request.Headers["X-Preset-Filename"].ToString() ?? "");
+				string requestedGame = request.Query["game"].ToString();
+				if (!roulette.TryImportPreset(text, fileName, requestedGame, out RouletteConfig cfg, out string gameId, out string displayName, out string? presetGame, out string error, out bool mismatch))
+				{
+					return Results.Json(new { ok = false, error, mismatch, game = gameId, displayName, presetGame });
+				}
+				roulette.Save(cfg);
+				return Results.Json(new
+				{
+					ok = true,
+					rules = cfg.Rules.Count,
+					enabled = cfg.Enabled,
+					game = gameId,
+					displayName,
+					presetGame,
+					config = roulette.GetSnapshot()
+				});
 			});
 			// Roulette winner → game ONLY (no kind=ui fan-out / no second spin side-effects).
 			ConcurrentDictionary<string, long> rouletteDeliverTokens = new ConcurrentDictionary<string, long>(StringComparer.Ordinal);
@@ -784,6 +875,7 @@ public class Program
 						Nickname = nickR,
 						AvatarUrl = avatarR
 					};
+					GiftCatalog.Fill(winPayload);
 					DeliveryResult winResult = await gameBridgeService.DeliverGiftAsync(winPayload);
 					state.PushLog(new LogEntry
 					{
@@ -822,6 +914,7 @@ public class Program
 					UserName = userName,
 					Nickname = nickname
 				};
+				GiftCatalog.Fill(payload);
 				if (msgType.Contains("Chat", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(payload.Comment))
 				{
 					payload.Comment = giftName;
@@ -997,17 +1090,27 @@ public class Program
 				JsonElement root = doc.RootElement;
 				string key = root.TryGetProperty("key", out JsonElement keyEl) ? (keyEl.GetString() ?? "") : "";
 				string webhookUrl = root.TryGetProperty("webhookUrl", out JsonElement whEl) ? (whEl.GetString() ?? "") : "";
+				string giftName = root.TryGetProperty("giftName", out JsonElement gnEl) ? (gnEl.GetString() ?? "") : "";
+				string nickname = root.TryGetProperty("nickname", out JsonElement nnEl) ? (nnEl.GetString() ?? "") : "";
+				int count = 1;
+				if (root.TryGetProperty("count", out JsonElement countEl0) && countEl0.ValueKind == JsonValueKind.Number)
+				{
+					count = countEl0.GetInt32();
+				}
+				if (count < 1) count = 1;
+				if (count > 200) count = 200;
 				if (!string.IsNullOrWhiteSpace(webhookUrl))
 				{
 					var testPayload = new GiftPayload
 					{
-						GiftName = "Rose",
-						RepeatCount = 1,
+						GiftName = string.IsNullOrWhiteSpace(giftName) ? "Rose" : giftName.Trim(),
+						RepeatCount = count,
 						UserName = "test_user",
-						Nickname = "Test User"
+						Nickname = string.IsNullOrWhiteSpace(nickname) ? "Test User" : nickname.Trim()
 					};
-					if (km.TryFireWebhook(webhookUrl, out string whDetail, testPayload))
-						return Results.Json(new { ok = true, detail = whDetail, webhook = true });
+					GiftCatalog.Fill(testPayload);
+					if (km.TryDeliverWebhookUrl(webhookUrl, testPayload, out string whDetail))
+						return Results.Json(new { ok = true, detail = whDetail, webhook = true, count });
 					return Results.Json(new { ok = false, error = string.IsNullOrWhiteSpace(whDetail) ? "webhook failed" : whDetail });
 				}
 				int vk = 0;
@@ -1020,7 +1123,6 @@ public class Program
 				{
 					holdMs = holdEl.GetInt32();
 				}
-				int count = 1;
 				if (root.TryGetProperty("count", out JsonElement countEl) && countEl.ValueKind == JsonValueKind.Number)
 				{
 					count = countEl.GetInt32();
@@ -1193,154 +1295,6 @@ public class Program
 			{
 				ok = true,
 				open = WinPadHost.IsOpen
-			})));
-			app.MapGet("/api/agency/creators", (Func<IResult>)(() =>
-			{
-				try
-				{
-					string userPath = Path.Combine(AppPaths.UserDataDir, "creators-snapshot.json");
-					string bundled = Path.Combine(AppPaths.AppDir, "wwwroot", "defaults", "agency", "creators-snapshot.json");
-					string path = File.Exists(userPath) ? userPath : bundled;
-					if (!File.Exists(path))
-					{
-						return Results.NotFound(new { ok = false, error = "creators snapshot missing" });
-					}
-					string json = File.ReadAllText(path);
-					return Results.Content(json, "application/json");
-				}
-				catch (Exception ex)
-				{
-					return Results.BadRequest(new { ok = false, error = ex.Message });
-				}
-			}));
-			app.MapGet("/api/agency/pastlive-archive", (Func<IResult>)(() =>
-			{
-				try
-				{
-					string userArchive = Path.Combine(AppPaths.UserDataDir, "creators-pastlive-archive.json");
-					string bundledArchive = Path.Combine(AppPaths.AppDir, "wwwroot", "defaults", "agency", "all-creators-pastlive.json");
-					string path = File.Exists(userArchive) ? userArchive : bundledArchive;
-					if (!File.Exists(path))
-						return Results.NotFound(new { ok = false, error = "pastlive archive missing" });
-					return Results.Content(File.ReadAllText(path), "application/json");
-				}
-				catch (Exception ex)
-				{
-					return Results.BadRequest(new { ok = false, error = ex.Message });
-				}
-			}));
-			app.MapPost("/api/agency/creators/sync", async (HttpRequest request) =>
-			{
-				try
-				{
-					string? day = request.Query["day"].FirstOrDefault()
-						?? request.Headers["X-Agency-Day"].FirstOrDefault();
-					await AgencyBackstageSyncHost.SyncFullAsync(day);
-					string userPath = Path.Combine(AppPaths.UserDataDir, "creators-snapshot.json");
-					string bundled = Path.Combine(AppPaths.AppDir, "wwwroot", "defaults", "agency", "creators-snapshot.json");
-					string path = File.Exists(userPath) ? userPath : bundled;
-					if (!File.Exists(path))
-					{
-						return Results.NotFound(new { ok = false, error = "creators snapshot missing" });
-					}
-					if (!string.IsNullOrWhiteSpace(AgencyBackstageSyncHost.LastError)
-						&& AgencyBackstageSyncHost.LastOkUtc == DateTime.MinValue)
-					{
-						return Results.BadRequest(new
-						{
-							ok = false,
-							error = AgencyBackstageSyncHost.LastError,
-							lastError = AgencyBackstageSyncHost.LastError
-						});
-					}
-					return Results.Content(File.ReadAllText(path), "application/json");
-				}
-				catch (Exception ex)
-				{
-					return Results.BadRequest(new
-					{
-						ok = false,
-						error = ex.Message,
-						lastError = AgencyBackstageSyncHost.LastError
-					});
-				}
-			});
-			app.MapGet("/api/agency/creators/sync/status", (Func<IResult>)(() => Results.Json(new
-			{
-				ok = true,
-				lastOkUtc = AgencyBackstageSyncHost.LastOkUtc == DateTime.MinValue ? null : AgencyBackstageSyncHost.LastOkUtc.ToString("o"),
-				lastError = AgencyBackstageSyncHost.LastError
-			})));
-			app.MapPost("/api/agency/creators/live-poll", async () =>
-			{
-				try
-				{
-					await AgencyLivePollHost.TriggerNowAsync();
-					string userPath = Path.Combine(AppPaths.UserDataDir, "creators-snapshot.json");
-					string bundled = Path.Combine(AppPaths.AppDir, "wwwroot", "defaults", "agency", "creators-snapshot.json");
-					string path = File.Exists(userPath) ? userPath : bundled;
-					if (!File.Exists(path))
-					{
-						return Results.NotFound(new { ok = false, error = "creators snapshot missing" });
-					}
-					if (!string.IsNullOrWhiteSpace(AgencyLivePollHost.LastError) && AgencyLivePollHost.LastOkUtc == DateTime.MinValue)
-					{
-						return Results.BadRequest(new
-						{
-							ok = false,
-							error = AgencyLivePollHost.LastError,
-							lastError = AgencyLivePollHost.LastError
-						});
-					}
-					return Results.Content(File.ReadAllText(path), "application/json");
-				}
-				catch (Exception ex)
-				{
-					return Results.BadRequest(new
-					{
-						ok = false,
-						error = ex.Message,
-						lastError = AgencyLivePollHost.LastError
-					});
-				}
-			});
-			app.MapGet("/api/agency/creators/live-poll/status", (Func<IResult>)(() => Results.Json(new
-			{
-				ok = true,
-				running = AgencyLivePollHost.IsRunning,
-				lastOkUtc = AgencyLivePollHost.LastOkUtc == DateTime.MinValue ? null : AgencyLivePollHost.LastOkUtc.ToString("o"),
-				lastError = AgencyLivePollHost.LastError
-			})));
-			app.MapPost("/api/agency/creators", async (HttpRequest request) =>
-			{
-				try
-				{
-					Directory.CreateDirectory(AppPaths.UserDataDir);
-					string userPath = Path.Combine(AppPaths.UserDataDir, "creators-snapshot.json");
-					using StreamReader reader = new StreamReader(request.Body);
-					string json = await reader.ReadToEndAsync();
-					await File.WriteAllTextAsync(userPath, json);
-					return Results.Json(new { ok = true });
-				}
-				catch (Exception ex)
-				{
-					return Results.BadRequest(new { ok = false, error = ex.Message });
-				}
-			});
-			app.MapPost("/api/agency/dashboard/open", (Func<IResult>)(() =>
-			{
-				CreatorDashboardHost.Open(recreate: !CreatorDashboardHost.IsOpen);
-				return Results.Json(new { ok = true, open = CreatorDashboardHost.IsOpen });
-			}));
-			app.MapPost("/api/agency/dashboard/close", (Func<IResult>)(() =>
-			{
-				CreatorDashboardHost.CloseDashboard();
-				return Results.Json(new { ok = true, open = false });
-			}));
-			app.MapGet("/api/agency/dashboard/status", (Func<IResult>)(() => Results.Json(new
-			{
-				ok = true,
-				open = CreatorDashboardHost.IsOpen
 			})));
 			app.MapPost("/api/roulette-overlay/open", (Func<IResult>)(() =>
 			{
@@ -1603,27 +1557,6 @@ public class Program
 				DevLogService.Clear();
 				DevLogService.Write("dev-log", "cleared by UI");
 				return Results.Json(new { ok = true, file = DevLogService.DevLogFile });
-			}));
-			app.MapGet("/api/stickers/temple-escape/zip", (Func<IResult>)(() =>
-			{
-				string dir = Path.Combine(AppPaths.AppDir, "wwwroot", "stickers", "temple-escape");
-				if (!Directory.Exists(dir))
-				{
-					return Results.NotFound(new { ok = false, error = "stickers missing" });
-				}
-				string zipPath = Path.Combine(Path.GetTempPath(), "monkeyeffect-temple-escape-stickers.zip");
-				try
-				{
-					if (File.Exists(zipPath)) File.Delete(zipPath);
-					System.IO.Compression.ZipFile.CreateFromDirectory(dir, zipPath, System.IO.Compression.CompressionLevel.Fastest, includeBaseDirectory: false);
-					byte[] bytes = File.ReadAllBytes(zipPath);
-					try { File.Delete(zipPath); } catch { }
-					return Results.File(bytes, "application/zip", "TempleEscape-StickerSheets.zip");
-				}
-				catch (Exception ex)
-				{
-					return Results.Json(new { ok = false, error = ex.Message });
-				}
 			}));
 			static string FileSha12(string path)
 			{

@@ -147,6 +147,10 @@ public sealed class KeyMapDeliveryService
 		if (profile != null && !string.IsNullOrWhiteSpace(profile.KeyMapFile))
 			return profile.KeyMapFile;
 
+		string? fromUser = DetectKeyMapFromUserGames(selection);
+		if (fromUser != null)
+			return fromUser;
+
 		if (id.Equals("custom", StringComparison.OrdinalIgnoreCase))
 			return DetectKeyMapFromCustom(selection);
 
@@ -159,7 +163,7 @@ public sealed class KeyMapDeliveryService
 			if (_gameWindow.TryGetWindow(out nint _, out string title) &&
 			    !string.IsNullOrWhiteSpace(title))
 			{
-				foreach (GameProfile g in GameCatalog.BuiltIn)
+				foreach (GameProfile g in GameCatalog.All)
 				{
 					if (string.IsNullOrWhiteSpace(g.KeyMapFile)) continue;
 					if (g.TitleContains.Any(t => title.Contains(t, StringComparison.OrdinalIgnoreCase)))
@@ -176,8 +180,32 @@ public sealed class KeyMapDeliveryService
 	/// Do not use the selected game id here — leftover CustomProcess "THE RIDER"
 	/// must not activate keys while Temple Escape is selected.
 	/// </summary>
+	private static string? DetectKeyMapFromUserGames(GameSelection selection)
+	{
+		string proc = (selection.CustomProcess ?? "").Trim();
+		string title = (selection.CustomTitle ?? "").Trim();
+		string display = (selection.DisplayName ?? "").Trim();
+		foreach (GameProfile g in GameCatalog.UserGames)
+		{
+			if (string.IsNullOrWhiteSpace(g.KeyMapFile)) continue;
+			if (proc.Length > 0 && g.ProcessNames.Any(p => p.Equals(proc, StringComparison.OrdinalIgnoreCase)))
+				return g.KeyMapFile;
+			if (title.Length > 0 && g.TitleContains.Any(t =>
+				title.Contains(t, StringComparison.OrdinalIgnoreCase) ||
+				t.Contains(title, StringComparison.OrdinalIgnoreCase)))
+				return g.KeyMapFile;
+			if (display.Length > 0 &&
+			    (g.Name.Equals(display, StringComparison.OrdinalIgnoreCase) ||
+			     g.TitleContains.Any(t => display.Contains(t, StringComparison.OrdinalIgnoreCase))))
+				return g.KeyMapFile;
+		}
+		return null;
+	}
+
 	private static string? DetectKeyMapFromCustom(GameSelection selection)
 	{
+		string? userHit = DetectKeyMapFromUserGames(selection);
+		if (userHit != null) return userHit;
 		string proc = (selection.CustomProcess ?? "").Trim();
 		string title = (selection.CustomTitle ?? "").Trim();
 		string display = (selection.DisplayName ?? "").Trim();
@@ -195,7 +223,7 @@ public sealed class KeyMapDeliveryService
 		    blob.Contains("JOJO", StringComparison.OrdinalIgnoreCase))
 			return "roblox-keymap.json";
 
-		foreach (GameProfile g in GameCatalog.BuiltIn)
+		foreach (GameProfile g in GameCatalog.All)
 		{
 			if (string.IsNullOrWhiteSpace(g.KeyMapFile)) continue;
 
@@ -861,14 +889,37 @@ public sealed class KeyMapDeliveryService
 			return false;
 		}
 
-		GameProfile? profile = GameCatalog.FindById(gameId);
-		string? keyFile = profile?.KeyMapFile ?? ResolveKeyMapFile(sel);
-		if (string.IsNullOrWhiteSpace(keyFile))
+		if (gameId is "auto" or "custom" || string.IsNullOrWhiteSpace(gameId) || GameCatalog.FindById(gameId) == null)
 		{
-			error = $"{displayName} ไม่ใช้ Keyboard Mapping — พรีเซ็ตนี้ใช้กับเกมอย่าง THE RIDER, ZERO-HOUR หรือ Roblox\nเลือกเกมให้ตรงแล้วค่อยนำเข้า ระบบจะไม่เปลี่ยนเกมให้อัตโนมัติ";
-			return false;
+			GameProfile created = GameCatalog.UpsertUserGame(
+				sel?.DisplayName ?? displayName,
+				sel?.CustomProcess,
+				sel?.CustomTitle,
+				gameId is "auto" or "custom" ? null : gameId);
+			gameId = created.Id;
+			displayName = created.Name;
+			_activeFile = created.KeyMapFile ?? GameCatalog.KeyMapFileFor(gameId);
+			_gameWindow.SetSelection(new GameSelection
+			{
+				Id = created.Id,
+				DisplayName = created.Name,
+				CustomProcess = sel?.CustomProcess,
+				CustomTitle = sel?.CustomTitle
+			});
+			return true;
 		}
 
+		GameProfile? profile = GameCatalog.FindById(gameId);
+		string keyFile = profile?.KeyMapFile ?? GameCatalog.KeyMapFileFor(gameId);
+		if (string.IsNullOrWhiteSpace(profile?.KeyMapFile) &&
+		    profile != null &&
+		    profile.Id is not ("auto" or "custom") &&
+		    GameCatalog.BuiltIn.All(b => !b.Id.Equals(profile.Id, StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(b.KeyMapFile)))
+		{
+			GameProfile ensured = GameCatalog.UpsertUserGame(displayName, sel?.CustomProcess, sel?.CustomTitle, gameId);
+			keyFile = ensured.KeyMapFile ?? keyFile;
+			displayName = ensured.Name;
+		}
 		_activeFile = keyFile;
 		return true;
 	}
@@ -986,20 +1037,86 @@ public sealed class KeyMapDeliveryService
 		}
 	}
 
+	private static readonly object WebhookGate = new object();
+
+	public bool TryDeliverWebhookUrl(string url, GiftPayload payload, out string detail)
+	{
+		var rule = new KeyMapRule { WebhookUrl = url, Label = "test" };
+		bool ok = FireMappedWebhook(rule, payload, payload?.GiftName ?? "test", out detail);
+		return ok;
+	}
+
 	private bool FireMappedWebhook(KeyMapRule rule, GiftPayload payload, string label, out string channel)
 	{
 		_webhookExclusive = true;
-		if (!TryFireWebhook(rule.WebhookUrl, out string whDetail, payload))
+		GiftCatalog.Fill(payload);
+		int times = WebhookRepeatTimes(rule.WebhookUrl, payload);
+		GiftPayload unit = UnitWebhookPayload(payload);
+		int ok = 0;
+		string last = "";
+		lock (WebhookGate)
 		{
-			_lastWebhookDetail = whDetail;
+			for (int i = 0; i < times; i++)
+			{
+				if (TryFireWebhook(rule.WebhookUrl, out last, unit))
+				{
+					ok++;
+				}
+				if (i + 1 < times)
+				{
+					Thread.Sleep(45);
+				}
+			}
+		}
+		_lastWebhookDetail = last;
+		if (ok <= 0)
+		{
 			channel = "webhook-failed";
-			AppPaths.Log($"webhook miss {label}: {whDetail}");
+			AppPaths.Log($"webhook miss {label}: {last}");
 			return false;
 		}
-		_lastWebhookDetail = whDetail;
-		channel = $"webhook:{rule.WebhookUrl}";
-		AppPaths.Log($"webhook delivered {label} -> {rule.WebhookUrl} ({rule.Label}) {whDetail}");
+		channel = $"webhook:{rule.WebhookUrl} x{ok}/{times}";
+		AppPaths.Log($"webhook delivered {label} x{ok}/{times} -> {rule.WebhookUrl} ({rule.Label}) {last}");
 		return true;
+	}
+
+	private static int WebhookRepeatTimes(string? url, GiftPayload payload)
+	{
+		int n = Math.Max(1, payload.RepeatCount);
+		if (n > 200) n = 200;
+		if (string.IsNullOrWhiteSpace(url)) return 1;
+		string path = url;
+		if (path.Contains("/spawn/", StringComparison.OrdinalIgnoreCase) ||
+		    path.Contains("/event/", StringComparison.OrdinalIgnoreCase))
+		{
+			return n;
+		}
+		return 1;
+	}
+
+	private static GiftPayload UnitWebhookPayload(GiftPayload src)
+	{
+		GiftCatalog.Fill(src);
+		return new GiftPayload
+		{
+			MessageType = src.MessageType,
+			Type = src.Type,
+			MsgType = src.MsgType,
+			Platform = src.Platform,
+			GiftName = src.GiftName,
+			GiftId = src.GiftId,
+			RepeatCount = 1,
+			RepeatEnd = true,
+			UserName = src.UserName,
+			Nickname = src.Nickname,
+			AvatarUrl = src.AvatarUrl,
+			GiftPictureUrl = src.GiftPictureUrl,
+			Comment = src.Comment,
+			DiamondCount = src.DiamondCount,
+			UserLevel = src.UserLevel,
+			IsSuperFan = src.IsSuperFan,
+			FanClubLevel = src.FanClubLevel
+		};
 	}
 
 	private static KeyMapRule? ResolveRule(KeyMapConfig cfg, GiftPayload payload, string gift)
@@ -1257,8 +1374,29 @@ public sealed class KeyMapDeliveryService
 		Add("userId", user);
 		if (payload != null)
 		{
+			GiftCatalog.Fill(payload);
 			Add("giftName", payload.GiftName);
-			if (payload.RepeatCount > 0) Add("repeatCount", payload.RepeatCount.ToString());
+			int unitCoins = payload.DiamondCount > 0 ? payload.DiamondCount : GiftCatalog.CoinsFor(payload.GiftName);
+			int repeat = payload.RepeatCount > 0 ? payload.RepeatCount : 1;
+			Add("repeatCount", repeat.ToString());
+			Add("count", repeat.ToString());
+			Add("comboCount", repeat.ToString());
+			Add("coins", unitCoins.ToString());
+			Add("diamonds", unitCoins.ToString());
+			Add("diamondCount", unitCoins.ToString());
+			Add("giftValue", unitCoins.ToString());
+			if (payload.GiftId is long gid && gid > 0) Add("giftId", gid.ToString());
+			string picture = payload.GiftPictureUrl;
+			if (string.IsNullOrWhiteSpace(picture)) picture = GiftCatalog.PictureUrl(payload.GiftName);
+			Add("giftPictureUrl", picture);
+			Add("giftImage", picture);
+			Add("giftImageUrl", picture);
+			Add("image", picture);
+			string avatar = (payload.AvatarUrl ?? "").Trim();
+			Add("profilePictureUrl", avatar);
+			Add("profilePicturUrl", avatar);
+			Add("avatarUrl", avatar);
+			Add("avatar", avatar);
 		}
 		if (!Has("eventId"))
 			Add("eventId", "me-" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + "-" + Guid.NewGuid().ToString("N")[..8]);

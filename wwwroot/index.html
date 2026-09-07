@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v1053-welcome" />
+    <link rel="stylesheet" href="/style.css?v=v1062-info" />
   </head>
   <body>
     <div class="bg"></div>
@@ -22,7 +22,7 @@
           <div class="sidebar-brand-text">
             <div class="title-row">
               <h1>Monkeyeffect</h1>
-              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.7.17</span>
+              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.8</span>
             </div>
             <p>Gift relay → เกม</p>
           </div>
@@ -38,7 +38,7 @@
             <span class="nav-group-label">หลัก</span>
             <button type="button" class="nav-btn active" data-panel="connect">
               <span class="nav-ico" aria-hidden="true">◎</span>
-              <span class="nav-label">เชื่อมต่อ</span>
+              <span class="nav-label">หน้าหลัก</span>
             </button>
             <button type="button" class="nav-btn" data-panel="effects">
               <span class="nav-ico" aria-hidden="true">◆</span>
@@ -75,14 +75,6 @@
             <button type="button" class="nav-btn nav-btn-live" data-panel="live">
               <span class="nav-ico" aria-hidden="true">◉</span>
               <span class="nav-label">Overlay Gallery</span>
-            </button>
-            <button type="button" class="nav-btn" data-panel="agency">
-              <span class="nav-ico" aria-hidden="true">▣</span>
-              <span class="nav-label">ครีเอเตอร์</span>
-            </button>
-            <button type="button" class="nav-btn" data-panel="stickers">
-              <span class="nav-ico" aria-hidden="true">◈</span>
-              <span class="nav-label">สติกเกอร์</span>
             </button>
             <button type="button" class="nav-btn" data-panel="tts">
               <span class="nav-ico" aria-hidden="true">🎙</span>
@@ -139,8 +131,21 @@
       <div class="workspace">
       <header class="workspace-head">
         <div>
-          <h2 class="workspace-title" id="workspaceTitle">เชื่อมต่อ</h2>
+          <h2 class="workspace-title" id="workspaceTitle">หน้าหลัก</h2>
           <p class="workspace-sub">อ่าน Gift / Like / Follow จาก TikTok LIVE แล้วส่งต่อให้เกมที่เลือก</p>
+        </div>
+        <div id="liveStrip" class="live-strip" aria-live="polite">
+          <div class="live-strip-meta">
+            <strong id="liveStripUser">ยังไม่เชื่อมต่อ</strong>
+            <span id="liveStripGame">เกม —</span>
+          </div>
+          <div class="live-strip-stats">
+            <span id="liveStripCoins">◆ 0</span>
+            <span id="liveStripLikes">♡ 0</span>
+            <span id="liveStripFollows">+ 0</span>
+            <span id="liveStripViewers">◎ —</span>
+          </div>
+          <div id="liveStripLast" class="live-strip-last">ยังไม่มีของขวัญ</div>
         </div>
       </header>
 
@@ -164,6 +169,7 @@
           <div class="game-select-row">
             <select id="gameSelect"></select>
             <button id="scanGamesBtn" class="btn ghost small" type="button">สแกนหน้าต่าง</button>
+            <button id="addGameBtn" class="btn ghost small" type="button">เพิ่มเกม</button>
           </div>
           <div id="customGameFields" class="custom-game-fields hidden">
             <label for="customGameProcess">ชื่อโปรเซส (ไม่ต้องใส่ .exe)</label>
@@ -174,7 +180,16 @@
           <div id="scanGamesPanel" class="scan-games-panel hidden">
             <label for="scannedWindowSelect">เลือกจากหน้าต่างที่เปิดอยู่</label>
             <select id="scannedWindowSelect"></select>
-            <button id="useScannedGameBtn" class="btn secondary small" type="button">ใช้หน้าต่างนี้</button>
+            <button id="useScannedGameBtn" class="btn secondary small" type="button">เพิ่มเป็นเกมนี้</button>
+          </div>
+          <div id="addGamePanel" class="scan-games-panel hidden">
+            <label for="addGameName">ชื่อเกมใหม่</label>
+            <input id="addGameName" class="field" type="text" placeholder="เช่น BEYOND RETURN" autocomplete="off" />
+            <label for="addGameProcess">ชื่อโปรเซส (ไม่ต้องใส่ .exe)</label>
+            <input id="addGameProcess" class="field" type="text" placeholder="เช่น BeyondReturn-Win64-Shipping" autocomplete="off" />
+            <label for="addGameTitle">ชื่อหน้าต่างเกม (บางส่วนก็ได้)</label>
+            <input id="addGameTitle" class="field" type="text" placeholder="เช่น BEYOND RETURN" autocomplete="off" />
+            <button id="addGameSaveBtn" class="btn secondary small" type="button">บันทึกเกมนี้</button>
           </div>
           <p class="hint">ใส่ username แล้วกด Connect — ต่อ TikTok LIVE ตรงๆ ไม่ต้องเปิด Chrome (ตัวพิมพ์เล็ก/ใหญ่ไม่สำคัญ ระบบแปลงให้อัตโนมัติ)</p>
 
@@ -212,6 +227,17 @@
           <div class="stat-card">
             <span class="stat-label">HTTP /livemsg</span>
             <strong id="httpPort" class="stat-value">12922</strong>
+          </div>
+        </section>
+
+        <section class="card home-live-card">
+          <div class="card-head">
+            <h2>ของขวัญล่าสุด</h2>
+            <span class="chip" id="homeLiveChip">OFFLINE</span>
+          </div>
+          <p class="hint">รูปของขวัญ + ชื่อผู้ส่ง + เหรียญ — อัปเดตตอนไลฟ์จริงและตอนกดทดสอบ</p>
+          <div id="homeLastGifts" class="home-gifts">
+            <div class="home-gift-empty">ยังไม่มีของขวัญ — เชื่อมต่อไลฟ์ หรือไปเอฟเฟกต์เกมแล้วกด Send Test</div>
           </div>
         </section>
 
@@ -292,13 +318,17 @@
 
         <section class="card hidden" id="effectsKeymapCard">
           <div class="card-head">
-            <h2 id="effectsKeymapTitle">Actions</h2>
+            <h2 id="effectsKeymapTitle">Actions & Events</h2>
             <span class="chip" id="effectsKeymapStatus">keymap</span>
           </div>
           <p class="hint">
-            แอคชัน = ชื่อเอฟเฟกต์ + ปุ่มคีย์บอร์ด · คลิกช่องคีย์แล้วกดปุ่มเพื่อจับ
-            · ยังว่างอยู่จนกว่าจะนำเข้าพรีเซ็ต · แถวที่ขึ้นว่า «ว่าง» ยังไม่มีคีย์ในไฟล์
+            ของขวัญมีรูปจากคลัง · ค้นหาแอคชันได้ · คอมโบยิงทีละชิ้น · webhook ส่งชื่อ/รูป/เหรียญ
+            · ▶ ใช้จำนวนจากช่องคอมโบด้านบน · คลิกชื่อของขวัญเพื่อเลือกจากคลัง
           </p>
+          <div class="keymap-toolbar">
+            <input id="keymapSearch" class="field" type="search" placeholder="ค้นหาแอคชัน / ของขวัญ / คีย์" autocomplete="off" />
+            <span class="chip" id="keymapFilterCount"></span>
+          </div>
           <div id="effectsKeymapTable" style="margin-top:.5rem;overflow:auto"></div>
           <div class="actions tight" style="margin-top:.75rem">
             <button id="effectsKeymapAddBtn" class="btn primary" type="button">เพิ่ม Action</button>
@@ -345,9 +375,15 @@
           <div class="actions tight">
             <button id="rouletteOpenOverlayBtn" class="btn secondary" type="button">เปิด Overlay สุ่ม</button>
             <button id="rouletteCloseOverlayBtn" class="btn ghost" type="button">ปิด Overlay</button>
-            <button id="rouletteRestoreDefaultsBtn" class="btn ghost" type="button">ใช้กฎเริ่มต้น (กฎ 02)</button>
+            <button id="rouletteRestoreDefaultsBtn" class="btn ghost" type="button">ใช้กล่องสุ่ม Temple Escape</button>
           </div>
-          <p class="hint">หมุนเฉพาะใน Overlay (มีเสียงติ๊ก) · กฎและรูปเก็บในโฟลเดอร์ <b>userdata</b> คัดลอกทั้งโฟลเดอร์แอพไปเครื่องอื่นได้</p>
+          <div class="actions tight" style="margin-top:.65rem">
+            <button id="rouletteImportBtn" class="btn primary" type="button">นำเข้าพรีเซ็ต</button>
+            <button id="rouletteExportBtn" class="btn secondary" type="button">ส่งออกพรีเซ็ต</button>
+            <input id="rouletteImportFile" type="file" accept=".json,application/json" hidden />
+          </div>
+          <p class="hint" id="rouletteGameBindHint">พรีเซ็ตกล่องสุ่มแยกตามเกม — นำเข้า/ส่งออกเฉพาะเกมที่เลือกอยู่ เพราะ mapping ไม่เหมือนกัน</p>
+          <p class="hint" id="roulettePresetMsg"></p>
         </section>
 
         <section class="card">
@@ -807,6 +843,7 @@ Please click OK to continue.</textarea>
           <p class="hint">
             Overlay แยกโชว์โหลแก้ว 2D ตั้ง สมส่วน · ของขวัญตกจากด้านบนตามแรงโน้มถ่วง กองในโหล ~500 ชิ้น
             แล้วล้นออกปากซ้าย–ขวา ไหลลงข้างโหลไปกองบนพื้น · Overlay จุได้ 5000 ชิ้น · ของเก่าไม่ถูกลบ · รีเซ็ตเมื่อเริ่มไลฟ์ใหม่
+            · เปิด Overlay แล้วลากแถบหัวหน้าต่างหรือพื้นเขียวเพื่อย้าย ลากขอบเพื่อย่อขยาย — ตำแหน่งจำไว้ให้
           </p>
           <p class="hint">
             TikTok LIVE Studio: ใส่ลิงก์ Overlay เป็น Browser Source (อย่าแคปหน้าต่าง) แล้วคีย์สีเขียว
@@ -814,7 +851,7 @@ Please click OK to continue.</textarea>
           </p>
           <label for="jarOverlayUrl">ลิงก์ Overlay</label>
           <div class="actions">
-            <input id="jarOverlayUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/jar-overlay.html?v=jar50" />
+            <input id="jarOverlayUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/jar-overlay.html?v=jar51" />
             <button id="jarCopyOverlayUrlBtn" class="btn ghost" type="button">คัดลอก</button>
           </div>
           <div class="win-score-box">
@@ -852,8 +889,8 @@ Please click OK to continue.</textarea>
             <span class="chip">Browser Source · พื้นหลังโปร่งใส</span>
           </div>
           <p class="hint">
-            คัดลอกลิงก์ใส่ OBS เป็น Browser Source — ไม่ต้องแคปหน้าต่าง · พื้นหลังโปร่งใส
-            · อยากคีย์เขียวต่อท้าย <strong>&chroma=1</strong> · ทดสอบด้วยปุ่มส่งของขวัญในหน้าเชื่อมต่อ
+            วิดเจ็ตสำหรับ OBS หรือ TikTok LIVE Studio — คัดลอกลิงก์แล้ววางเป็น Browser Source
+            · พื้นหลังโปร่งใส · อยากคีย์เขียวต่อท้าย <strong>&chroma=1</strong>
           </p>
           <div class="live-stats-preview">
             <div class="live-stat-box">
@@ -877,112 +914,21 @@ Please click OK to continue.</textarea>
           </div>
         </section>
 
-        <section class="card welcome-inline-card">
-          <div class="card-head">
-            <h2>กรอบต้อนรับ Superfan — กดดูตัวอย่าง</h2>
-          </div>
-          <p class="hint">กดปุ่มด้านล่างเพื่อดูกรอบแต่ละระดับในหน้านี้เลย ไม่เปิดหน้าต่างใหม่</p>
-          <div class="actions tight welcome-test-row">
-            <button type="button" class="btn primary welcome-demo-btn" data-welcome-demo="fan">Superfan</button>
-            <button type="button" class="btn secondary welcome-demo-btn" data-welcome-demo="silver">LV 25 เงิน</button>
-            <button type="button" class="btn secondary welcome-demo-btn" data-welcome-demo="gold">LV 35 ทอง</button>
-            <button type="button" class="btn secondary welcome-demo-btn" data-welcome-demo="platinum">LV 45 แพลตินัม</button>
-            <button type="button" class="btn secondary welcome-demo-btn" data-welcome-demo="diamond">LV 55 เพชร</button>
-          </div>
-          <div class="welcome-preview-wrap">
-            <iframe id="welcomeGalleryFrame" class="welcome-preview-frame" title="ตัวอย่างกรอบต้อนรับ" src="/live-overlay.html?panel=welcome&v=gal9&demo=gold"></iframe>
-          </div>
-        </section>
-
         <div id="overlayGallery" class="og-gallery"></div>
 
-        <section class="card">
-          <div class="card-head">
-            <h2>ตั้งค่า Overlay</h2>
-          </div>
-          <div class="form-grid">
-            <div>
-              <label for="liveLastCount">Last gifter ที่โชว์</label>
-              <input id="liveLastCount" class="field" type="number" min="3" max="15" value="8" />
-            </div>
-            <div>
-              <label for="liveGoal">เป้าเพชร (Coin Match / Slider / Jar)</label>
-              <input id="liveGoal" class="field" type="number" min="1" max="10000000" value="1000" />
-            </div>
-            <div>
-              <label for="liveTimerSeconds">Timer (วินาที)</label>
-              <input id="liveTimerSeconds" class="field" type="number" min="5" max="86400" value="300" />
-            </div>
-            <div>
-              <label for="liveStreamer">ชื่อสตรีมเมอร์ / Tiny Diny</label>
-              <input id="liveStreamer" class="field" type="text" placeholder="ชื่อที่จะโชว์" />
-            </div>
-          </div>
-          <div class="actions">
-            <button id="liveTimerStartBtn" class="btn primary" type="button">เริ่ม Timer</button>
-            <button id="liveTimerStopBtn" class="btn ghost" type="button">หยุด</button>
-            <button id="liveTimerResetBtn" class="btn ghost" type="button">รีเซ็ตเวลา</button>
-          </div>
-          <label for="liveSong">Song Requests / กำลังเล่น</label>
-          <input id="liveSong" class="field" type="text" placeholder="ชื่อเพลงที่โชว์บน overlay" />
-          <label for="liveSocials">Social Media Rotator (บรรทัดละ 1 อัน)</label>
-          <textarea id="liveSocials" class="field og-area" rows="3">TikTok @yourname
+        <div id="liveOverlaySettings" class="hidden" hidden>
+          <input id="liveLastCount" type="number" value="8" />
+          <input id="liveGoal" type="number" value="1000" />
+          <input id="liveTimerSeconds" type="number" value="300" />
+          <input id="liveStreamer" type="text" value="" />
+          <input id="liveSong" type="text" value="" />
+          <textarea id="liveSocials">TikTok @yourname
 Instagram @yourname
 Facebook Fanpage</textarea>
-          <label for="liveCommands">Command Info (บรรทัดละ 1 คำสั่ง)</label>
-          <textarea id="liveCommands" class="field og-area" rows="3">!gift ส่งของขวัญเข้าเกม
+          <textarea id="liveCommands">!gift ส่งของขวัญเข้าเกม
 !song ขอเพลง
 !rank ดูอันดับ</textarea>
-          <div class="actions">
-            <button id="liveSaveSettingsBtn" class="btn primary" type="button">บันทึกตั้งค่า</button>
-          </div>
-        </section>
-      </div>
-
-      <!-- ===== Agency creators ===== -->
-      <div id="panel-agency" class="panel">
-        <section class="card">
-          <div class="card-head">
-            <h2>Creator Dashboard</h2>
-            <span class="chip">LIVE Backstage</span>
-          </div>
-          <p class="hint">
-            หน้าต่างแยกแสดงครีเอเตอร์ทั้งหมด · เวลารวมรายเดือน · เวลารายวัน (วันนี้ รวมที่ไลฟ์ไป+กำลังไลฟ์) · เพชรวันนี้/เรียลไทม์ · เพชรรวมเดือน
-            · ข้อมูลดึงจาก TikTok LIVE Backstage แล้วเก็บ snapshot ในเครื่อง
-          </p>
-          <div class="actions tight">
-            <button id="agencyOpenDashboardBtn" class="btn primary" type="button">เปิดหน้าต่าง Dashboard</button>
-            <button id="agencyCloseDashboardBtn" class="btn ghost" type="button">ปิดหน้าต่าง</button>
-          </div>
-        </section>
-      </div>
-
-      <!-- ===== สติกเกอร์ ===== -->
-      <div id="panel-stickers" class="panel">
-        <section class="card">
-          <div class="card-head">
-            <h2>สำหรับเกมวิ่ง</h2>
-            <span class="chip">Temple Escape</span>
-          </div>
-          <p class="hint">ชุดที่อัปไว้ทั้งแผ่น ไม่แยกไอคอน — ใช้กับเกมวิ่ง Temple</p>
-          <div class="actions tight">
-            <a class="btn primary" href="/api/stickers/temple-escape/zip">ดาวน์โหลดทั้งหมด (ZIP)</a>
-          </div>
-          <div class="temple-sheet-list">
-            <figure class="temple-sheet">
-              <img src="/stickers/temple-escape/01.png?v=3" alt="01" />
-              <figcaption>01</figcaption>
-            </figure>
-            <figure class="temple-sheet">
-              <img src="/stickers/temple-escape/02.png?v=3" alt="02" />
-              <figcaption>02</figcaption>
-            </figure>
-            <figure class="temple-sheet">
-              <img src="/stickers/temple-escape/sheet-score.png?v=3" alt="ชุดคะแนน" />
-              <figcaption>ชุดคะแนน +/−</figcaption>
-            </figure>
-          </div>
-        </section>
+        </div>
       </div>
 
       <!-- ===== อ่านออกเสียง AI ===== -->
@@ -1371,19 +1317,20 @@ Facebook Fanpage</textarea>
       <div id="panel-welcome" class="panel">
         <section class="card">
           <div class="card-head">
-            <h2>กรอบต้อนรับ Superfan / LV 20+</h2>
+            <h2>กรอบต้อนรับ LV 20+</h2>
             <label class="toggle">
               <input id="welcomeEnabled" type="checkbox" checked />
               <span>เปิดใช้</span>
             </label>
           </div>
           <p class="hint">
-            แสดงกรอบพร้อมรูปและชื่อเมื่อ Superfan เข้าไลฟ์ หรือผู้ชมเลเวลเกินค่าที่ตั้ง
-            ความสวยของกรอบแบ่งตามเลเวล — นำไปใส่ OBS จาก Overlay Gallery ชื่อ <b>กรอบต้อนรับ</b>
+            เมื่อ Superfan หรือผู้ชม LV 20 ขึ้นไปเข้าไลฟ์ กรอบจะดึงชื่อ รูปโปรไฟล์ และเลเวลจากไลฟ์มาแสดง
+            · เงิน 20 · ทอง 30 · แพลตินัม 40 · เพชร 50
           </p>
+          <div id="welcomeLivePersonPanel" class="welcome-live-person">ยังไม่มีผู้ชมจากไลฟ์</div>
           <div class="form-grid">
             <div>
-              <label for="welcomeMinLevel">เลเวลขั้นต่ำ (เกินค่านี้)</label>
+              <label for="welcomeMinLevel">เลเวลขั้นต่ำ (เริ่มที่ค่านี้)</label>
               <input id="welcomeMinLevel" class="field" type="number" min="1" max="99" value="20" />
             </div>
             <div>
@@ -1391,22 +1338,40 @@ Facebook Fanpage</textarea>
               <input id="welcomeDurationSec" class="field" type="number" min="2" max="60" value="8" />
             </div>
           </div>
-          <p class="hint">ทดสอบกรอบแต่ละระดับ — เปิดพรีวิว Overlay ค้างไว้แล้วกดปุ่ม</p>
-          <div class="actions tight welcome-test-row">
-            <button type="button" class="btn ghost" data-welcome-test="fan">Superfan</button>
-            <button type="button" class="btn ghost" data-welcome-test="silver">LV 25 เงิน</button>
-            <button type="button" class="btn ghost" data-welcome-test="gold">LV 35 ทอง</button>
-            <button type="button" class="btn ghost" data-welcome-test="platinum">LV 45 แพลตินัม</button>
-            <button type="button" class="btn ghost" data-welcome-test="diamond">LV 55 เพชร</button>
+          <div class="welcome-tier-picks">
+            <button type="button" class="welcome-tier-card" data-welcome-test="fan"><span>Superfan</span><strong>แฟนคลับ</strong></button>
+            <button type="button" class="welcome-tier-card" data-welcome-test="silver"><span>LV 20</span><strong>เงิน</strong></button>
+            <button type="button" class="welcome-tier-card" data-welcome-test="gold"><span>LV 30</span><strong>ทอง</strong></button>
+            <button type="button" class="welcome-tier-card" data-welcome-test="platinum"><span>LV 40</span><strong>แพลตินัม</strong></button>
+            <button type="button" class="welcome-tier-card" data-welcome-test="diamond"><span>LV 50</span><strong>เพชร</strong></button>
           </div>
-          <p id="welcomeActivity" class="hint">รอ Superfan หรือผู้ชมเลเวลสูงเข้าไลฟ์...</p>
+          <p id="welcomeActivity" class="hint">รอ Superfan หรือผู้ชม LV 20+ เข้าไลฟ์...</p>
         </section>
         <section class="card">
           <div class="card-head">
-            <h2>พรีวิว Overlay</h2>
+            <h2>ใส่ OBS / TikTok LIVE Studio</h2>
+            <span class="chip">720×420</span>
+          </div>
+          <p class="hint">หน้าต่างในแอพเป็นแค่ตัวอย่าง ต้องวางลิงก์นี้เป็น Browser Source ถึงจะขึ้นบนจอไลฟ์</p>
+          <label for="welcomeObsUrl">ลิงก์ Overlay</label>
+          <div class="welcome-obs-row">
+            <input id="welcomeObsUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/live-overlay.html?panel=welcome&amp;v=gal18" />
+            <button type="button" class="btn primary" id="welcomeCopyObsUrl">คัดลอกลิงก์</button>
+          </div>
+          <ol class="welcome-obs-steps">
+            <li>เปิด OBS หรือ TikTok LIVE Studio</li>
+            <li>เพิ่มแหล่ง <strong>Browser Source</strong> ใหม่</li>
+            <li>วางลิงก์ด้านบน · กว้าง <strong>720</strong> สูง <strong>420</strong></li>
+            <li>เปิดพื้นหลังโปร่งใส · อย่าติ๊กปิดเมื่อซ่อนแหล่ง</li>
+            <li>กลับมาที่แอพนี้ แล้วกดการ์ด Superfan / LV เพื่อทดสอบบนจอ OBS</li>
+          </ol>
+        </section>
+        <section class="card">
+          <div class="card-head">
+            <h2>พรีวิวในแอพ</h2>
           </div>
           <div class="welcome-preview-wrap">
-            <iframe id="welcomePreviewFrame" class="welcome-preview-frame" title="พรีวิวกรอบต้อนรับ" src="/live-overlay.html?panel=welcome&v=gal9&demo=gold"></iframe>
+            <iframe id="welcomePreviewFrame" class="welcome-preview-frame" title="พรีวิวกรอบต้อนรับ" src="/live-overlay.html?panel=welcome&v=gal18&demo=fan"></iframe>
           </div>
         </section>
       </div>
@@ -1416,7 +1381,7 @@ Facebook Fanpage</textarea>
         <section class="card">
           <div class="card-head">
             <h2>อัปเดตออนไลน์</h2>
-            <span class="chip" id="updateStatusChip">v1.0.7.17</span>
+            <span class="chip" id="updateStatusChip">v1.0.8</span>
           </div>
           <p class="hint">ค่าเริ่มต้นชี้ไปที่ GitHub Monkeyeffect — มีอัปเดตแล้วตัวเวอร์ชันมุมซ้ายจะมีจุดแดง กดที่เวอร์ชันเพื่อเปิดหน้านี้และติดตั้ง</p>
           <label for="updateFeedUrl">URL ของ latest.json</label>
@@ -1473,7 +1438,8 @@ Facebook Fanpage</textarea>
       </div>
     </main>
 
-    <script src="/app.js?v=v1109-zh-chat1"></script>
-    <script src="/studio.js?v=studio8"></script>
+    <div id="giftPicker" class="gift-picker hidden" hidden></div>
+    <script src="/app.js?v=v1123-info"></script>
+    <script src="/studio.js?v=studio11"></script>
   </body>
 </html>
