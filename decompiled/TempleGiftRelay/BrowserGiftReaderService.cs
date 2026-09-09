@@ -35,6 +35,8 @@ public sealed class BrowserGiftReaderService
 
 	private readonly LiveStatsOverlayService _liveStats;
 
+	private readonly PhotoPrintService _photoPrint;
+
 	private readonly List<(object Target, EventInfo Event, Delegate Handler)> _roomEventHooks = new();
 
 	private readonly TikTokWebcastDecoder _decoder = new TikTokWebcastDecoder();
@@ -182,13 +184,14 @@ public sealed class BrowserGiftReaderService
 
 	private const int ChromeDebugPort = 9333;
 
-	public BrowserGiftReaderService(RelayState state, GameBridgeService gameBridge, RouletteConfigService roulette, RouletteSpinService rouletteSpin, LiveStatsOverlayService liveStats)
+	public BrowserGiftReaderService(RelayState state, GameBridgeService gameBridge, RouletteConfigService roulette, RouletteSpinService rouletteSpin, LiveStatsOverlayService liveStats, PhotoPrintService photoPrint)
 	{
 		_state = state;
 		_gameBridge = gameBridge;
 		_roulette = roulette;
 		_rouletteSpin = rouletteSpin;
 		_liveStats = liveStats;
+		_photoPrint = photoPrint;
 	}
 
 	public async Task ConnectAsync(string username, CancellationToken cancellationToken = default(CancellationToken))
@@ -252,10 +255,41 @@ public sealed class BrowserGiftReaderService
 			_runCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 			CancellationToken token = _runCts.Token;
 			// Main path: webcast (no Chrome). Chrome only when TEMPLEGIFT_USE_CHROME=1 / reader=chrome.
+			// After AIS-style outages, Euler/Cloudflare can hang while RoomId (Akamai) still works.
 			if (!UseChromeReader())
 			{
-				await ConnectViaWebcastClientAsync(cleanUsername, token);
-				return;
+				bool signingReachable = await Ipv4Network.CanReachSigningHostAsync(token);
+				if (signingReachable)
+				{
+					try
+					{
+						await ConnectViaWebcastClientAsync(cleanUsername, token);
+						return;
+					}
+					catch (Exception ex) when (ShouldFallbackToChrome(ex, token))
+					{
+						AppPaths.Log("webcast-hang fallback-chrome: " + ex.Message);
+						_state.PushLog(new LogEntry
+						{
+							Kind = "system",
+							Text = "webcast ค้างหลังเน็ตหลุด — สลับโหมด Chrome สำรอง"
+						});
+					}
+				}
+				else if (AppPaths.FindChrome() != null)
+				{
+					AppPaths.Log("webcast-preflight unreachable — chrome fallback");
+					_state.PushLog(new LogEntry
+					{
+						Kind = "system",
+						Text = "เน็ตไปเซิร์ฟเวอร์ไลฟ์ไม่ถึง — สลับโหมด Chrome สำรอง"
+					});
+				}
+				else
+				{
+					throw new InvalidOperationException(
+						"เน็ตไปเซิร์ฟเวอร์ไลฟ์ TikTok ไม่ถึง (พบบ่อยหลัง AIS หลุด). รีโมเด็มหรือเปลี่ยน DNS เป็น 1.1.1.1 แล้วกด Connect อีกครั้ง");
+				}
 			}
 			_state.PushLog(new LogEntry
 			{
@@ -1117,8 +1151,11 @@ public sealed class BrowserGiftReaderService
 	private void QueueGiftDelivery(GiftPayload payload)
 	{
 		string text = payload.MessageType ?? "SendGift";
-		try { _liveStats.RecordWelcome(payload); }
-		catch { }
+		if (IsRoomEnterMessage(text))
+		{
+			try { _liveStats.RecordWelcome(payload); }
+			catch { }
+		}
 		if (text.Contains("Chat", StringComparison.OrdinalIgnoreCase))
 		{
 			if (string.IsNullOrWhiteSpace(payload.Comment))
@@ -1334,7 +1371,9 @@ public sealed class BrowserGiftReaderService
 				Kind = "roulette",
 				Text = $"[ROULETTE] {payload.GiftName} x{count} :: {options} :: from {who}",
 				Sent = 0,
-				WindowSent = false
+				WindowSent = false,
+				Nickname = who,
+				AvatarUrl = (payload.AvatarUrl ?? "").Trim()
 			});
 			DevLogService.Write("gift.ui", "announce roulette", new { mergeKey, gift = payload.GiftName, count });
 			return;
@@ -1348,7 +1387,9 @@ public sealed class BrowserGiftReaderService
 			Kind = "ui",
 			Text = line,
 			Sent = 0,
-			WindowSent = false
+			WindowSent = false,
+			Nickname = who,
+			AvatarUrl = (payload.AvatarUrl ?? "").Trim()
 		});
 		DevLogService.Write("gift.ui", "announce ui", new { mergeKey, gift = payload.GiftName, count, isFollow });
 	}
@@ -1611,6 +1652,13 @@ public sealed class BrowserGiftReaderService
 			else
 			{
 				_liveStats.RecordGift(value);
+				int copies = value.RepeatCount <= 0 ? 1 : value.RepeatCount;
+				_photoPrint.EnqueueFromGift(
+					FirstNonEmpty(value.Nickname, value.UserName, "ผู้ชม"),
+					value.UserName ?? "",
+					value.AvatarUrl ?? "",
+					value.GiftName ?? "",
+					copies);
 			}
 		}
 		catch (Exception ex)
@@ -1786,7 +1834,9 @@ public sealed class BrowserGiftReaderService
 				Kind = "ui",
 				Text = $"Like x1 from {who}",
 				Sent = 0,
-				WindowSent = false
+				WindowSent = false,
+				Nickname = who,
+				AvatarUrl = (payload.AvatarUrl ?? "").Trim()
 			});
 			DevLogService.Write("gift.ui", "announce like", new { who });
 		}
@@ -1948,9 +1998,32 @@ public sealed class BrowserGiftReaderService
 		return string.Equals(Environment.GetEnvironmentVariable("TEMPLEGIFT_USE_CHROME"), "1", StringComparison.OrdinalIgnoreCase);
 	}
 
+	private static bool ShouldFallbackToChrome(Exception ex, CancellationToken token)
+	{
+		if (token.IsCancellationRequested) return false;
+		if (AppPaths.FindChrome() == null) return false;
+		string m = ex.Message ?? "";
+		if (m.Contains("ยังไม่กำลังไลฟ์", StringComparison.Ordinal)) return false;
+		if (m.Contains("หา RoomId ไม่ได้", StringComparison.Ordinal)) return false;
+		return m.Contains("canceled", StringComparison.OrdinalIgnoreCase)
+			|| m.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+			|| m.Contains("timed out", StringComparison.OrdinalIgnoreCase)
+			|| m.Contains("ค้าง", StringComparison.Ordinal)
+			|| m.Contains("เน็ตไป", StringComparison.Ordinal)
+			|| m.Contains("Unable to connect", StringComparison.OrdinalIgnoreCase)
+			|| m.Contains("No such host", StringComparison.OrdinalIgnoreCase)
+			|| m.Contains("connection attempt", StringComparison.OrdinalIgnoreCase);
+	}
+
 	private static HttpClient CreateWebcastHttpClient()
 	{
-		HttpClient client = new HttpClient
+		SocketsHttpHandler handler = new SocketsHttpHandler
+		{
+			UseProxy = false,
+			ConnectTimeout = TimeSpan.FromSeconds(8),
+			ConnectCallback = Ipv4Network.ConnectIPv4FirstAsync
+		};
+		HttpClient client = new HttpClient(handler)
 		{
 			Timeout = TimeSpan.FromSeconds(15L)
 		};
@@ -2052,23 +2125,92 @@ public sealed class BrowserGiftReaderService
 			Text = "Connecting TikTok LIVE via webcast @" + cleanUsername + " (no Chrome)..."
 		});
 		AppPaths.Log("webcast-connect user=" + cleanUsername);
+		Ipv4Network.FlushDns();
 
 		(string? resolvedRoomId, bool? isLive) = await TryResolveRoomViaApiAsync(cleanUsername, token);
-		if (isLive == false)
+		if (isLive == false && string.IsNullOrWhiteSpace(resolvedRoomId))
 		{
 			throw new InvalidOperationException(
 				"@" + cleanUsername + " ยังไม่กำลังไลฟ์อยู่ — เปิดไลฟ์ก่อน แล้วกด Connect อีกครั้ง");
 		}
+		if (isLive == false)
+		{
+			AppPaths.Log("room-api not-live but room=" + resolvedRoomId + " — try webcast anyway");
+			_state.PushLog(new LogEntry
+			{
+				Kind = "system",
+				Text = "TikTok บอกว่าไลฟ์ดับ แต่ยังมี RoomId — ลองเชื่อมต่อต่อ"
+			});
+		}
 
 		WarnIfTikFinityLikelyConnected();
 
+		Exception? lastHang = null;
+		for (int attempt = 1; attempt <= 2; attempt++)
+		{
+			if (attempt > 1)
+			{
+				Ipv4Network.FlushDns();
+				_state.PushLog(new LogEntry
+				{
+					Kind = "system",
+					Text = "webcast ค้าง — ล้าง DNS แล้วลองใหม่ครั้งที่ 2"
+				});
+				AppPaths.Log("webcast-retry attempt=2");
+				await Task.Delay(700, token);
+			}
+			try
+			{
+				await ConnectWebcastAttemptAsync(cleanUsername, resolvedRoomId, token);
+				return;
+			}
+			catch (OperationCanceledException) when (token.IsCancellationRequested)
+			{
+				throw;
+			}
+			catch (Exception ex) when (attempt < 2 && IsRetryableWebcastHang(ex))
+			{
+				lastHang = ex;
+				AppPaths.Log("webcast-attempt-fail: " + ex.Message);
+			}
+		}
+		if (lastHang != null)
+		{
+			throw lastHang;
+		}
+		throw new InvalidOperationException(
+			"เชื่อมต่อ LIVE ไม่สำเร็จ @" + cleanUsername
+			+ " — เน็ตไปเซิร์ฟเวอร์ไลฟ์ TikTok ค้าง (พบบ่อยหลัง AIS หลุด). รีโมเด็มหรือเปลี่ยน DNS เป็น 1.1.1.1 แล้วกด Connect อีกครั้ง");
+	}
+
+	private static bool IsRetryableWebcastHang(Exception ex)
+	{
+		string m = ex.Message ?? "";
+		if (m.Contains("ยังไม่กำลังไลฟ์", StringComparison.Ordinal)) return false;
+		if (m.Contains("หา RoomId ไม่ได้", StringComparison.Ordinal)) return false;
+		return m.Contains("canceled", StringComparison.OrdinalIgnoreCase)
+			|| m.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+			|| m.Contains("timed out", StringComparison.OrdinalIgnoreCase)
+			|| m.Contains("ค้าง", StringComparison.Ordinal)
+			|| m.Contains("เน็ตไป", StringComparison.Ordinal)
+			|| m.Contains("Unable to connect", StringComparison.OrdinalIgnoreCase)
+			|| m.Contains("No such host", StringComparison.OrdinalIgnoreCase)
+			|| m.Contains("connection attempt", StringComparison.OrdinalIgnoreCase);
+	}
+
+	private async Task ConnectWebcastAttemptAsync(string cleanUsername, string? resolvedRoomId, CancellationToken token)
+	{
 		ClientSettings settings = Constants.DEFAULT_SETTINGS;
 		settings.PrintToConsole = false;
 		settings.LogLevel = LogLevel.Error;
 		settings.RetryOnConnectionFailure = true;
 		settings.HandleExistingMessagesOnConnect = false;
 		settings.DownloadGiftInfo = false;
-		settings.Timeout = 25f;
+		settings.Timeout = 12f;
+		if (Ipv4Network.Proxy != null)
+		{
+			settings.Proxy = Ipv4Network.Proxy;
+		}
 		string? signingKey = TryLoadSigningKey();
 		if (!string.IsNullOrWhiteSpace(signingKey))
 		{
@@ -2134,6 +2276,7 @@ public sealed class BrowserGiftReaderService
 		client.OnLike += Client_OnLike;
 		client.OnFollow += Client_OnFollow;
 		client.OnChatMessage += Client_OnChatMessage;
+		client.OnBarrage += Client_OnBarrage;
 		HookLiveRoomEvents(client);
 
 		Exception? startError = null;
@@ -2161,7 +2304,7 @@ public sealed class BrowserGiftReaderService
 		try
 		{
 			using CancellationTokenSource readyCts = CancellationTokenSource.CreateLinkedTokenSource(token);
-			readyCts.CancelAfter(TimeSpan.FromSeconds(45L));
+			readyCts.CancelAfter(TimeSpan.FromSeconds(18L));
 			await ready.Task.WaitAsync(readyCts.Token);
 		}
 		catch (Exception ex)
@@ -2195,6 +2338,16 @@ public sealed class BrowserGiftReaderService
 				throw new InvalidOperationException(
 					"เชื่อมต่อ LIVE ไม่สำเร็จ @" + cleanUsername
 					+ " — หา RoomId ไม่ได้ ตรวจว่ากำลังไลฟ์อยู่ / username ถูกต้อง (ตัวเล็ก) หรือใช้โหมด Chrome สำรองในตั้งค่าขั้นสูง");
+			}
+			bool canceled = ex is OperationCanceledException
+				|| detail.Contains("canceled", StringComparison.OrdinalIgnoreCase)
+				|| detail.Contains("timeout", StringComparison.OrdinalIgnoreCase)
+				|| detail.Contains("timed out", StringComparison.OrdinalIgnoreCase);
+			if (canceled)
+			{
+				throw new InvalidOperationException(
+					"เชื่อมต่อ LIVE ไม่สำเร็จ @" + cleanUsername
+					+ " — เน็ตไปเซิร์ฟเวอร์ไลฟ์ TikTok ค้าง (พบบ่อยหลัง AIS หลุด). รีโมเด็มหรือเปลี่ยน DNS เป็น 1.1.1.1 แล้วกด Connect อีกครั้ง");
 			}
 			throw new InvalidOperationException(
 				"เชื่อมต่อ LIVE ไม่สำเร็จ @" + cleanUsername + " — " + detail);
@@ -2452,6 +2605,12 @@ public sealed class BrowserGiftReaderService
 			{
 				return;
 			}
+			if (typeName.Contains("Member", StringComparison.OrdinalIgnoreCase)
+			    && !typeName.Contains("Join", StringComparison.OrdinalIgnoreCase)
+			    && LiveEventValue.ReadLong(e, "Action") >= 2)
+			{
+				return;
+			}
 			GiftPayload payload = new GiftPayload
 			{
 				MessageType = typeName.Contains("Subscribe", StringComparison.OrdinalIgnoreCase) ? "SendSubscribe" : "SendJoin",
@@ -2462,6 +2621,7 @@ public sealed class BrowserGiftReaderService
 				AvatarUrl = ExtractAvatarLoose(user)
 			};
 			TikTokUserRank.Apply(payload, user);
+			TikTokUserRank.Apply(payload, e);
 			bool force = typeName.Contains("Subscribe", StringComparison.OrdinalIgnoreCase);
 			_liveStats.RecordWelcome(payload, force);
 		}
@@ -2501,6 +2661,7 @@ public sealed class BrowserGiftReaderService
 				RoomUserSeq = LiveEventValue.ReadLong(e, "RoomUserSeq", "UserCount", "ViewerCount")
 			};
 			TikTokUserRank.Apply(giftPayload, e.User);
+			TikTokUserRank.Apply(giftPayload, e);
 			QueueGiftDelivery(giftPayload);
 		}
 		catch (Exception ex)
@@ -2528,6 +2689,7 @@ public sealed class BrowserGiftReaderService
 				LogId = e.LogId ?? string.Empty
 			};
 			TikTokUserRank.Apply(likePayload, e.Sender);
+			TikTokUserRank.Apply(likePayload, e);
 			QueueGiftDelivery(likePayload);
 		}
 		catch (Exception ex)
@@ -2588,12 +2750,82 @@ public sealed class BrowserGiftReaderService
 				LogId = e.LogId ?? string.Empty
 			};
 			TikTokUserRank.Apply(chatPayload, e.Sender);
+			TikTokUserRank.Apply(chatPayload, e);
 			QueueGiftDelivery(chatPayload);
 		}
 		catch (Exception ex)
 		{
 			AppPaths.Log("webcast-chat: " + ex.Message);
 		}
+	}
+
+	private void Client_OnBarrage(TikTokLiveClient sender, Barrage e)
+	{
+		try
+		{
+			if (e.MsgType != Barrage.BarrageType.GradeUserEntranceNotification)
+			{
+				return;
+			}
+			NoteLiveActivity();
+			var param = e.UserGradeParam;
+			object? user = param?.User;
+			if (user == null && e.Content?.Pieces != null)
+			{
+				foreach (TextPiece piece in e.Content.Pieces)
+				{
+					if (piece?.UserValue?.User != null)
+					{
+						user = piece.UserValue.User;
+						break;
+					}
+				}
+			}
+			if (user == null)
+			{
+				return;
+			}
+			int grade = param != null && param.CurrentGrade >= 1 && param.CurrentGrade <= 99
+				? param.CurrentGrade
+				: 0;
+			GiftPayload payload = new GiftPayload
+			{
+				MessageType = "SendJoin",
+				Type = "SendJoin",
+				MsgType = "SendJoin",
+				UserName = TikTokUserRank.UniqueId(user),
+				Nickname = TikTokUserRank.DisplayName(user),
+				AvatarUrl = ExtractAvatarLoose(user),
+				UserLevel = grade
+			};
+			TikTokUserRank.Apply(payload, user);
+			TikTokUserRank.Apply(payload, e);
+			if (grade > payload.UserLevel) payload.UserLevel = grade;
+			_liveStats.RecordWelcome(payload);
+			DevLogService.Write("welcome.join", payload.Nickname, new
+			{
+				user = payload.UserName,
+				level = payload.UserLevel,
+				source = "barrage"
+			});
+		}
+		catch (Exception ex)
+		{
+			AppPaths.Log("webcast-barrage: " + ex.Message);
+		}
+	}
+
+	private static bool IsRoomEnterMessage(string? text)
+	{
+		if (string.IsNullOrWhiteSpace(text)) return false;
+		if (text.Contains("Gift", StringComparison.OrdinalIgnoreCase)) return false;
+		if (text.Contains("Chat", StringComparison.OrdinalIgnoreCase)) return false;
+		if (text.Contains("Like", StringComparison.OrdinalIgnoreCase)) return false;
+		return text.Contains("Join", StringComparison.OrdinalIgnoreCase)
+			|| text.Contains("Member", StringComparison.OrdinalIgnoreCase)
+			|| text.Contains("Subscribe", StringComparison.OrdinalIgnoreCase)
+			|| text.Contains("Barrage", StringComparison.OrdinalIgnoreCase)
+			|| text.Contains("Entrance", StringComparison.OrdinalIgnoreCase);
 	}
 
 	private static string ExtractAvatarLoose(object? user)
@@ -2729,6 +2961,7 @@ public sealed class BrowserGiftReaderService
 				live.OnLike -= Client_OnLike;
 				live.OnFollow -= Client_OnFollow;
 				live.OnChatMessage -= Client_OnChatMessage;
+				live.OnBarrage -= Client_OnBarrage;
 				UnhookLiveRoomEvents(live);
 			}
 			catch

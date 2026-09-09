@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.8",
-  [string]$Notes = "Monkeyeffect 1.0.8 - Overlay Gallery gold frames and transparent PNG widgets",
+  [string]$Ver = "1.0.8.1",
+  [string]$Notes = "Monkeyeffect 1.0.8.1 - แก้เชื่อม TikTok LIVE ค้างหลังเน็ต AIS หลุด (บังคับ IPv4)",
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 
@@ -35,6 +35,11 @@ New-Item -ItemType Directory -Force -Path (Join-Path $stage "wwwroot") | Out-Nul
 New-Item -ItemType Directory -Force -Path (Join-Path $stage "tools") | Out-Null
 Copy-Item -Force $dllDst (Join-Path $stage "TempleGiftRelay.dll")
 robocopy (Join-Path $Root "wwwroot") (Join-Path $stage "wwwroot") /E /XD media-cache _opaque-src /NFL /NDL /NJH /NJS /nc /ns /np | Out-Null
+# Keep the zip under GitHub's 100MB git limit (1.0.8 was ~83MB).
+foreach ($extra in @("overlay\play", "overlay\themes")) {
+  $p = Join-Path $stage "wwwroot\$extra"
+  if (Test-Path $p) { Remove-Item -Recurse -Force $p }
+}
 # Only ship runtime tools needed by the app (never innosetup / build helpers).
 $toolsSrc = Join-Path $Root "tools"
 $toolsDst = Join-Path $stage "tools"

@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.8",
-    "notes":  "Monkeyeffect 1.0.8 - Overlay Gallery gold frames and transparent PNG widgets",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8-update.zip",
-    "sha256":  "91a8318a295ce25b2d4f0fc61a8e8985a5345560a19310bc0cfd4500f43009ce",
+    "version":  "1.0.8.1",
+    "notes":  "Monkeyeffect 1.0.8.1 - แก้เชื่อม TikTok LIVE ค้างหลังเน็ต AIS หลุด (บังคับ IPv4)",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.1-update.zip",
+    "sha256":  "3be12ca22ad1a2454d200a6c293fc26a039df635af1d1a4985c7d17fe188e75b",
     "mandatory":  true,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

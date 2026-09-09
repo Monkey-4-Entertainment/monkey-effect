@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v1062-info" />
+    <link rel="stylesheet" href="/style.css?v=v1068-circle" />
   </head>
   <body>
     <div class="bg"></div>
@@ -22,7 +22,7 @@
           <div class="sidebar-brand-text">
             <div class="title-row">
               <h1>Monkeyeffect</h1>
-              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.8</span>
+              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.8.1</span>
             </div>
             <p>Gift relay → เกม</p>
           </div>
@@ -79,6 +79,10 @@
             <button type="button" class="nav-btn" data-panel="tts">
               <span class="nav-ico" aria-hidden="true">🎙</span>
               <span class="nav-label">อ่านเสียง AI</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="photoprint">
+              <span class="nav-ico" aria-hidden="true">▣</span>
+              <span class="nav-label">ปริ้นรูป</span>
             </button>
           </div>
 
@@ -324,6 +328,8 @@
           <p class="hint">
             ของขวัญมีรูปจากคลัง · ค้นหาแอคชันได้ · คอมโบยิงทีละชิ้น · webhook ส่งชื่อ/รูป/เหรียญ
             · ▶ ใช้จำนวนจากช่องคอมโบด้านบน · คลิกชื่อของขวัญเพื่อเลือกจากคลัง
+            · คอลัมน์ <b>ครั้ง</b> = กดคีย์เข้าเกมกี่ครั้งต่อ 1 ของขวัญ (เช่น +3 กรอก 3) · คอมโบคูณต่อ
+            · แอคชัน <b>+3</b> / <b>+5</b> ใช้คีย์ของ <b>+1</b> อัตโนมัติ
           </p>
           <div class="keymap-toolbar">
             <input id="keymapSearch" class="field" type="search" placeholder="ค้นหาแอคชัน / ของขวัญ / คีย์" autocomplete="off" />
@@ -345,7 +351,8 @@
           </div>
           <p class="hint">
             แบบ TikFinity Events: ของขวัญ / ไลค์ / ฟอลโลว์ ตอนไลฟ์ไปยิงแอคชันด้านบน
-            · กด <b>+ สร้าง Event</b> เพื่อเพิ่ม · ดินสอคือแก้ในแถวนี้เลย
+            · คอลัมน์ <b>ครบกี่ครั้ง</b> คือจำนวนที่ต้องสะสมก่อนส่งเข้าเกม (เช่น ไลค์ใส่ 100)
+            · กด <b>+ สร้าง Event</b> เพื่อเพิ่ม · แก้ในแถวนี้เลย แล้วกดบันทึก
           </p>
           <div id="effectsEventsTable" style="margin-top:.5rem;overflow:auto"></div>
           <div class="actions tight" style="margin-top:.75rem">
@@ -1019,6 +1026,62 @@ Facebook Fanpage</textarea>
         </section>
       </div>
 
+      <!-- ===== ปริ้นรูปผู้ส่งของขวัญ ===== -->
+      <div id="panel-photoprint" class="panel">
+        <section class="card">
+          <div class="card-head">
+            <h2>ปริ้นรูปผู้ส่งของขวัญ</h2>
+            <label class="toggle">
+              <input id="photoPrintEnabled" type="checkbox" />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">
+            ปริ้นตามการ์ดบนจอ: รูปซ้าย ชื่อขวา · กรอบดำ · ของขวัญรัวเข้าคิวทุกใบ ไม่ข้าม
+          </p>
+          <p class="hint">
+            <b>Flash Toy</b> จับคู่บลูทูธใน Windows มักไม่ได้ — ชื่อ <b>FlashToy_xxxx_BLE</b> เป็น BLE สำหรับแอปมือถือ ไม่ใช่เครื่องพิมพ์ Windows<br />
+            ใช้สาย Type-C ก่อน: เสียบเครื่องเข้าคอม → ติดตั้งไดร์เวอร์ Windows จากหน้า
+            <a href="https://www.flashexpress.co.th/fle/activity/bibasic-toy" target="_blank" rel="noopener">Flash Toy Mini</a>
+            → ที่ <b>เครื่องพิมพ์และสแกนเนอร์</b> ต้องมีชื่อ Beeprt / FlashToy<br />
+            แล้วกด <b>รีเฟรชเครื่องพิมพ์</b> เลือก <b>FlashToy Printer</b> · ทดสอบปริ้น<br />
+            <b>MEMOBIRD GT1</b> ต้องใช้พอร์ตบลูทูธขาออก (ตอนนี้ COM5) ไม่ใช่ COM ขาเข้า — ปิดแอป Memobird/WeChat บนมือถือก่อน เครื่องพิมพ์ Windows ใช้วิทยุได้ทีละเครื่อง ถ้ายัง Error ให้เลือก <b>FlashToy Printer</b> (สาย USB) ก่อน
+          </p>
+          <div class="photo-print-preview-wrap">
+            <div id="photoPrintCard" class="photo-print-card">
+              <div class="photo-print-photo" id="photoPrintPhoto">?</div>
+              <div class="photo-print-name" id="photoPrintName">รอของขวัญ</div>
+            </div>
+          </div>
+          <p id="photoPrintActivity" class="hint tts-activity">ยังไม่เปิดใช้ — ติ๊ก “เปิดใช้” แล้วรอของขวัญจากไลฟ์</p>
+          <div class="form-grid">
+            <div>
+              <label for="photoPrintPrinter">เครื่องพิมพ์</label>
+              <select id="photoPrintPrinter" class="field select">
+                <option value="">เครื่องพิมพ์เริ่มต้น</option>
+              </select>
+            </div>
+            <div>
+              <label for="photoPrintGift">ของขวัญ (ว่าง = ทุกชิ้น)</label>
+              <input id="photoPrintGift" class="field" type="text" placeholder="เช่น Rose" autocomplete="off" />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="photoPrintTestBtn" class="btn primary" type="button">ทดสอบปริ้น</button>
+            <button id="photoPrintRefreshBtn" class="btn ghost" type="button">รีเฟรชเครื่องพิมพ์</button>
+          </div>
+          <div class="photo-print-queue">
+            <div class="photo-print-queue-head">
+              <h3>คิวปริ้น <span id="photoPrintQueueCount">0</span></h3>
+              <button id="photoPrintClearBtn" class="btn ghost" type="button">ล้างคิว</button>
+            </div>
+            <div id="photoPrintQueueList" class="photo-print-queue-list">
+              <div class="home-gift-empty">ยังไม่มีคิว</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
       <!-- ===== เสียงเตือน ===== -->
       <div id="panel-alerts" class="panel">
         <section class="card">
@@ -1324,28 +1387,27 @@ Facebook Fanpage</textarea>
             </label>
           </div>
           <p class="hint">
-            เมื่อ Superfan หรือผู้ชม LV 20 ขึ้นไปเข้าไลฟ์ กรอบจะดึงชื่อ รูปโปรไฟล์ และเลเวลจากไลฟ์มาแสดง
-            · เงิน 20 · ทอง 30 · แพลตินัม 40 · เพชร 50
+            จับผู้ชม LV 20 ขึ้นไปเข้าไลฟ์ — ชื่อ รูป และเลข LV จากไลฟ์จริง
+            · การ์ดโล่เป็นตัวอย่างกรอบ · 20–29 เงิน · 30–39 ทอง · 40–49 แพลตินัม · 50 เพชร
           </p>
           <div id="welcomeLivePersonPanel" class="welcome-live-person">ยังไม่มีผู้ชมจากไลฟ์</div>
           <div class="form-grid">
             <div>
-              <label for="welcomeMinLevel">เลเวลขั้นต่ำ (เริ่มที่ค่านี้)</label>
+              <label for="welcomeMinLevel">เลเวลขั้นต่ำ</label>
               <input id="welcomeMinLevel" class="field" type="number" min="1" max="99" value="20" />
             </div>
             <div>
               <label for="welcomeDurationSec">แสดงกี่วินาที</label>
-              <input id="welcomeDurationSec" class="field" type="number" min="2" max="60" value="8" />
+              <input id="welcomeDurationSec" class="field" type="number" min="2" max="60" value="3" />
             </div>
           </div>
           <div class="welcome-tier-picks">
-            <button type="button" class="welcome-tier-card" data-welcome-test="fan"><span>Superfan</span><strong>แฟนคลับ</strong></button>
-            <button type="button" class="welcome-tier-card" data-welcome-test="silver"><span>LV 20</span><strong>เงิน</strong></button>
-            <button type="button" class="welcome-tier-card" data-welcome-test="gold"><span>LV 30</span><strong>ทอง</strong></button>
-            <button type="button" class="welcome-tier-card" data-welcome-test="platinum"><span>LV 40</span><strong>แพลตินัม</strong></button>
-            <button type="button" class="welcome-tier-card" data-welcome-test="diamond"><span>LV 50</span><strong>เพชร</strong></button>
+            <button type="button" class="welcome-tier-card" data-welcome-test="silver"><span>ตัวอย่างโล่เงิน</span><strong>LV 20–29</strong></button>
+            <button type="button" class="welcome-tier-card" data-welcome-test="gold"><span>ตัวอย่างโล่ทอง</span><strong>LV 30–39</strong></button>
+            <button type="button" class="welcome-tier-card" data-welcome-test="platinum"><span>ตัวอย่างโล่แพลตินัม</span><strong>LV 40–49</strong></button>
+            <button type="button" class="welcome-tier-card" data-welcome-test="diamond"><span>ตัวอย่างโล่เพชร</span><strong>LV 50+</strong></button>
           </div>
-          <p id="welcomeActivity" class="hint">รอ Superfan หรือผู้ชม LV 20+ เข้าไลฟ์...</p>
+          <p id="welcomeActivity" class="hint">รอผู้ชม LV 20 ขึ้นไปเข้าไลฟ์...</p>
         </section>
         <section class="card">
           <div class="card-head">
@@ -1355,7 +1417,7 @@ Facebook Fanpage</textarea>
           <p class="hint">หน้าต่างในแอพเป็นแค่ตัวอย่าง ต้องวางลิงก์นี้เป็น Browser Source ถึงจะขึ้นบนจอไลฟ์</p>
           <label for="welcomeObsUrl">ลิงก์ Overlay</label>
           <div class="welcome-obs-row">
-            <input id="welcomeObsUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/live-overlay.html?panel=welcome&amp;v=gal18" />
+            <input id="welcomeObsUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/live-overlay.html?panel=welcome&amp;v=gal37" />
             <button type="button" class="btn primary" id="welcomeCopyObsUrl">คัดลอกลิงก์</button>
           </div>
           <ol class="welcome-obs-steps">
@@ -1371,7 +1433,7 @@ Facebook Fanpage</textarea>
             <h2>พรีวิวในแอพ</h2>
           </div>
           <div class="welcome-preview-wrap">
-            <iframe id="welcomePreviewFrame" class="welcome-preview-frame" title="พรีวิวกรอบต้อนรับ" src="/live-overlay.html?panel=welcome&v=gal18&demo=fan"></iframe>
+            <iframe id="welcomePreviewFrame" class="welcome-preview-frame" title="พรีวิวกรอบต้อนรับ" src="/live-overlay.html?panel=welcome&v=gal37"></iframe>
           </div>
         </section>
       </div>
@@ -1381,7 +1443,7 @@ Facebook Fanpage</textarea>
         <section class="card">
           <div class="card-head">
             <h2>อัปเดตออนไลน์</h2>
-            <span class="chip" id="updateStatusChip">v1.0.8</span>
+            <span class="chip" id="updateStatusChip">v1.0.8.1</span>
           </div>
           <p class="hint">ค่าเริ่มต้นชี้ไปที่ GitHub Monkeyeffect — มีอัปเดตแล้วตัวเวอร์ชันมุมซ้ายจะมีจุดแดง กดที่เวอร์ชันเพื่อเปิดหน้านี้และติดตั้ง</p>
           <label for="updateFeedUrl">URL ของ latest.json</label>
@@ -1439,7 +1501,7 @@ Facebook Fanpage</textarea>
     </main>
 
     <div id="giftPicker" class="gift-picker hidden" hidden></div>
-    <script src="/app.js?v=v1123-info"></script>
+    <script src="/app.js?v=v1141-nopos80"></script>
     <script src="/studio.js?v=studio11"></script>
   </body>
 </html>

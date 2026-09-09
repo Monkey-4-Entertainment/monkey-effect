@@ -28,6 +28,7 @@ public class Program
 		try
 		{
 			AppPaths.Initialize();
+			Ipv4Network.ApplyAtStartup();
 			AppPaths.ValidatePortableLayout();
 		}
 		catch (Exception ex)
@@ -119,6 +120,7 @@ public class Program
 			webApplicationBuilder.Services.AddSingleton<RouletteConfigService>();
 			webApplicationBuilder.Services.AddSingleton<RouletteSpinService>();
 			webApplicationBuilder.Services.AddSingleton<LiveStatsOverlayService>();
+			webApplicationBuilder.Services.AddSingleton<PhotoPrintService>();
 			webApplicationBuilder.Services.AddSingleton<MinecraftRconService>();
 			webApplicationBuilder.Services.AddSingleton<BrowserGiftReaderService>();
 			app = webApplicationBuilder.Build();
@@ -200,6 +202,37 @@ public class Program
 				serves = live.ServeCount
 			})));
 			app.MapGet("/avatar-cache/{fileName}", (Func<string, AvatarCacheService, IResult>)((string fileName, AvatarCacheService avatars) => (!avatars.TryGetFile(fileName, out string fullPath, out string contentType)) ? Results.NotFound() : Results.File(fullPath, contentType)));
+			app.MapGet("/api/avatar", async (HttpRequest request, AvatarCacheService avatars, CancellationToken ct) =>
+			{
+				string url = (request.Query["url"].ToString() ?? "").Trim();
+				if (string.IsNullOrWhiteSpace(url) || url.Length > 2000)
+				{
+					return Results.BadRequest(new { ok = false, error = "url required" });
+				}
+				bool local = url.StartsWith("http://127.0.0.1:12922/avatar-cache/", StringComparison.OrdinalIgnoreCase)
+					|| url.StartsWith("http://localhost:12922/avatar-cache/", StringComparison.OrdinalIgnoreCase)
+					|| url.StartsWith("/avatar-cache/", StringComparison.OrdinalIgnoreCase);
+				bool remote = url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+					|| url.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
+				if (!local && !remote)
+				{
+					return Results.BadRequest(new { ok = false, error = "invalid url" });
+				}
+				if (local && avatars.TryGetLocalPath(url.StartsWith("/") ? "http://127.0.0.1:12922" + url : url, out string cached) && System.IO.File.Exists(cached) && new System.IO.FileInfo(cached).Length > 64)
+				{
+					return Results.File(cached, "image/png");
+				}
+				if (!remote)
+				{
+					return Results.NotFound();
+				}
+				string ensured = await avatars.EnsureLocalUrlAsync(url, ct);
+				if (avatars.TryGetLocalPath(ensured, out string path) && System.IO.File.Exists(path) && new System.IO.FileInfo(path).Length > 64)
+				{
+					return Results.File(path, "image/png");
+				}
+				return Results.NotFound();
+			});
 			app.MapGet("/api/status", (Func<RelayState, LocalLiveHttpService, IResult>)delegate(RelayState state, LocalLiveHttpService live)
 			{
 				StatusDto statusDto = state.ToStatus();
@@ -287,6 +320,63 @@ public class Program
 				{
 				}
 				return Results.Json(stats.ToSnapshot(state.TikTokConnected, state.TikTokLive));
+			});
+			app.MapGet("/api/photo-print/printers", (Func<PhotoPrintService, IResult>)(print => Results.Json(print.Status())));
+			app.MapGet("/api/photo-print/status", (Func<PhotoPrintService, IResult>)(print => Results.Json(print.Status())));
+			app.MapPost("/api/photo-print/clear", (Func<PhotoPrintService, IResult>)(print => Results.Json(print.ClearQueue())));
+			app.MapPost("/api/photo-print/config", async (HttpRequest request, PhotoPrintService print) =>
+			{
+				bool enabled = false;
+				string printer = "";
+				string giftName = "";
+				try
+				{
+					using JsonDocument doc = await JsonDocument.ParseAsync(request.Body);
+					JsonElement root = doc.RootElement;
+					if (root.TryGetProperty("enabled", out JsonElement en))
+						enabled = en.ValueKind == JsonValueKind.True || (en.ValueKind == JsonValueKind.String && en.GetString() == "true");
+					if (root.TryGetProperty("printer", out JsonElement p)) printer = p.GetString() ?? "";
+					if (root.TryGetProperty("giftName", out JsonElement g)) giftName = g.GetString() ?? "";
+				}
+				catch (Exception ex)
+				{
+					return Results.BadRequest(new { ok = false, error = ex.Message });
+				}
+				return Results.Json(print.ApplyConfig(enabled, printer, giftName));
+			});
+			app.MapPost("/api/photo-print", async (HttpRequest request, PhotoPrintService print) =>
+			{
+				string nick = "";
+				string user = "";
+				string avatarUrl = "";
+				string gift = "";
+				string printer = "";
+				int copies = 1;
+				try
+				{
+					using JsonDocument doc = await JsonDocument.ParseAsync(request.Body);
+					JsonElement root = doc.RootElement;
+					if (root.ValueKind == JsonValueKind.Object)
+					{
+						if (root.TryGetProperty("nick", out JsonElement n)) nick = n.GetString() ?? "";
+						if (root.TryGetProperty("nickname", out JsonElement nn) && string.IsNullOrWhiteSpace(nick)) nick = nn.GetString() ?? "";
+						if (root.TryGetProperty("user", out JsonElement u)) user = u.GetString() ?? "";
+						if (root.TryGetProperty("userName", out JsonElement un) && string.IsNullOrWhiteSpace(user)) user = un.GetString() ?? "";
+						if (root.TryGetProperty("avatarUrl", out JsonElement a)) avatarUrl = a.GetString() ?? "";
+						if (root.TryGetProperty("avatar", out JsonElement av) && string.IsNullOrWhiteSpace(avatarUrl)) avatarUrl = av.GetString() ?? "";
+						if (root.TryGetProperty("gift", out JsonElement g)) gift = g.GetString() ?? "";
+						if (root.TryGetProperty("giftName", out JsonElement gn) && string.IsNullOrWhiteSpace(gift)) gift = gn.GetString() ?? "";
+						if (root.TryGetProperty("printer", out JsonElement p)) printer = p.GetString() ?? "";
+						if (root.TryGetProperty("copies", out JsonElement c) && c.ValueKind == JsonValueKind.Number) copies = c.GetInt32();
+						else if (root.TryGetProperty("count", out JsonElement cnt) && cnt.ValueKind == JsonValueKind.Number) copies = cnt.GetInt32();
+					}
+				}
+				catch (Exception ex)
+				{
+					return Results.BadRequest(new { ok = false, error = ex.Message });
+				}
+				object result = await print.EnqueueAsync(nick, user, avatarUrl, gift, printer, copies);
+				return Results.Json(result);
 			});
 			app.MapPost("/api/minecraft/rcon", async (HttpRequest request, MinecraftRconService rcon, CancellationToken ct) =>
 			{
@@ -833,7 +923,7 @@ public class Program
 					status = state.ToStatus()
 				});
 			});
-			app.MapPost("/api/test-gift", (Func<TestGiftRequest, GameBridgeService, RelayState, GameWindowService, AvatarCacheService, LiveStatsOverlayService, Task<IResult>>)async delegate(TestGiftRequest request, GameBridgeService gameBridgeService, RelayState state, GameWindowService gameWindowService, AvatarCacheService avatars, LiveStatsOverlayService liveStats)
+			app.MapPost("/api/test-gift", (Func<TestGiftRequest, GameBridgeService, RelayState, GameWindowService, AvatarCacheService, LiveStatsOverlayService, PhotoPrintService, Task<IResult>>)async delegate(TestGiftRequest request, GameBridgeService gameBridgeService, RelayState state, GameWindowService gameWindowService, AvatarCacheService avatars, LiveStatsOverlayService liveStats, PhotoPrintService photoPrint)
 			{
 				gameWindowService.Refresh();
 				string msgType = (string.IsNullOrWhiteSpace(request.MessageType) ? "SendGift" : request.MessageType.Trim());
@@ -912,7 +1002,8 @@ public class Program
 					Comment = (request.Comment ?? "").Trim(),
 					RepeatCount = repeatCount,
 					UserName = userName,
-					Nickname = nickname
+					Nickname = nickname,
+					AvatarUrl = (request.AvatarUrl ?? "").Trim()
 				};
 				GiftCatalog.Fill(payload);
 				if (msgType.Contains("Chat", StringComparison.OrdinalIgnoreCase) && string.IsNullOrWhiteSpace(payload.Comment))
@@ -926,7 +1017,11 @@ public class Program
 					if (kind == "like") liveStats.RecordLike(payload);
 					else if (kind == "follow") liveStats.RecordFollow(payload);
 					else if (kind == "chat") liveStats.RecordChat(payload);
-					else liveStats.RecordGift(payload);
+					else
+					{
+						liveStats.RecordGift(payload);
+						photoPrint.EnqueueFromGift(payload.Nickname, payload.UserName, payload.AvatarUrl, payload.GiftName, payload.RepeatCount);
+					}
 				}
 				catch { }
 				string prefix = "[TEST] ";
@@ -951,7 +1046,9 @@ public class Program
 					Kind = "ui",
 					Text = line,
 					Sent = 0,
-					WindowSent = false
+					WindowSent = false,
+					Nickname = payload.Nickname,
+					AvatarUrl = (payload.AvatarUrl ?? "").Trim()
 				});
 				DeliveryResult deliveryResult = await gameBridgeService.DeliverGiftAsync(payload);
 				state.PushLog(new LogEntry
@@ -1089,6 +1186,7 @@ public class Program
 				using var doc = await JsonDocument.ParseAsync(request.Body);
 				JsonElement root = doc.RootElement;
 				string key = root.TryGetProperty("key", out JsonElement keyEl) ? (keyEl.GetString() ?? "") : "";
+				string label = root.TryGetProperty("label", out JsonElement labelEl) ? (labelEl.GetString() ?? "") : "";
 				string webhookUrl = root.TryGetProperty("webhookUrl", out JsonElement whEl) ? (whEl.GetString() ?? "") : "";
 				string giftName = root.TryGetProperty("giftName", out JsonElement gnEl) ? (gnEl.GetString() ?? "") : "";
 				string nickname = root.TryGetProperty("nickname", out JsonElement nnEl) ? (nnEl.GetString() ?? "") : "";
@@ -1127,9 +1225,22 @@ public class Program
 				{
 					count = countEl.GetInt32();
 				}
+				if (count < 1) count = 1;
+				if (count > 200) count = 200;
+				int times = 0;
+				if (root.TryGetProperty("times", out JsonElement timesEl) && timesEl.ValueKind == JsonValueKind.Number)
+					times = timesEl.GetInt32();
+				if (!string.IsNullOrWhiteSpace(label) || times > 1)
+				{
+					var stacked = km.ExpandStackedKey(label, key, vk, holdMs, count, times);
+					key = stacked.Key;
+					vk = stacked.Vk;
+					holdMs = stacked.HoldMs;
+					count = stacked.Count;
+				}
 				if (km.TrySendKey(key, vk, holdMs, count, out string detail))
 				{
-					return Results.Json(new { ok = true, detail });
+					return Results.Json(new { ok = true, detail, key, count, label });
 				}
 				return Results.Json(new { ok = false, error = string.IsNullOrWhiteSpace(detail) ? "send failed" : detail });
 			});
