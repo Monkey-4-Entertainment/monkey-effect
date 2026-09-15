@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.8.3",
-    "notes":  "Monkeyeffect 1.0.8.3 - ฐานข้อมูลสมาชิกแยกตามบัญชี, MasterAdmin ดูทั้งหมด, กรอบต้อนรับจับเข้าห้อง, แก้คนดูตอนนี้",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.3-update.zip",
-    "sha256":  "9b43777489d71ccf12f54909427e3008d94944298c7b5d706725585066500d8a",
+    "version":  "1.0.8.4",
+    "notes":  "Monkeyeffect 1.0.8.4 - welcome video by UniqueId, real TikTok nick/avatar after clip, autoplay+WebM fix, stop UniqueId overwriting profile",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.4-update.zip",
+    "sha256":  "670434b2c7019c098a1de1ca066579785f4007f6b5cbbbcdcfef106b8829caa8",
     "mandatory":  true,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
