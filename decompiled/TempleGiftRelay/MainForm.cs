@@ -27,7 +27,7 @@ public sealed class MainForm : Form
 
 	public MainForm()
 	{
-		Text = "Monkeyeffect 1.0.8.1";
+		Text = "Monkeyeffect 1.0.8.5";
 		base.StartPosition = FormStartPosition.CenterScreen;
 		MinimumSize = new Size(960, 640);
 		base.Size = new Size(1280, 800);
@@ -69,7 +69,7 @@ public sealed class MainForm : Form
 			if (_webView.CoreWebView2 == null) return;
 			if (WindowState == FormWindowState.Minimized) return;
 			_ = _webView.CoreWebView2.ExecuteScriptAsync(
-				"(function(){try{if(typeof window.__tgrKeepAlive==='function')window.__tgrKeepAlive();else if(typeof fetchStatus==='function')fetchStatus();}catch(e){}})();");
+				"(function(){try{if(typeof window.__tgrKeepAlive==='function')window.__tgrKeepAlive();}catch(e){}})();");
 		}
 		catch
 		{

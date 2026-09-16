@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v1068-circle" />
+    <link rel="stylesheet" href="/style.css?v=v1188-jar-original" />
   </head>
   <body>
     <div class="bg"></div>
@@ -22,7 +22,7 @@
           <div class="sidebar-brand-text">
             <div class="title-row">
               <h1>Monkeyeffect</h1>
-              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.8.1</span>
+              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.0.8.2</span>
             </div>
             <p>Gift relay → เกม</p>
           </div>
@@ -37,8 +37,12 @@
           <div class="nav-group">
             <span class="nav-group-label">หลัก</span>
             <button type="button" class="nav-btn active" data-panel="connect">
-              <span class="nav-ico" aria-hidden="true">◎</span>
+              <span class="nav-ico" aria-hidden="true">⌂</span>
               <span class="nav-label">หน้าหลัก</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="members">
+              <span class="nav-ico" aria-hidden="true">◎</span>
+              <span class="nav-label">ฐานข้อมูลสมาชิก</span>
             </button>
             <button type="button" class="nav-btn" data-panel="effects">
               <span class="nav-ico" aria-hidden="true">◆</span>
@@ -67,10 +71,6 @@
             <button type="button" class="nav-btn" data-panel="win">
               <span class="nav-ico" aria-hidden="true">★</span>
               <span class="nav-label">นับ Win</span>
-            </button>
-            <button type="button" class="nav-btn nav-btn-jar" data-panel="jar">
-              <span class="nav-ico" aria-hidden="true">◌</span>
-              <span class="nav-label">โหลแก้ว</span>
             </button>
             <button type="button" class="nav-btn nav-btn-live" data-panel="live">
               <span class="nav-ico" aria-hidden="true">◉</span>
@@ -245,12 +245,136 @@
           </div>
         </section>
 
+        <section class="card" id="homeLiveViewersCard">
+          <div class="card-head">
+            <h2>รายการจากไลฟ์สด</h2>
+            <span class="chip" id="homeLiveViewersCount">0 คน</span>
+          </div>
+          <p class="hint">ผู้ชมที่ดึงจากไลฟ์อัตโนมัติเมื่อล็อกอินครีเอเตอร์ค้างไว้ — ดูอย่างเดียว ไม่มีแก้ไข/ลบ</p>
+          <div id="memberOwnerFilterWrap" class="form-grid" hidden style="margin-bottom:10px">
+            <div>
+              <label for="memberOwnerFilter">ดูข้อมูลของบัญชี</label>
+              <select id="memberOwnerFilter" class="field">
+                <option value="all">ทั้งหมด (MasterAdmin)</option>
+              </select>
+            </div>
+          </div>
+          <input id="memberSearch" class="field" type="search" placeholder="ค้นหาชื่อ / TikTok..." style="margin-bottom:10px" />
+          <p id="memberDbMsg" class="hint"></p>
+          <div id="memberTable" class="member-table-wrap"></div>
+        </section>
+
         <section class="card log-card">
           <div class="card-head">
             <h2>Gift Log</h2>
             <button id="clearBtn" class="btn ghost small">Clear</button>
           </div>
           <div id="log" class="log"></div>
+        </section>
+      </div>
+
+      <!-- ===== ฐานข้อมูลสมาชิก ===== -->
+      <div id="panel-members" class="panel">
+        <section class="card" id="memberAuthCard">
+          <div class="card-head">
+            <h2>ฐานข้อมูลสมาชิก</h2>
+            <span class="chip" id="memberAuthModeChip">เข้าสู่ระบบ</span>
+          </div>
+          <p class="hint">ล็อกอินบัญชีครีเอเตอร์ที่ใช้งานในระบบ (ไม่ใช่ผู้ชม TikTok) · MasterAdmin: Monkey4</p>
+          <div class="form-grid" id="memberAuthForm">
+            <div>
+              <label for="memberUsername">ชื่อผู้ใช้ หรือ ชื่อที่แสดง</label>
+              <input id="memberUsername" class="field" type="text" autocomplete="username" placeholder="Monkey4 / creator01 / ชื่อครีเอเตอร์" />
+            </div>
+            <div>
+              <label for="memberPassword">รหัสผ่าน</label>
+              <input id="memberPassword" class="field" type="password" autocomplete="current-password" placeholder="รหัสที่ตั้งตอนสร้างบัญชี" />
+            </div>
+            <div id="memberDisplayWrap" hidden>
+              <label for="memberDisplayName">ชื่อที่แสดง</label>
+              <input id="memberDisplayName" class="field" type="text" placeholder="ชื่อครีเอเตอร์" />
+            </div>
+          </div>
+          <div class="actions">
+            <button id="memberLoginBtn" class="btn primary" type="button">เข้าสู่ระบบ</button>
+            <button id="memberRegisterBtn" class="btn secondary" type="button">สมัครครีเอเตอร์</button>
+            <button id="memberToggleModeBtn" class="btn ghost" type="button">ยังไม่มีบัญชี? สมัคร</button>
+          </div>
+          <p id="memberAuthMsg" class="hint"></p>
+        </section>
+
+        <section class="card" id="memberDbCard" hidden>
+          <div class="card-head">
+            <h2>สมาชิกในระบบ (ครีเอเตอร์)</h2>
+            <span class="chip" id="memberWhoChip">—</span>
+          </div>
+          <p class="hint">บัญชีที่สร้างไว้ให้ล็อกอินใช้งาน Monkeyeffect — ไม่ใช่รายชื่อผู้ชมจากไลฟ์</p>
+          <p id="memberLiveStatus" class="hint">รอสถานะ...</p>
+          <div class="actions" style="margin-bottom:10px">
+            <button id="memberLogoutBtn" class="btn ghost" type="button">ออกจากระบบ</button>
+            <button id="memberRefreshBtn" class="btn ghost" type="button">รีเฟรช</button>
+          </div>
+
+          <!-- บัญชีตัวเอง (ครีเอเตอร์ทั่วไป) -->
+          <section id="memberSelfCard" class="nested-card" style="margin:0 0 14px;padding:12px;background:rgba(255,255,255,0.03)">
+            <div class="card-head">
+              <h2>บัญชีของฉัน</h2>
+            </div>
+            <div class="form-grid">
+              <div>
+                <label for="selfUsername">ชื่อผู้ใช้</label>
+                <input id="selfUsername" class="field" type="text" disabled />
+              </div>
+              <div>
+                <label for="selfDisplay">ชื่อที่แสดง</label>
+                <input id="selfDisplay" class="field" type="text" placeholder="ชื่อครีเอเตอร์" />
+              </div>
+              <div>
+                <label for="selfPassword">รหัสผ่านใหม่</label>
+                <input id="selfPassword" class="field" type="password" autocomplete="new-password" placeholder="เว้นว่างถ้าไม่เปลี่ยน" />
+              </div>
+            </div>
+            <div class="actions">
+              <button id="selfSaveBtn" class="btn primary" type="button">บันทึกบัญชี</button>
+            </div>
+            <p id="selfMsg" class="hint"></p>
+          </section>
+
+          <!-- MasterAdmin: รายการครีเอเตอร์ -->
+          <section class="nested-card" id="memberAdminCard" hidden style="margin:0 0 14px;padding:12px;background:rgba(255,255,255,0.03)">
+            <div class="card-head">
+              <h2>รายการครีเอเตอร์</h2>
+              <span class="chip" id="memberAccountCount">0 บัญชี</span>
+            </div>
+            <p class="hint">สร้าง / แก้ไข / ลบ บัญชีครีเอเตอร์ที่ใช้งานในระบบ</p>
+            <div class="form-grid" id="adminAccountForm">
+              <div>
+                <label for="adminAccUsername">ชื่อผู้ใช้</label>
+                <input id="adminAccUsername" class="field" type="text" autocomplete="off" placeholder="creator01" />
+              </div>
+              <div>
+                <label for="adminAccDisplay">ชื่อที่แสดง</label>
+                <input id="adminAccDisplay" class="field" type="text" autocomplete="off" placeholder="ชื่อครีเอเตอร์" />
+              </div>
+              <div>
+                <label for="adminAccPassword">รหัสผ่าน</label>
+                <input id="adminAccPassword" class="field" type="password" autocomplete="new-password" placeholder="อย่างน้อย 4 ตัว" />
+              </div>
+              <div style="display:flex;align-items:flex-end;gap:8px;padding-bottom:4px">
+                <label class="toggle" style="margin:0">
+                  <input id="adminAccEnabled" type="checkbox" checked />
+                  <span>เปิดใช้</span>
+                </label>
+              </div>
+            </div>
+            <input id="adminAccEditId" type="hidden" />
+            <div class="actions">
+              <button id="adminAccSaveBtn" class="btn primary" type="button">สร้างครีเอเตอร์</button>
+              <button id="adminAccClearBtn" class="btn ghost" type="button">ล้างฟอร์ม</button>
+            </div>
+            <p id="adminAccMsg" class="hint"></p>
+            <div id="memberAccountsTable" class="member-table-wrap"></div>
+          </section>
         </section>
       </div>
 
@@ -575,7 +699,7 @@
           </label>
           <label class="toggle option-check">
             <input id="videoClickThrough" type="checkbox" />
-            <span>คลิกทะลุหน้าต่าง (ตอนไลฟ์)</span>
+            <span>คลิกทะลุหน้าต่าง (ตอนไลฟ์แล้ว · ปิดไว้ก่อนถ้าจะย้ายหน้าต่าง)</span>
           </label>
 
           <ul class="info-list">
@@ -583,7 +707,7 @@
             <li>กดปิดแต่ละปุ่ม จะ<b>ซ่อนเฉพาะฟังก์ชันนั้น</b> จาก Overlay (ปิด Win = ตัวเลขหาย, ปิดสุ่ม = วงล้อหาย, ปิดวิดีโอ = คลิปหาย)</li>
             <li>WIN อยู่บนสุดกึ่งกลาง · วิดีโอเต็มหน้าต่าง · Roulette โผล่ใต้ WIN ตอนสุ่ม</li>
             <li><b>ห้ามกดย่อ/พับหน้าต่างเขียว</b> ตอนไลฟ์ — TikTok LIVE Studio จะจับภาพไม่ได้</li>
-            <li>ใน LIVE Studio เพิ่มแหล่งหน้าต่าง → ตัวกรอง → <b>โครมาคีย์</b> ลบเขียว</li>
+            <li>ใน LIVE Studio เพิ่มแหล่งหน้าต่าง → ตัวกรอง → <b>โครมาคีย์</b> ลบเขียว · ความเนียนสูง / spill ต่ำ</li>
           </ul>
 
           <div class="actions tight">
@@ -610,6 +734,7 @@
             <option value="sequence">เล่นทีละคลิปตามลำดับ</option>
             <option value="all">เล่นทุกคลิปต่อกัน</option>
           </select>
+          <p class="hint">คอมโบ xN ต่อคิว N คลิป เล่นทีละอันจนครบ — ไม่ตัดคลิปที่กำลังเล่น</p>
 
           <label>ไฟล์วิดีโอ (mp4 / webm / mov)</label>
           <div class="file-row">
@@ -837,56 +962,8 @@ Please click OK to continue.</textarea>
         </section>
       </div>
 
-      <!-- ===== โหลแก้วสะสมของขวัญ ===== -->
-      <div id="panel-jar" class="panel">
-        <section class="card">
-          <div class="card-head">
-            <h2>โหลแก้วสะสมของขวัญ</h2>
-            <label class="toggle">
-              <input id="jarEnabled" type="checkbox" checked />
-              <span>เปิดใช้</span>
-            </label>
-          </div>
-          <p class="hint">
-            Overlay แยกโชว์โหลแก้ว 2D ตั้ง สมส่วน · ของขวัญตกจากด้านบนตามแรงโน้มถ่วง กองในโหล ~500 ชิ้น
-            แล้วล้นออกปากซ้าย–ขวา ไหลลงข้างโหลไปกองบนพื้น · Overlay จุได้ 5000 ชิ้น · ของเก่าไม่ถูกลบ · รีเซ็ตเมื่อเริ่มไลฟ์ใหม่
-            · เปิด Overlay แล้วลากแถบหัวหน้าต่างหรือพื้นเขียวเพื่อย้าย ลากขอบเพื่อย่อขยาย — ตำแหน่งจำไว้ให้
-          </p>
-          <p class="hint">
-            TikTok LIVE Studio: ใส่ลิงก์ Overlay เป็น Browser Source (อย่าแคปหน้าต่าง) แล้วคีย์สีเขียว
-            <strong>#00FF00</strong> · Similarity ปานกลาง · Smoothness ต่ำ ถ้าเปิดสูงขอบโหลจะขาดๆ
-          </p>
-          <label for="jarOverlayUrl">ลิงก์ Overlay</label>
-          <div class="actions">
-            <input id="jarOverlayUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/jar-overlay.html?v=jar51" />
-            <button id="jarCopyOverlayUrlBtn" class="btn ghost" type="button">คัดลอก</button>
-          </div>
-          <div class="win-score-box">
-            <div id="jarCountDisplay" class="win-score-display">0 ชิ้น</div>
-          </div>
-          <div class="actions">
-            <button id="jarOpenOverlayBtn" class="btn primary" type="button">เปิด Overlay โหลแก้ว</button>
-            <button id="jarCloseOverlayBtn" class="btn ghost" type="button">ปิด Overlay</button>
-            <button id="jarResetBtn" class="btn secondary" type="button">รีเซ็ตโหล</button>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-head">
-            <h2>ทดสอบตกโหล</h2>
-            <span class="chip" id="jarCatalogCount">0 รูป</span>
-          </div>
-          <label for="jarTestGift">ชื่อของขวัญ</label>
-          <input id="jarTestGift" class="field" type="text" list="jarGiftList" value="Rose" placeholder="Rose" autocomplete="off" />
-          <datalist id="jarGiftList"></datalist>
-          <label for="jarTestCount">จำนวน (1:1)</label>
-          <input id="jarTestCount" class="field" type="number" min="1" max="9999" value="10" />
-          <div class="actions">
-            <button id="jarTestBtn" class="btn secondary" type="button">ทดสอบตกโหล</button>
-          </div>
-          <p class="hint">รูปของขวัญแปลงเก็บจาก streamtoearn.io/th/gifts ไว้ในฟังก์ชันแล้ว ไม่โหลดจากเว็บตอนไลฟ์</p>
-        </section>
-      </div>
+      <!-- โหลแก้ว: ตั้งค่าอยู่ใน Overlay Gallery — เก็บ datalist ไว้ให้ทดสอบตกโหล -->
+      <datalist id="jarGiftList" hidden></datalist>
 
       <!-- ===== Overlay Gallery ===== -->
       <div id="panel-live" class="panel">
@@ -967,13 +1044,18 @@ Facebook Fanpage</textarea>
               <input id="ttsReadEmoji" type="checkbox" />
               <span>อ่านอิโมจิ</span>
             </label>
+            <label class="toggle option-check" title="ตัดข้อความยาว ตัวอักษซ้ำ ลิงก์ และแชทสแปมก่อนอ่าน">
+              <input id="ttsCutSpam" type="checkbox" checked />
+              <span>ตัดข้อความสแปม</span>
+            </label>
           </div>
           <p class="hint">
             ติ๊ก = เปิดอ่าน · ไม่ติ๊ก = ปิด<br />
             <b>อ่านชื่อ</b> = ชื่อผู้ส่ง ·
             <b>อ่านของขวัญ</b> = ชื่อของขวัญ ·
             <b>อ่านข้อความ</b> = ข้อความที่พิมพ์ ·
-            <b>อ่านอิโมจิ</b> = อิโมจิที่ส่งมา<br />
+            <b>อ่านอิโมจิ</b> = อิโมจิที่ส่งมา ·
+            <b>ตัดข้อความสแปม</b> = ตัดตัวซ้ำ / ลิงก์ / ข้อความยาวเกินก่อนอ่าน<br />
             ระหว่างอ่านเสียง เพลงจะถูกลดเสียงอัตโนมัติ แล้วกลับมาดังเมื่ออ่านจบ<br />
             <b>แนะนำ:</b> เลือกเสียง Neural (Premwadee/Niwat) เร็วและชัดกว่า · ยังไม่รองรับแรป/ร้องเพลง
           </p>
@@ -1037,7 +1119,7 @@ Facebook Fanpage</textarea>
             </label>
           </div>
           <p class="hint">
-            ปริ้นตามการ์ดบนจอ: รูปซ้าย ชื่อขวา · กรอบดำ · ของขวัญรัวเข้าคิวทุกใบ ไม่ข้าม
+            ปริ้นตามการ์ดบนจอ: รูปซ้าย ชื่อขวา · กรอบดำบาง · แต่ละใบต่อกันไม่มีช่องว่าง
           </p>
           <p class="hint">
             <b>Flash Toy</b> จับคู่บลูทูธใน Windows มักไม่ได้ — ชื่อ <b>FlashToy_xxxx_BLE</b> เป็น BLE สำหรับแอปมือถือ ไม่ใช่เครื่องพิมพ์ Windows<br />
@@ -1050,7 +1132,11 @@ Facebook Fanpage</textarea>
           <div class="photo-print-preview-wrap">
             <div id="photoPrintCard" class="photo-print-card">
               <div class="photo-print-photo" id="photoPrintPhoto">?</div>
-              <div class="photo-print-name" id="photoPrintName">รอของขวัญ</div>
+              <div class="photo-print-copy">
+                <div class="photo-print-name" id="photoPrintName">รอของขวัญ</div>
+                <div class="photo-print-bless" id="photoPrintBless">Good vibes</div>
+                <div class="photo-print-bless-th" id="photoPrintBlessTh">พลังบวก</div>
+              </div>
             </div>
           </div>
           <p id="photoPrintActivity" class="hint tts-activity">ยังไม่เปิดใช้ — ติ๊ก “เปิดใช้” แล้วรอของขวัญจากไลฟ์</p>
@@ -1411,21 +1497,41 @@ Facebook Fanpage</textarea>
         </section>
         <section class="card">
           <div class="card-head">
+            <h2>วิดีโอต้อนรับตาม User ID</h2>
+            <span class="chip" id="welcomeVideoRuleCount">0 กฎ</span>
+          </div>
+          <p class="hint">ผูกคลิปกับ TikTok UniqueId — user นั้นเข้าห้องถึงจะเล่น · แนะนำไฟล์ <strong>mp4 (H.264)</strong> เพราะ Link ใน LIVE Studio เล่น webm ไม่ค่อยได้ · คลิปจบแล้วขึ้นรูป+ชื่อจริงจาก TikTok</p>
+          <input id="welcomeVideoEditId" type="hidden" value="" />
+          <label for="welcomeVideoUserId">User ID (UniqueId)</label>
+          <input id="welcomeVideoUserId" class="field" type="text" placeholder="เช่น username_tiktok" autocomplete="off" spellcheck="false" />
+          <label>ไฟล์วิดีโอ (mp4 / webm / mov)</label>
+          <div class="actions tight">
+            <input id="welcomeVideoFiles" type="file" accept="video/*,.mp4,.webm,.mov,.mkv" multiple />
+            <button id="welcomeVideoAddFilesBtn" class="btn secondary" type="button">เพิ่มไฟล์</button>
+          </div>
+          <div id="welcomeVideoPendingList" class="song-list"></div>
+          <div class="actions tight">
+            <button id="welcomeVideoSaveRuleBtn" class="btn primary" type="button">บันทึกกฎ</button>
+            <button id="welcomeVideoCancelEditBtn" class="btn ghost" type="button">ยกเลิกแก้ไข</button>
+          </div>
+          <div id="welcomeVideoRulesList" class="rules-list"></div>
+        </section>
+        <section class="card">
+          <div class="card-head">
             <h2>ใส่ OBS / TikTok LIVE Studio</h2>
-            <span class="chip">720×420</span>
+            <span class="chip">720×960 · 9:12</span>
           </div>
           <p class="hint">หน้าต่างในแอพเป็นแค่ตัวอย่าง ต้องวางลิงก์นี้เป็น Browser Source ถึงจะขึ้นบนจอไลฟ์</p>
-          <label for="welcomeObsUrl">ลิงก์ Overlay</label>
+          <label for="welcomeObsUrl">ลิงก์ Overlay (9:12 เท่านั้น)</label>
           <div class="welcome-obs-row">
-            <input id="welcomeObsUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/live-overlay.html?panel=welcome&amp;v=gal37" />
+            <input id="welcomeObsUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/welcome-9x12.html" />
             <button type="button" class="btn primary" id="welcomeCopyObsUrl">คัดลอกลิงก์</button>
           </div>
           <ol class="welcome-obs-steps">
-            <li>เปิด OBS หรือ TikTok LIVE Studio</li>
-            <li>เพิ่มแหล่ง <strong>Browser Source</strong> ใหม่</li>
-            <li>วางลิงก์ด้านบน · กว้าง <strong>720</strong> สูง <strong>420</strong></li>
-            <li>เปิดพื้นหลังโปร่งใส · อย่าติ๊กปิดเมื่อซ่อนแหล่ง</li>
-            <li>กลับมาที่แอพนี้ แล้วกดการ์ด Superfan / LV เพื่อทดสอบบนจอ OBS</li>
+            <li>คัดลอกลิงก์ด้านบน</li>
+            <li>ใน TikTok LIVE Studio เพิ่มแหล่ง <strong>ลิงก์</strong> แล้ววาง URL</li>
+            <li>ตั้งความละเอียดกำหนดเอง <strong>720 × 960</strong> (9:12 เท่านั้น)</li>
+            <li>ถ้ายังเป็นสี่เหลี่ยมผืนผ้า — ลากขอบกล่องแดงให้สูงจนแถบเตือนใน Overlay หาย</li>
           </ol>
         </section>
         <section class="card">
@@ -1433,7 +1539,7 @@ Facebook Fanpage</textarea>
             <h2>พรีวิวในแอพ</h2>
           </div>
           <div class="welcome-preview-wrap">
-            <iframe id="welcomePreviewFrame" class="welcome-preview-frame" title="พรีวิวกรอบต้อนรับ" src="/live-overlay.html?panel=welcome&v=gal37"></iframe>
+            <iframe id="welcomePreviewFrame" class="welcome-preview-frame" title="พรีวิวกรอบต้อนรับ" src="about:blank" data-src="/live-overlay.html?panel=welcome&v=gal82&w=720&h=960&width=720&height=960"></iframe>
           </div>
         </section>
       </div>
@@ -1443,7 +1549,7 @@ Facebook Fanpage</textarea>
         <section class="card">
           <div class="card-head">
             <h2>อัปเดตออนไลน์</h2>
-            <span class="chip" id="updateStatusChip">v1.0.8.1</span>
+            <span class="chip" id="updateStatusChip">v1.0.8.2</span>
           </div>
           <p class="hint">ค่าเริ่มต้นชี้ไปที่ GitHub Monkeyeffect — มีอัปเดตแล้วตัวเวอร์ชันมุมซ้ายจะมีจุดแดง กดที่เวอร์ชันเพื่อเปิดหน้านี้และติดตั้ง</p>
           <label for="updateFeedUrl">URL ของ latest.json</label>
@@ -1501,7 +1607,8 @@ Facebook Fanpage</textarea>
     </main>
 
     <div id="giftPicker" class="gift-picker hidden" hidden></div>
-    <script src="/app.js?v=v1141-nopos80"></script>
-    <script src="/studio.js?v=studio11"></script>
+    <script src="/app.js?v=v1201-jar-morph"></script>
+    <script src="/studio.js?v=studio13"></script>
+    <script src="/members.js?v=m13-login"></script>
   </body>
 </html>

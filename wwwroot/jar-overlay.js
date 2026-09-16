@@ -1,15 +1,82 @@
 (() => {
+  const params = new URLSearchParams(location.search);
+  const chroma = params.get("chroma") === "1";
+  document.documentElement.classList.toggle("chroma", chroma);
+  document.body.classList.toggle("chroma", chroma);
+
   const CHANNEL = "tgr-jar-overlay";
   const STORAGE_KEY = "tgr_jar_overlay_cmd";
   const STATUS_KEY = "tgr_jar_overlay_status";
   const ICONS = "/gifts/jar/icons/";
   const UNKNOWN = ICONS + "_unknown.svg";
-  const JAR_ART_URL = "/gifts/jar/art/mason.png?v=jar50";
-  const JAR_ART_W = 293;
-  const JAR_ART_H = 384;
-  const JAR_ART_ASPECT = JAR_ART_H / JAR_ART_W;
   const JAR_FILL = 500;
   const OVERLAY_CAP = 2000;
+
+  function parseHexColor(raw, fallback = "#7ec8e3") {
+    const s = String(raw || "").trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+    if (/^[0-9a-fA-F]{6}$/.test(s)) return `#${s.toLowerCase()}`;
+    return fallback;
+  }
+
+  function hexToRgb(hex) {
+    const n = parseInt(String(hex).slice(1), 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+
+  function rgba(hex, a) {
+    const { r, g, b } = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  function mixHex(hex, towardHex, t) {
+    const a = hexToRgb(hex);
+    const b = hexToRgb(towardHex);
+    const m = (x, y) => Math.round(x + (y - x) * t);
+    const to = (n) => n.toString(16).padStart(2, "0");
+    return `#${to(m(a.r, b.r))}${to(m(a.g, b.g))}${to(m(a.b, b.b))}`;
+  }
+
+  let jarColor = parseHexColor(params.get("color") || params.get("jarColor"), "#e8f4ff");
+  const JAR_STYLE_IDS = ["classic", "round", "tall", "wide", "original"];
+  const JAR_STYLE_ALIASES = {
+    crystal: "round",
+    neon: "tall",
+    luxe: "wide",
+    bulb: "round",
+    potion: "tall",
+    bowl: "wide",
+    legacy: "original",
+    old: "original",
+    mason: "original",
+    tikfinity: "original",
+    coinjar: "original",
+    glass: "original",
+  };
+  function parseJarStyle(raw) {
+    let s = String(raw || "").toLowerCase().trim();
+    if (JAR_STYLE_ALIASES[s]) s = JAR_STYLE_ALIASES[s];
+    return JAR_STYLE_IDS.includes(s) ? s : "classic";
+  }
+  let jarStyle = parseJarStyle(params.get("style") || params.get("jarStyle"));
+  const GLASS_BODY_URL = "/gifts/jar/art/glass-body.png?v=jar59";
+  const GLASS_BASE_URL = "/gifts/jar/art/glass-base.png?v=jar59";
+  const GLASS_RIM_URL = "/gifts/jar/art/glass-rim.png?v=jar59";
+  const glassBody = new Image();
+  const glassBase = new Image();
+  const glassRim = new Image();
+  glassBody.decoding = "async";
+  glassBase.decoding = "async";
+  glassRim.decoding = "async";
+  glassBody.src = GLASS_BODY_URL;
+  glassBase.src = GLASS_BASE_URL;
+  glassRim.src = GLASS_RIM_URL;
+  function onGlassArtLoad() {
+    resize();
+  }
+  glassBody.onload = onGlassArtLoad;
+  glassBase.onload = onGlassArtLoad;
+  glassRim.onload = onGlassArtLoad;
 
   const { Engine, World, Bodies, Body, Composite, Runner, Sleeping, Events } = Matter;
   const CAT_INNER = 0x0001;
@@ -18,7 +85,7 @@
   const CAT_GROUND = 0x0008;
 
   const canvas = document.getElementById("fx");
-  const ctx = canvas.getContext("2d", { alpha: false });
+  const ctx = canvas.getContext("2d", { alpha: !chroma });
   const hudCount = document.getElementById("hudCount");
   const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(CHANNEL) : null;
 
@@ -36,10 +103,6 @@
   let lastCmdAt = 0;
   let lastHud = -1;
   let wallBodies = [];
-  const jarArt = new Image();
-  jarArt.decoding = "async";
-  jarArt.src = JAR_ART_URL;
-  jarArt.onload = () => resize();
 
   const engine = Engine.create({
     enableSleeping: true,
@@ -150,7 +213,8 @@
     return t * t * (3 - 2 * t);
   }
 
-  function masonHalf(t) {
+  /** Reference mason profile inside glass-body.png (fraction of jarW). */
+  function classicHalf(t) {
     if (t < 0.06) return lerp(0.328, 0.345, t / 0.06);
     if (t < 0.18) return lerp(0.345, 0.355, (t - 0.06) / 0.12);
     if (t < 0.28) return lerp(0.355, 0.412, smooth((t - 0.18) / 0.1));
@@ -159,19 +223,62 @@
     return lerp(0.33, 0.18, smooth(Math.min(1, (t - 0.93) / 0.07)));
   }
 
+  /** Half-width profile 0..1 along jar height (mouth → base). Each style = different silhouette. */
+  function shapeHalf(t) {
+    const s = jarStyle;
+    if (s === "round") {
+      if (t < 0.1) return lerp(0.22, 0.28, t / 0.1);
+      if (t < 0.32) return lerp(0.28, 0.5, smooth((t - 0.1) / 0.22));
+      if (t < 0.72) return lerp(0.5, 0.52, (t - 0.32) / 0.4);
+      if (t < 0.9) return lerp(0.52, 0.4, smooth((t - 0.72) / 0.18));
+      return lerp(0.4, 0.22, smooth(Math.min(1, (t - 0.9) / 0.1)));
+    }
+    if (s === "tall") {
+      if (t < 0.08) return lerp(0.16, 0.17, t / 0.08);
+      if (t < 0.38) return lerp(0.17, 0.19, (t - 0.08) / 0.3);
+      if (t < 0.52) return lerp(0.19, 0.38, smooth((t - 0.38) / 0.14));
+      if (t < 0.82) return lerp(0.38, 0.4, (t - 0.52) / 0.3);
+      if (t < 0.93) return lerp(0.4, 0.28, smooth((t - 0.82) / 0.11));
+      return lerp(0.28, 0.16, smooth(Math.min(1, (t - 0.93) / 0.07)));
+    }
+    if (s === "wide") {
+      if (t < 0.08) return lerp(0.4, 0.44, t / 0.08);
+      if (t < 0.2) return lerp(0.44, 0.48, smooth((t - 0.08) / 0.12));
+      if (t < 0.78) return lerp(0.48, 0.5, (t - 0.2) / 0.58);
+      if (t < 0.92) return lerp(0.5, 0.38, smooth((t - 0.78) / 0.14));
+      return lerp(0.38, 0.2, smooth(Math.min(1, (t - 0.92) / 0.08)));
+    }
+    return classicHalf(t);
+  }
+
+  function shapeAspect() {
+    if (jarStyle === "original") return 1;
+    if (jarStyle === "round") return 1.12;
+    if (jarStyle === "tall") return 1.58;
+    if (jarStyle === "wide") return 1.02;
+    return 384 / 293;
+  }
+
+  function shapeCornerR(jarW) {
+    if (jarStyle === "round") return Math.max(22, jarW * 0.2);
+    if (jarStyle === "tall") return Math.max(12, jarW * 0.09);
+    if (jarStyle === "wide") return Math.max(18, jarW * 0.16);
+    return Math.max(15, jarW * 0.11);
+  }
+
   function sampleJar(cx, top, jarW, jarH, mouthY, pad) {
     const bottom = top + jarH;
-    const cornerR = Math.max(15, jarW * 0.11);
-    const sideSteps = 28;
-    const arcSteps = 8;
+    const cornerR = shapeCornerR(jarW);
+    const sideSteps = 48;
+    const arcSteps = 12;
     const pts = [];
     for (let i = 0; i <= sideSteps; i++) {
       const t = i / sideSteps;
       const y = lerp(mouthY, bottom - cornerR, t);
-      const hw = masonHalf(t) * jarW + pad;
+      const hw = shapeHalf(t) * jarW + pad;
       pts.push([cx - hw, y]);
     }
-    const bodyHw = masonHalf(1) * jarW + pad;
+    const bodyHw = shapeHalf(1) * jarW + pad;
     const cy = bottom - cornerR;
     for (let i = 1; i <= arcSteps; i++) {
       const a = Math.PI + (Math.PI / 2) * (i / arcSteps);
@@ -184,7 +291,7 @@
     for (let i = sideSteps; i >= 0; i--) {
       const t = i / sideSteps;
       const y = lerp(mouthY, bottom - cornerR, t);
-      const hw = masonHalf(t) * jarW + pad;
+      const hw = shapeHalf(t) * jarW + pad;
       pts.push([cx + hw, y]);
     }
     return pts;
@@ -290,17 +397,28 @@
     const sideRoom = Math.max(88, Math.min(140, w * 0.2));
     const maxW = Math.max(160, w - margin * 2 - sideRoom * 2);
     const maxH = Math.max(200, h - margin * 2 - dropRoom - hudRoom);
-    let jarW = Math.min(maxW, maxH / JAR_ART_ASPECT, 360);
-    let jarH = jarW * JAR_ART_ASPECT;
+    const aspect = shapeAspect();
+    let jarW = Math.min(maxW, maxH / aspect, jarStyle === "wide" ? 400 : jarStyle === "original" ? 420 : 360);
+    let jarH = jarW * aspect;
     if (jarH > maxH) {
       jarH = maxH;
-      jarW = jarH / JAR_ART_ASPECT;
+      jarW = jarH / aspect;
     }
     const cx = w * 0.5;
     const bottom = h - margin - hudRoom;
     const top = Math.max(margin + dropRoom, bottom - jarH);
     const wallT = Math.max(8, jarW * 0.055);
-    const mouthY = top + jarH * 0.055;
+    const mouthPad =
+      jarStyle === "original"
+        ? jarH * 0.13
+        : jarStyle === "tall"
+          ? jarH * 0.02
+          : jarStyle === "round"
+            ? jarH * 0.04
+            : jarStyle === "wide"
+              ? jarH * 0.035
+              : jarH * 0.055;
+    const mouthY = top + mouthPad;
     const inner = sampleJar(cx, top, jarW, jarH, mouthY, 0);
     const outer = sampleJar(cx, top, jarW, jarH, mouthY, wallT);
     outer[0][0] -= wallT * 0.22;
@@ -322,6 +440,17 @@
     const bowlW = Math.max(40, maxX - minX);
     const pieceR = Math.max(11, Math.min(14.5, Math.sqrt((bowlW * bowlH * 1.35) / (JAR_FILL * Math.PI))));
 
+    const neckSpan =
+      jarStyle === "original"
+        ? [0.1, 0.2]
+        : jarStyle === "tall"
+          ? [0.02, 0.34]
+          : jarStyle === "round"
+            ? [0.03, 0.12]
+            : jarStyle === "wide"
+              ? [0.02, 0.1]
+              : [0.05, 0.135];
+
     geom = {
       w,
       h,
@@ -341,8 +470,8 @@
       jarLeft: minX,
       jarRight: maxX,
       wallT,
-      neckY0: top + jarH * 0.05,
-      neckY1: top + jarH * 0.135,
+      neckY0: top + jarH * neckSpan[0],
+      neckY1: top + jarH * neckSpan[1],
       stageL: margin,
       stageR: w - margin,
       stageT: margin,
@@ -534,35 +663,180 @@
     ctx.restore();
   }
 
-  function jarArtReady() {
-    return !!(jarArt && jarArt.complete && jarArt.naturalWidth);
+  function setJarColor(raw) {
+    jarColor = parseHexColor(raw, jarColor || "#e8f4ff");
   }
 
-  function drawJarImage() {
+  function setJarStyle(raw) {
+    const next = parseJarStyle(raw);
+    if (next === jarStyle) return;
+    jarStyle = next;
+    resize();
+  }
+
+  function palette() {
+    const base = jarColor;
+    return {
+      base,
+      deep: mixHex(base, "#0a1620", 0.42),
+      mid: mixHex(base, "#ffffff", 0.18),
+      soft: mixHex(base, "#ffffff", 0.55),
+      rim: mixHex(base, "#ffffff", 0.78),
+      glow: mixHex(base, "#ffffff", 0.92),
+      ink: mixHex(base, "#05080c", 0.62),
+    };
+  }
+
+  function glassArtReady() {
+    return !!(
+      glassBody.complete &&
+      glassBody.naturalWidth &&
+      glassBase.complete &&
+      glassBase.naturalWidth &&
+      glassRim.complete &&
+      glassRim.naturalWidth
+    );
+  }
+
+  let tintBuf = null;
+  function drawTintedImage(img, x, y, w, h) {
+    if (!img || !img.naturalWidth) return;
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-    ctx.drawImage(jarArt, geom.artX, geom.artY, geom.jarW, geom.jarH);
-  }
-
-  function drawJarBack() {
-    if (!geom || !outerPoly.length || !jarPoly.length) return;
-    if (jarArtReady()) {
-      drawJarImage();
+    const nearWhite = /^#(e|f)[0-9a-f]{5}$/i.test(jarColor);
+    if (nearWhite) {
+      ctx.drawImage(img, x, y, w, h);
       return;
     }
-    const { cx, jarW, jarH, top, wallT, mouthY, mouthL, mouthR, neckY0, neckY1 } = geom;
+    const bw = Math.max(1, Math.round(w));
+    const bh = Math.max(1, Math.round(h));
+    if (!tintBuf || tintBuf.width !== bw || tintBuf.height !== bh) {
+      tintBuf = document.createElement("canvas");
+      tintBuf.width = bw;
+      tintBuf.height = bh;
+    }
+    const g = tintBuf.getContext("2d");
+    g.clearRect(0, 0, bw, bh);
+    g.drawImage(img, 0, 0, bw, bh);
+    g.globalCompositeOperation = "source-atop";
+    g.fillStyle = rgba(jarColor, 0.35);
+    g.fillRect(0, 0, bw, bh);
+    g.globalCompositeOperation = "source-over";
+    ctx.drawImage(tintBuf, x, y);
+  }
+
+  /** Warp glass-body.png bands to the active shape silhouette. */
+  function drawMorphedGlassBody() {
+    if (!geom || !glassBody.complete || !glassBody.naturalWidth) return;
+    const { cx, artY, jarW, jarH, mouthY, innerBottom } = geom;
+    const srcW = glassBody.naturalWidth;
+    const srcH = glassBody.naturalHeight;
+    const bands = 96;
+    const pad = 1.08;
+    const span = Math.max(1, innerBottom - mouthY);
     ctx.save();
     ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    const nearWhite = /^#(e|f)[0-9a-f]{5}$/i.test(jarColor);
+    let bandBuf = null;
+    let bandCtx = null;
+    if (!nearWhite) {
+      bandBuf = document.createElement("canvas");
+      bandCtx = bandBuf.getContext("2d");
+    }
+
+    for (let i = 0; i < bands; i++) {
+      const t0 = i / bands;
+      const t1 = (i + 1) / bands;
+      const tm = (t0 + t1) * 0.5;
+      const sy = t0 * srcH;
+      const sh = Math.max(1, (t1 - t0) * srcH + 0.6);
+      const dy = artY + t0 * jarH;
+      const dh = Math.max(1, (t1 - t0) * jarH + 0.6);
+      const dyMid = dy + dh * 0.5;
+      const physT = Math.max(0, Math.min(1, (dyMid - mouthY) / span));
+
+      const srcHw = Math.max(8, classicHalf(tm) * srcW * pad);
+      const dstHw = Math.max(8, shapeHalf(physT) * jarW * pad);
+      const sx = srcW * 0.5 - srcHw;
+      const sw = srcHw * 2;
+      const dx = cx - dstHw;
+      const dw = dstHw * 2;
+
+      if (nearWhite) {
+        ctx.drawImage(glassBody, sx, sy, sw, sh, dx, dy, dw, dh);
+      } else {
+        const bw = Math.max(1, Math.round(dw));
+        const bh = Math.max(1, Math.round(dh));
+        if (bandBuf.width !== bw || bandBuf.height !== bh) {
+          bandBuf.width = bw;
+          bandBuf.height = bh;
+        }
+        bandCtx.clearRect(0, 0, bw, bh);
+        bandCtx.drawImage(glassBody, sx, sy, sw, sh, 0, 0, bw, bh);
+        bandCtx.globalCompositeOperation = "source-atop";
+        bandCtx.fillStyle = rgba(jarColor, 0.35);
+        bandCtx.fillRect(0, 0, bw, bh);
+        bandCtx.globalCompositeOperation = "source-over";
+        ctx.drawImage(bandBuf, dx, dy);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawShapedGlassBack() {
+    if (!geom || !glassArtReady()) return;
+    const { cx, jarW, jarH, mouthY, innerBottom, wallT } = geom;
+    const scaleRef = jarW / 500;
+    const mouthScale = shapeHalf(0.06) / classicHalf(0.06);
+    const baseScale = shapeHalf(1) / classicHalf(1);
+
+    const rimW = 256 * scaleRef * mouthScale;
+    const rimH = 34 * scaleRef;
+    const rimX = cx - rimW / 2;
+    const rimY = mouthY - rimH * 0.55;
+    drawTintedImage(glassRim, rimX, rimY, rimW, rimH);
+
+    const baseW = 233 * scaleRef * baseScale;
+    const baseH = 62 * scaleRef * Math.min(1.25, Math.max(0.85, jarH / jarW));
+    const baseX = cx - baseW / 2;
+    const baseY = innerBottom + wallT * 0.15 - baseH * 0.35;
+    drawTintedImage(glassBase, baseX, baseY, baseW, baseH);
+  }
+
+  /** Style 5 — Coin Jar glass exact (unwarped) */
+  function drawGlassJarBack() {
+    if (!geom || !glassArtReady()) return;
+    const { artX, artY, jarW, jarH } = geom;
+    const s = jarW / 500;
+    const rimW = 256 * s;
+    const rimH = 34 * s;
+    const rimX = artX + (jarW - rimW) / 2;
+    const rimY = artY + 45 * s;
+    drawTintedImage(glassRim, rimX, rimY, rimW, rimH);
+    const baseW = 233 * s;
+    const baseH = 62 * s;
+    const baseX = artX + (jarW - baseW) / 2;
+    const baseY = artY + jarH - 63 * s - baseH;
+    drawTintedImage(glassBase, baseX, baseY, baseW, baseH);
+  }
+
+  function drawGlassJarFront() {
+    if (!geom || !glassArtReady()) return;
+    const { artX, artY, jarW, jarH } = geom;
+    drawTintedImage(glassBody, artX, artY, jarW, jarH);
+  }
+
+  function drawVectorGlassFallback() {
+    if (!geom || !outerPoly.length || !jarPoly.length) return;
+    const p = palette();
+    const { cx, jarW, top, innerBottom, wallT } = geom;
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-
-    strokePoly(jarPoly, true);
-    const innerFill = ctx.createLinearGradient(cx - jarW * 0.5, top, cx + jarW * 0.5, top);
-    innerFill.addColorStop(0, "#d9f0fb");
-    innerFill.addColorStop(0.5, "#eef9ff");
-    innerFill.addColorStop(1, "#d3ebf8");
-    ctx.fillStyle = innerFill;
-    ctx.fill();
 
     ctx.beginPath();
     ctx.moveTo(outerPoly[0][0], outerPoly[0][1]);
@@ -572,92 +846,73 @@
     for (let i = 1; i < jarPoly.length; i++) ctx.lineTo(jarPoly[i][0], jarPoly[i][1]);
     ctx.closePath();
     const glass = ctx.createLinearGradient(cx - jarW * 0.55, top, cx + jarW * 0.55, top);
-    glass.addColorStop(0, "#8ec4de");
-    glass.addColorStop(0.22, "#c5e6f6");
-    glass.addColorStop(0.5, "#dff3fc");
-    glass.addColorStop(0.78, "#b7dcf0");
-    glass.addColorStop(1, "#7fb6d2");
+    glass.addColorStop(0, rgba(p.deep, 0.45));
+    glass.addColorStop(0.5, rgba(p.soft, 0.16));
+    glass.addColorStop(1, rgba(p.deep, 0.42));
     ctx.fillStyle = glass;
     ctx.fill("evenodd");
 
-    ctx.fillStyle = "#9fcfe6";
-    const lipH = Math.max(6, wallT * 0.95);
-    const lipW = wallT * 1.15;
-    ctx.fillRect(mouthL - wallT * 0.15, mouthY - lipH * 0.12, lipW, lipH);
-    ctx.fillRect(mouthR - wallT, mouthY - lipH * 0.12, lipW, lipH);
+    strokePoly(outerOpen, false);
+    ctx.strokeStyle = rgba(p.deep, 0.9);
+    ctx.lineWidth = Math.max(5, wallT * 0.65);
+    ctx.stroke();
+    ctx.strokeStyle = rgba(p.rim, 0.98);
+    ctx.lineWidth = Math.max(2.2, wallT * 0.28);
+    ctx.stroke();
+    strokePoly(innerOpen, false);
+    ctx.strokeStyle = rgba(p.glow, 0.65);
+    ctx.lineWidth = Math.max(1.3, wallT * 0.16);
+    ctx.stroke();
 
-    ctx.strokeStyle = "#6aa4c2";
-    ctx.lineWidth = Math.max(2.2, wallT * 0.32);
-    const threadN = 3;
-    for (let i = 0; i < threadN; i++) {
-      const y = lerp(neckY0, neckY1, i / (threadN - 1));
-      const t = Math.max(0, Math.min(1, (y - mouthY) / Math.max(1, jarH - jarW * 0.11)));
-      const hw = masonHalf(t) * jarW;
-      ctx.beginPath();
-      ctx.moveTo(cx - hw - wallT * 0.15, y);
-      ctx.lineTo(cx - hw + wallT * 0.92, y);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(cx + hw + wallT * 0.15, y);
-      ctx.lineTo(cx + hw - wallT * 0.92, y);
-      ctx.stroke();
-    }
+    ctx.strokeStyle = rgba("#ffffff", 0.88);
+    ctx.lineWidth = Math.max(2.4, jarW * 0.025);
+    ctx.beginPath();
+    ctx.moveTo(cx - jarW * 0.32, top + (innerBottom - top) * 0.2);
+    ctx.quadraticCurveTo(
+      cx - jarW * 0.38,
+      top + (innerBottom - top) * 0.48,
+      cx - jarW * 0.3,
+      top + (innerBottom - top) * 0.72
+    );
+    ctx.stroke();
     ctx.restore();
+  }
+
+  function drawJarBack() {
+    if (!geom || !outerPoly.length || !jarPoly.length) return;
+    if (jarStyle === "original") {
+      drawGlassJarBack();
+      return;
+    }
+    if (glassArtReady()) {
+      drawShapedGlassBack();
+      return;
+    }
+    drawVectorGlassFallback();
   }
 
   function drawJarFront() {
     if (!geom || !outerPoly.length || !jarPoly.length) return;
-    if (jarArtReady()) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(outerPoly[0][0], outerPoly[0][1]);
-      for (let i = 1; i < outerPoly.length; i++) ctx.lineTo(outerPoly[i][0], outerPoly[i][1]);
-      ctx.closePath();
-      ctx.moveTo(jarPoly[0][0], jarPoly[0][1]);
-      for (let i = 1; i < jarPoly.length; i++) ctx.lineTo(jarPoly[i][0], jarPoly[i][1]);
-      ctx.closePath();
-      ctx.clip("evenodd");
-      drawJarImage();
-      ctx.restore();
+    if (jarStyle === "original") {
+      drawGlassJarFront();
       return;
     }
-    const { cx, jarW, jarH, top, wallT } = geom;
+    if (glassArtReady()) {
+      drawMorphedGlassBody();
+      return;
+    }
+    const p = palette();
+    const { wallT } = geom;
     ctx.save();
-    ctx.imageSmoothingEnabled = true;
-    ctx.lineJoin = "round";
-    ctx.lineCap = "round";
-
     strokePoly(outerOpen, false);
-    ctx.strokeStyle = "#3d7fa3";
-    ctx.lineWidth = Math.max(6, wallT * 0.72);
-    ctx.stroke();
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = Math.max(2.6, wallT * 0.34);
-    ctx.stroke();
-
-    strokePoly(innerOpen, false);
-    ctx.strokeStyle = "rgba(255,255,255,0.78)";
-    ctx.lineWidth = Math.max(1.6, wallT * 0.22);
-    ctx.stroke();
-    ctx.strokeStyle = "#5b97b6";
-    ctx.lineWidth = Math.max(1.2, wallT * 0.16);
-    ctx.stroke();
-
-    ctx.strokeStyle = "rgba(255,255,255,0.95)";
-    ctx.lineWidth = Math.max(2.8, jarW * 0.03);
-    ctx.beginPath();
-    ctx.moveTo(cx - jarW * 0.32, top + jarH * 0.22);
-    ctx.quadraticCurveTo(cx - jarW * 0.38, top + jarH * 0.48, cx - jarW * 0.3, top + jarH * 0.74);
-    ctx.stroke();
-    ctx.lineWidth = Math.max(1.3, jarW * 0.012);
-    ctx.beginPath();
-    ctx.moveTo(cx - jarW * 0.2, top + jarH * 0.28);
-    ctx.lineTo(cx - jarW * 0.22, top + jarH * 0.5);
+    ctx.strokeStyle = rgba(p.rim, 0.95);
+    ctx.lineWidth = Math.max(2.2, wallT * 0.28);
     ctx.stroke();
     ctx.restore();
   }
 
   function snapChroma() {
+    if (!chroma) return;
     const x0 = 0;
     const y0 = 0;
     const w = canvas.width;
@@ -680,8 +935,12 @@
 
   function draw() {
     if (!geom) return;
-    ctx.fillStyle = "#00ff00";
-    ctx.fillRect(0, 0, geom.w, geom.h);
+    if (chroma) {
+      ctx.fillStyle = "#00ff00";
+      ctx.fillRect(0, 0, geom.w, geom.h);
+    } else {
+      ctx.clearRect(0, 0, geom.w, geom.h);
+    }
     drawJarBack();
     const gifts = giftBodies();
     for (const b of gifts) {
@@ -734,6 +993,11 @@
       if (giftBodies().length || spawnQ.length) return;
       const pieces = Array.isArray(data.pieces) ? data.pieces : [];
       for (const p of pieces) enqueueDrop(p.giftName || p.name, p.count);
+      return;
+    }
+    if (data.type === "jar-style") {
+      if (data.color) setJarColor(data.color);
+      if (data.style) setJarStyle(data.style);
     }
   }
 
@@ -747,6 +1011,11 @@
     }
   });
   window.addEventListener("resize", resize);
+  document.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    if (!window.chrome?.webview) return;
+    try { window.chrome.webview.postMessage("drag"); } catch { /* ignore */ }
+  });
 
   window.__jarStats = () => {
     const gifts = giftBodies();
@@ -810,5 +1079,5 @@
     }
   }
   pollLiveGifts();
-  setInterval(pollLiveGifts, 400);
+  setInterval(pollLiveGifts, 1200);
 })();

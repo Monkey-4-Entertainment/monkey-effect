@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.8.4",
-    "notes":  "Monkeyeffect 1.0.8.4 - welcome video by UniqueId, real TikTok nick/avatar after clip, autoplay+WebM fix, stop UniqueId overwriting profile",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.4-update.zip",
-    "sha256":  "670434b2c7019c098a1de1ca066579785f4007f6b5cbbbcdcfef106b8829caa8",
+    "version":  "1.0.8.5",
+    "notes":  "Monkeyeffect 1.0.8.5 - jar overlay 5 shapes, Coin Jar glass style, morph glass for other shapes, jar color + Gallery controls",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.5-update.zip",
+    "sha256":  "c23ca89031f3ac50a4c5c4a05ee558fa70bf0cb8683bfab9ac8193a5c6bc45c0",
     "mandatory":  true,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

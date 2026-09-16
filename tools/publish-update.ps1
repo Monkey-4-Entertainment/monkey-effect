@@ -1,7 +1,7 @@
 param(
   [string]$Root = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$Ver = "1.0.8.1",
-  [string]$Notes = "Monkeyeffect 1.0.8.1 - แก้เชื่อม TikTok LIVE ค้างหลังเน็ต AIS หลุด (บังคับ IPv4)",
+  [string]$Ver = "1.0.8.5",
+  [string]$Notes = 'Monkeyeffect 1.0.8.5 - jar overlay 5 shapes, Coin Jar glass style, morph glass for other shapes, jar color + Gallery controls',
   [string]$RepoRawBase = "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update"
 )
 
