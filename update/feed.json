@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.8.7",
-    "notes":  "Monkeyeffect 1.0.8.7 - import TikSpark presets (Matrix TH / JoJo Matrix), fix NUM keypad keys",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.7-update.zip",
-    "sha256":  "100eda4b5c2867ac7f8b44634029227b20fc8748fd3ebb704ea24110f7e7487f",
+    "version":  "1.0.8.8",
+    "notes":  "Monkeyeffect 1.0.8.8 - FARM DEFENSE v10 built-in: Rose combo 1:1 bulk count, separate Lion/Elephant, farm preset editor + sample preset",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.8-update.zip",
+    "sha256":  "1ab7b4bbd3d0c068ccea075e5d57c3667bd1bec1dd08e7f58246b0ed4791f0cf",
     "mandatory":  true,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
