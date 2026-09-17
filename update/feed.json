@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.8.6",
-    "notes":  "Monkeyeffect 1.0.8.6 - farm preset editor, keymap times/minCount, welcome join hooks, live overlay themes, gift video queue + chat spam filter",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.6-update.zip",
-    "sha256":  "dd4cd5a9e5c13ab2511465624efca963ac221db5172d25858923bec13bc23144",
+    "version":  "1.0.8.7",
+    "notes":  "Monkeyeffect 1.0.8.7 - import TikSpark presets (Matrix TH / JoJo Matrix), fix NUM keypad keys",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.7-update.zip",
+    "sha256":  "100eda4b5c2867ac7f8b44634029227b20fc8748fd3ebb704ea24110f7e7487f",
     "mandatory":  true,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
