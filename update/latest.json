@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.8.8",
-    "notes":  "Monkeyeffect 1.0.8.8 - FARM DEFENSE v10 built-in: Rose combo 1:1 bulk count, separate Lion/Elephant, farm preset editor + sample preset",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.8-update.zip",
-    "sha256":  "1ab7b4bbd3d0c068ccea075e5d57c3667bd1bec1dd08e7f58246b0ed4791f0cf",
-    "mandatory":  true,
-    "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
+  "version": "1.0.8.9",
+  "notes": "Monkeyeffect 1.0.8.9 - Gift jar: coin-based gift sizes, solid glass walls and floor, fill-before-overflow through the mouth, safe combos and resizing. Includes the existing FARM preset editor and backend.",
+  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.9-update.zip",
+  "sha256": "8df8e51291d719bc0066e9e39839eddc98026eefeee4918106909bf9a43dfc1f",
+  "mandatory": true,
+  "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

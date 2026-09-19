@@ -11,6 +11,8 @@
   const UNKNOWN = ICONS + "_unknown.svg";
   const JAR_FILL = 500;
   const OVERLAY_CAP = 2000;
+  // Per-gift coin value controls diameter, never the number in a combo.
+  const MAX_GIFT_SCALE = 3;
 
   function parseHexColor(raw, fallback = "#7ec8e3") {
     const s = String(raw || "").trim();
@@ -90,6 +92,7 @@
   const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(CHANNEL) : null;
 
   const catalogByKey = new Map();
+  let catalogReady = false;
   const imgCache = new Map();
   const spawnQ = [];
   const innerWalls = [];
@@ -103,6 +106,10 @@
   let lastCmdAt = 0;
   let lastHud = -1;
   let wallBodies = [];
+  let pileFull = false;
+  let pileAreaRatio = 0;
+  let fullSince = 0;
+  let lastPileCheck = -Infinity;
 
   const engine = Engine.create({
     enableSleeping: true,
@@ -171,19 +178,39 @@
       if (!res.ok) return;
       const pack = await res.json();
       for (const g of pack.gifts || []) {
-        const rec = { name: g.name, file: g.file, key: g.key };
+        const coins = Number(g.coins);
+        const rec = {
+          name: g.name, file: g.file, key: g.key,
+          coins: Number.isFinite(coins) && coins > 0 ? coins : 1,
+        };
         catalogByKey.set(normKey(g.key), rec);
         catalogByKey.set(normKey(g.name), rec);
       }
       for (const [alias, target] of Object.entries(pack.aliases || {})) {
         const hit = catalogByKey.get(normKey(target));
-        if (hit) catalogByKey.set(normKey(alias), hit);
+        // An alias must not replace a real gift (e.g. Rosa costs more than Rose).
+        if (hit && !catalogByKey.has(normKey(alias))) catalogByKey.set(normKey(alias), hit);
       }
     } catch {
       /* ignore */
     } finally {
       clearTimeout(timer);
+      catalogReady = true;
     }
+  }
+
+  function giftSizeScale(giftName) {
+    const coins = catalogByKey.get(normKey(giftName))?.coins || 1;
+    // 1 / 10 / 100 / 1,000 / 10,000+ coins -> 1 / 1.5 / 2 / 2.5 / 3x.
+    return Math.min(MAX_GIFT_SCALE, 1 + Math.log10(Math.max(1, coins)) * 0.5);
+  }
+
+  function giftRadius(giftName) {
+    const lipR = Math.max(5, geom.wallT * 0.62);
+    const maxR = Math.max(4, (geom.mouthW / 2 - lipR - 4) * 0.82);
+    // Scale the whole range down for narrow jars so even the largest gift fits.
+    const baseR = Math.min(geom.pieceR, maxR / MAX_GIFT_SCALE);
+    return baseR * giftSizeScale(giftName);
   }
 
   function iconUrl(giftName) {
@@ -215,12 +242,18 @@
 
   /** Reference mason profile inside glass-body.png (fraction of jarW). */
   function classicHalf(t) {
-    if (t < 0.06) return lerp(0.328, 0.345, t / 0.06);
-    if (t < 0.18) return lerp(0.345, 0.355, (t - 0.06) / 0.12);
-    if (t < 0.28) return lerp(0.355, 0.412, smooth((t - 0.18) / 0.1));
-    if (t < 0.82) return lerp(0.412, 0.418, (t - 0.28) / 0.54);
-    if (t < 0.93) return lerp(0.418, 0.33, smooth((t - 0.82) / 0.11));
-    return lerp(0.33, 0.18, smooth(Math.min(1, (t - 0.93) / 0.07)));
+    // Inner edge measured against the existing 500x500 glass PNG.
+    // t=0 is its mouth (y=65); t=1 is the inside floor (y=430).
+    const profile = [[0, .238], [.15, .230], [.205, .228], [.26, .258],
+      [.315, .268], [.835, .264], [.89, .250], [.945, .234], [.986, .196], [1, .170]];
+    t = Math.max(0, Math.min(1, t));
+    for (let i = 1; i < profile.length; i++) {
+      if (t <= profile[i][0]) {
+        const a = profile[i - 1], b = profile[i];
+        return lerp(a[1], b[1], (t - a[0]) / (b[0] - a[0]));
+      }
+    }
+    return profile[profile.length - 1][1];
   }
 
   /** Half-width profile 0..1 along jar height (mouth → base). Each style = different silhouette. */
@@ -267,30 +300,18 @@
   }
 
   function sampleJar(cx, top, jarW, jarH, mouthY, pad) {
-    const bottom = top + jarH;
-    const cornerR = shapeCornerR(jarW);
-    const sideSteps = 48;
-    const arcSteps = 12;
+    const bottom = top + jarH * 0.86;
+    const sideSteps = 64;
     const pts = [];
     for (let i = 0; i <= sideSteps; i++) {
       const t = i / sideSteps;
-      const y = lerp(mouthY, bottom - cornerR, t);
+      const y = lerp(mouthY, bottom, t);
       const hw = shapeHalf(t) * jarW + pad;
       pts.push([cx - hw, y]);
     }
-    const bodyHw = shapeHalf(1) * jarW + pad;
-    const cy = bottom - cornerR;
-    for (let i = 1; i <= arcSteps; i++) {
-      const a = Math.PI + (Math.PI / 2) * (i / arcSteps);
-      pts.push([cx - bodyHw + cornerR + Math.cos(a) * cornerR, cy - Math.sin(a) * cornerR]);
-    }
-    for (let i = arcSteps - 1; i >= 0; i--) {
-      const a = 0 - (Math.PI / 2) * (i / arcSteps);
-      pts.push([cx + bodyHw - cornerR + Math.cos(a) * cornerR, cy - Math.sin(a) * cornerR]);
-    }
     for (let i = sideSteps; i >= 0; i--) {
       const t = i / sideSteps;
-      const y = lerp(mouthY, bottom - cornerR, t);
+      const y = lerp(mouthY, bottom, t);
       const hw = shapeHalf(t) * jarW + pad;
       pts.push([cx + hw, y]);
     }
@@ -316,17 +337,17 @@
   }
 
   function segmentBody(wall, thick, filter, friction) {
-    const mx = (wall.ax + wall.bx) / 2;
-    const my = (wall.ay + wall.by) / 2;
+    // Put the wall outside the usable interior, not across its centerline.
+    const mx = (wall.ax + wall.bx) / 2 - wall.nx * thick / 2;
+    const my = (wall.ay + wall.by) / 2 - wall.ny * thick / 2;
     const angle = Math.atan2(wall.by - wall.ay, wall.bx - wall.ax);
-    return Bodies.rectangle(mx, my, wall.len, thick, {
+    return Bodies.rectangle(mx, my, wall.len + 3, thick, {
       isStatic: true,
       angle,
       friction: friction == null ? 0.92 : friction,
       frictionStatic: friction == null ? 1 : Math.min(1, friction + 0.15),
       restitution: 0,
       slop: 0.02,
-      chamfer: { radius: Math.min(3, thick * 0.25) },
       collisionFilter: filter,
     });
   }
@@ -335,18 +356,10 @@
     if (wallBodies.length) Composite.remove(engine.world, wallBodies);
     wallBodies = [];
     const innerF = { category: CAT_INNER, mask: CAT_GIFT };
-    const outerF = { category: CAT_OUTER, mask: CAT_GIFT };
     const groundF = { category: CAT_GROUND, mask: CAT_GIFT };
-    const lipSkip = geom.pieceR * 1.05;
     const innerT = Math.max(8, geom.wallT * 0.95);
-    const outerT = Math.max(8, geom.wallT * 1.05);
     for (const wall of innerWalls) {
-      if (Math.min(wall.ay, wall.by) < geom.mouthY + lipSkip) continue;
-      wallBodies.push(segmentBody(wall, innerT, innerF, 0.88));
-    }
-    for (const wall of outerWalls) {
-      if (Math.min(wall.ay, wall.by) < geom.mouthY + lipSkip * 0.55) continue;
-      wallBodies.push(segmentBody(wall, outerT, outerF, 0.18));
+      wallBodies.push(segmentBody(wall, innerT, innerF, 0.35));
     }
     const lipR = Math.max(5, geom.wallT * 0.62);
     for (const x of [geom.mouthL, geom.mouthR]) {
@@ -360,7 +373,7 @@
         })
       );
     }
-    const floorY = geom.innerBottom + geom.wallT * 0.85;
+    const floorY = geom.bottom + geom.wallT * 0.4;
     wallBodies.push(
       Bodies.rectangle(geom.w * 0.5, floorY + 22, geom.w + 240, 44, {
         isStatic: true,
@@ -408,16 +421,7 @@
     const bottom = h - margin - hudRoom;
     const top = Math.max(margin + dropRoom, bottom - jarH);
     const wallT = Math.max(8, jarW * 0.055);
-    const mouthPad =
-      jarStyle === "original"
-        ? jarH * 0.13
-        : jarStyle === "tall"
-          ? jarH * 0.02
-          : jarStyle === "round"
-            ? jarH * 0.04
-            : jarStyle === "wide"
-              ? jarH * 0.035
-              : jarH * 0.055;
+    const mouthPad = jarH * 0.13;
     const mouthY = top + mouthPad;
     const inner = sampleJar(cx, top, jarW, jarH, mouthY, 0);
     const outer = sampleJar(cx, top, jarW, jarH, mouthY, wallT);
@@ -438,6 +442,12 @@
     const mouthW = mouthR - mouthL;
     const bowlH = Math.max(40, maxY - mouthY);
     const bowlW = Math.max(40, maxX - minX);
+    let innerArea = 0;
+    for (let i = 0; i < inner.length; i++) {
+      const a = inner[i], b = inner[(i + 1) % inner.length];
+      innerArea += a[0] * b[1] - b[0] * a[1];
+    }
+    innerArea = Math.abs(innerArea) / 2;
     const pieceR = Math.max(11, Math.min(14.5, Math.sqrt((bowlW * bowlH * 1.35) / (JAR_FILL * Math.PI))));
 
     const neckSpan =
@@ -467,6 +477,7 @@
       mouthW,
       pieceR,
       innerBottom: maxY,
+      innerArea,
       jarLeft: minX,
       jarRight: maxX,
       wallT,
@@ -495,6 +506,7 @@
   }
 
   function resize() {
+    const previousGeom = geom;
     const w = Math.max(1, window.innerWidth);
     const h = Math.max(1, window.innerHeight);
     canvas.width = w;
@@ -502,6 +514,25 @@
     canvas.style.width = `${w}px`;
     canvas.style.height = `${h}px`;
     layoutJar(w, h);
+    pileFull = false;
+    pileAreaRatio = 0;
+    fullSince = 0;
+    lastPileCheck = -Infinity;
+    for (const body of giftBodies()) {
+      const r = giftRadius(body.plugin.giftName);
+      const ratio = r / (body.circleRadius || body.plugin.r);
+      Body.scale(body, ratio, ratio);
+      body.plugin.r = r;
+      if (previousGeom) {
+        const heightRatio = (geom.innerBottom - geom.mouthY) /
+          Math.max(1, previousGeom.innerBottom - previousGeom.mouthY);
+        Body.setPosition(body, {
+          x: geom.cx + (body.position.x - previousGeom.cx) * geom.jarW / previousGeom.jarW,
+          y: geom.mouthY + (body.position.y - previousGeom.mouthY) * heightRatio,
+        });
+      }
+      Sleeping.set(body, false);
+    }
   }
 
   function enqueueDrop(giftName, count) {
@@ -509,8 +540,7 @@
     if (!n || !giftName) return;
     const take = Math.min(n, roomLeft());
     if (!take) return;
-    const img = loadImage(giftName);
-    spawnQ.push({ giftName: String(giftName), left: take, img });
+    spawnQ.push({ giftName: String(giftName), left: take, img: null });
   }
 
   const recentDrops = [];
@@ -528,6 +558,11 @@
 
   function resetJar() {
     spawnQ.length = 0;
+    pileFull = false;
+    pileAreaRatio = 0;
+    fullSince = 0;
+    lastPileCheck = -Infinity;
+    spawnWait = 0;
     Composite.clear(engine.world, false, true);
     wallBodies = [];
     if (geom) rebuildWalls();
@@ -535,20 +570,32 @@
   }
 
   function spawnFromQueue(dt) {
-    if (!geom || !spawnQ.length) return;
+    if (!geom || !catalogReady || !spawnQ.length) return;
     spawnWait -= dt;
     if (spawnWait > 0) return;
     const queued = queuedCount();
     let budget = queued > 400 ? 3 : queued > 120 ? 2 : 1;
     while (budget > 0 && spawnQ.length && giftBodies().length < OVERLAY_CAP) {
       const item = spawnQ[0];
-      const r = geom.pieceR * (0.94 + Math.random() * 0.1);
-      const x = geom.cx + (Math.random() * 2 - 1) * geom.mouthW * 0.28;
-      const y = Math.max(18, geom.mouthY - r * 3 - Math.random() * 10);
+      if (!item.img) item.img = loadImage(item.giftName);
+      const r = giftRadius(item.giftName);
+      const lipR = Math.max(5, geom.wallT * 0.62);
+      const spread = Math.max(0, Math.min(geom.mouthW * 0.28, geom.mouthW / 2 - lipR - r - 4));
+      const y = Math.max(r + 2, geom.mouthY - r * 3 - Math.random() * 10);
+      // Do not create overlapping bodies in combo bursts: that used to eject
+      // gifts sideways even into an empty jar.
+      const existing = giftBodies();
+      let x = geom.cx, free = false;
+      for (let attempt = 0; attempt < 8; attempt++) {
+        x = geom.cx + (Math.random() * 2 - 1) * spread;
+        free = !existing.some(b => Math.hypot(b.position.x - x, b.position.y - y) < r + b.circleRadius + 2);
+        if (free) break;
+      }
+      if (!free) break;
       const body = Bodies.circle(x, y, r, {
         restitution: 0.04,
-        friction: 0.85,
-        frictionStatic: 1,
+        friction: 0.32,
+        frictionStatic: 0.45,
         frictionAir: 0.012,
         density: 0.0018,
         slop: 0.04,
@@ -569,7 +616,9 @@
   function markSpill(b, dir) {
     if (!b || !b.plugin || b.plugin.spilled) return;
     b.plugin.spilled = true;
-    b.collisionFilter.mask = CAT_OUTER | CAT_GIFT | CAT_GROUND;
+    // The same solid glass walls apply inside AND outside. Never disable them
+    // just because a gift is wider than the neck or touches the side of the bowl.
+    b.collisionFilter.mask = CAT_INNER | CAT_GIFT | CAT_GROUND;
     b.friction = 0.22;
     b.frictionStatic = 0.28;
     b.frictionAir = 0.01;
@@ -584,57 +633,128 @@
 
   function nudgeOverflow() {
     if (!geom) return;
-    const brim = geom.mouthY + geom.pieceR * 2.8;
-    const gifts = giftBodies();
-    let brimN = 0;
-    for (const b of gifts) {
-      if (!b.plugin.spilled && b.position.y < brim) brimN += 1;
-    }
-    const packed = brimN >= 7;
-    for (const b of gifts) {
-      if (b.plugin.spilled) {
-        if (b.position.y > geom.h + 30) {
-          const d = b.position.x < geom.cx ? -1 : 1;
-          const r = b.circleRadius || 12;
-          const x = geom.cx + d * (geom.jarW * 0.5 + geom.wallT * 2 + r * 2);
-          Body.setPosition(b, { x, y: geom.innerBottom - r - 2 });
-          Body.setVelocity(b, { x: d * 0.8, y: 0 });
-        }
-        continue;
-      }
-      if (b.position.y > geom.h + 30) {
-        markSpill(b, b.position.x < geom.cx ? -1 : 1);
-        continue;
-      }
+    const lipR = Math.max(5, geom.wallT * 0.62);
+    for (const b of giftBodies()) {
+      if (b.plugin.spilled) continue;
       const r = b.circleRadius || 12;
       const x = b.position.x;
       const y = b.position.y;
-      if (y < geom.mouthY - r * 2.4) continue;
-      const nearBrim = y < brim;
-      if (nearBrim) {
-        Sleeping.set(b, false);
-        b.sleepThreshold = Infinity;
+      if (!b.plugin.overflowing && pileFull &&
+          y + r >= geom.mouthY - geom.pieceR && y < geom.mouthY + r * .55) {
+        b.plugin.overflowing = true;
+        b.plugin.exitDir = x < geom.cx ? -1 : 1;
       }
-      if (x < geom.mouthL + r * 0.28) {
-        markSpill(b, -1);
-        continue;
-      }
-      if (x > geom.mouthR - r * 0.28) {
-        markSpill(b, 1);
-        continue;
-      }
-      if (!packed || !nearBrim) continue;
-      const dir = x < geom.cx ? -1 : 1;
-      const nearEdge = Math.abs(x - geom.cx) > geom.mouthW * 0.22;
-      const aboveLip = y < geom.mouthY + r * 0.7;
-      if (nearEdge || aboveLip) {
-        Body.applyForce(b, b.position, { x: dir * 0.0042, y: -0.00015 });
-        if (aboveLip && nearEdge) markSpill(b, dir);
+      if (!b.plugin.overflowing) continue;
+      Sleeping.set(b, false);
+      const dir = b.plugin.exitDir;
+      const clearY = geom.mouthY - lipR - r - 3;
+      // Lift through the opening first; move sideways only ABOVE the rim.
+      if (y > clearY) {
+        Body.setVelocity(b, { x: b.velocity.x * .8, y: Math.min(b.velocity.y, -.8) });
+        Body.applyForce(b, b.position, { x: (geom.cx - x) * b.mass * .000012, y: -b.mass * .0028 });
+      } else {
+        Body.setVelocity(b, { x: dir * Math.max(1.7, Math.abs(b.velocity.x)), y: 0 });
+        Body.applyForce(b, b.position, { x: dir * b.mass * .00045, y: -b.mass * .00135 });
+        if ((dir < 0 && x < geom.mouthL - lipR - r) ||
+            (dir > 0 && x > geom.mouthR + lipR + r)) markSpill(b, dir);
       }
     }
   }
 
   Events.on(engine, "beforeUpdate", nudgeOverflow);
+
+  function halfAtY(y) {
+    const t = Math.max(0, Math.min(1, (y - geom.mouthY) / (geom.innerBottom - geom.mouthY)));
+    return shapeHalf(t) * geom.jarW;
+  }
+
+  function containGifts() {
+    if (!geom) return;
+    for (const b of giftBodies()) {
+      if (b.plugin.spilled) continue;
+      const r = b.circleRadius;
+      let { x, y } = b.position;
+      if (y < geom.mouthY) continue;
+      // Collision-solver safety net for large combos / slow frames. A body that
+      // penetrates glass must go back inside, not become a side-wall "spill".
+      // Leave ordinary contact/slop to Matter; only repair a real penetration.
+      // Clamping every resting circle would break its floor contacts/sleeping.
+      if (y + r * .5 > geom.innerBottom) y = geom.innerBottom - r - .5;
+      const half = halfAtY(y);
+      if (Math.abs(x - geom.cx) > half - r * .4) {
+        const safeHalf = Math.max(0, half - r - .5);
+        x = Math.max(geom.cx - safeHalf, Math.min(geom.cx + safeHalf, x));
+      }
+      if (Math.abs(x - b.position.x) > .05 || Math.abs(y - b.position.y) > .05) {
+        const vx = x === b.position.x ? b.velocity.x : 0;
+        const vy = y === b.position.y ? b.velocity.y : Math.min(0, b.velocity.y);
+        Body.setPosition(b, { x, y });
+        Body.setVelocity(b, { x: vx, y: vy });
+        Sleeping.set(b, false);
+      }
+    }
+  }
+
+  function updatePileState() {
+    if (!geom) return;
+    const now = engine.timing.timestamp;
+    if (now - lastPileCheck < 100) return;
+    lastPileCheck = now;
+    const gifts = giftBodies().filter(b => !b.plugin.spilled && !b.plugin.overflowing &&
+      b.position.y + b.circleRadius >= geom.mouthY);
+    const byId = new Map(gifts.map(b => [b.id, b]));
+    const contacts = new Map(gifts.map(b => [b.id, []]));
+    for (const pair of engine.pairs.list) {
+      if (!pair.isActive) continue;
+      const a = pair.bodyA.id, b = pair.bodyB.id;
+      if (byId.has(a) && byId.has(b)) { contacts.get(a).push(b); contacts.get(b).push(a); }
+    }
+    // Sleeping pairs may be absent from Matter's active list. Reconnect touching
+    // neighbours spatially so a settled pile still counts as supported.
+    const cellSize = Math.max(8, ...gifts.map(b => b.circleRadius * 2 + 3));
+    const grid = new Map();
+    for (const b of gifts) {
+      const gx = Math.floor(b.position.x / cellSize), gy = Math.floor(b.position.y / cellSize);
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+        for (const other of grid.get(`${gx + dx},${gy + dy}`) || []) {
+          if (Math.hypot(b.position.x - other.position.x, b.position.y - other.position.y) <=
+              b.circleRadius + other.circleRadius + 1.5) {
+            contacts.get(b.id).push(other.id); contacts.get(other.id).push(b.id);
+          }
+        }
+      }
+      const key = `${gx},${gy}`;
+      if (!grid.has(key)) grid.set(key, []);
+      grid.get(key).push(b);
+    }
+    // Only a pile connected to the bottom counts. Incoming gifts passing the
+    // mouth (even a large combo) cannot make an empty jar "full".
+    const supported = new Set();
+    const queue = gifts.filter(b => b.position.y + b.circleRadius >= geom.innerBottom - geom.pieceR * 2).map(b => b.id);
+    for (let i = 0; i < queue.length; i++) {
+      const id = queue[i];
+      if (supported.has(id)) continue;
+      supported.add(id);
+      for (const other of contacts.get(id)) if (!supported.has(other)) queue.push(other);
+    }
+    let area = 0, reachesMouth = false;
+    for (const id of supported) {
+      const b = byId.get(id), r = b.circleRadius;
+      area += Math.PI * r * r;
+      if (b.position.y - r <= geom.mouthY + geom.pieceR * 1.5 && b.speed < 1.2) reachesMouth = true;
+    }
+    pileAreaRatio = area / Math.max(1, geom.innerArea);
+    const packed = pileAreaRatio >= .52 && reachesMouth;
+    if (packed) {
+      if (!fullSince) fullSince = now;
+      if (now - fullSince >= 300) pileFull = true;
+    } else {
+      fullSince = 0;
+      pileFull = false;
+    }
+  }
+
+  Events.on(engine, "afterUpdate", () => { containGifts(); updatePileState(); });
 
   function strokePoly(poly, close) {
     if (!poly.length) return;
@@ -732,7 +852,6 @@
     const srcW = glassBody.naturalWidth;
     const srcH = glassBody.naturalHeight;
     const bands = 96;
-    const pad = 1.08;
     const span = Math.max(1, innerBottom - mouthY);
     ctx.save();
     ctx.imageSmoothingEnabled = true;
@@ -757,12 +876,11 @@
       const dyMid = dy + dh * 0.5;
       const physT = Math.max(0, Math.min(1, (dyMid - mouthY) / span));
 
-      const srcHw = Math.max(8, classicHalf(tm) * srcW * pad);
-      const dstHw = Math.max(8, shapeHalf(physT) * jarW * pad);
-      const sx = srcW * 0.5 - srcHw;
-      const sw = srcHw * 2;
-      const dx = cx - dstHw;
-      const dw = dstHw * 2;
+      const srcT = Math.max(0, Math.min(1, (tm - .13) / .73));
+      const ratio = shapeHalf(physT) / classicHalf(srcT);
+      const sx = 0, sw = srcW;
+      const dw = jarW * ratio;
+      const dx = cx - dw / 2;
 
       if (nearWhite) {
         ctx.drawImage(glassBody, sx, sy, sw, sh, dx, dy, dw, dh);
@@ -787,21 +905,21 @@
 
   function drawShapedGlassBack() {
     if (!geom || !glassArtReady()) return;
-    const { cx, jarW, jarH, mouthY, innerBottom, wallT } = geom;
+    const { cx, artY, jarW, jarH, mouthY } = geom;
     const scaleRef = jarW / 500;
-    const mouthScale = shapeHalf(0.06) / classicHalf(0.06);
-    const baseScale = shapeHalf(1) / classicHalf(1);
+    const mouthScale = shapeHalf(0) / classicHalf(0);
+    const baseScale = shapeHalf(.934) / classicHalf(.934);
 
     const rimW = 256 * scaleRef * mouthScale;
-    const rimH = 34 * scaleRef;
+    const rimH = 34 * jarH / 500;
     const rimX = cx - rimW / 2;
     const rimY = mouthY - rimH * 0.55;
     drawTintedImage(glassRim, rimX, rimY, rimW, rimH);
 
     const baseW = 233 * scaleRef * baseScale;
-    const baseH = 62 * scaleRef * Math.min(1.25, Math.max(0.85, jarH / jarW));
+    const baseH = 62 * jarH / 500;
     const baseX = cx - baseW / 2;
-    const baseY = innerBottom + wallT * 0.15 - baseH * 0.35;
+    const baseY = artY + jarH * .75;
     drawTintedImage(glassBase, baseX, baseY, baseW, baseH);
   }
 
@@ -943,18 +1061,17 @@
     }
     drawJarBack();
     const gifts = giftBodies();
-    for (const b of gifts) {
-      if (b.plugin && b.plugin.spilled) continue;
-      if (b.position.y + (b.circleRadius || 12) < geom.mouthY) drawOne(b);
-    }
     ctx.save();
     if (jarPoly.length) {
       strokePoly(jarPoly, true);
+      // The open mouth and the jar interior are one visible region: no slicing
+      // a gift in half as it enters or rises over the lip.
+      ctx.rect(0, 0, geom.w, geom.mouthY);
       ctx.clip();
     }
     for (const b of gifts) {
       if (b.plugin && b.plugin.spilled) continue;
-      if (b.position.y + (b.circleRadius || 12) >= geom.mouthY) drawOne(b);
+      drawOne(b);
     }
     ctx.restore();
     drawJarFront();
@@ -1039,6 +1156,9 @@
       yMin,
       yMax,
       mouthY: geom && geom.mouthY,
+      floorY: geom && geom.innerBottom,
+      full: pileFull,
+      pileAreaRatio,
       engine: "matter",
     };
   };
