@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.9",
-    "notes":  "Monkeyeffect 1.0.9 - Subathon gift add/subtract rules, HH:MM:SS clock, HMS duration UI, effect buttons, overlay preview, frameless timer",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.9-update.zip",
-    "sha256":  "71daea5e6f71729b2124aaacc3f04fd7968e7b33f99d86897508c6055f1a8cbb",
+    "version":  "1.0.9.1",
+    "notes":  "Monkeyeffect 1.0.9.1 - Subathon gift add/subtract rules, HH:MM:SS clock, HMS duration UI, effect buttons, overlay preview, frameless timer; restores Codex jar gift sizing and mouth-only overflow (1.0.8.9)",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.9.1-update.zip",
+    "sha256":  "d1e8d0816b78588ccfebb1cdc9e04c1e397d9948ad18277f4dc976de35d06c3b",
     "mandatory":  true,
     "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
