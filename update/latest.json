@@ -1,8 +1,8 @@
 {
-  "version": "1.0.8.9",
-  "notes": "Monkeyeffect 1.0.8.9 - Gift jar: coin-based gift sizes, solid glass walls and floor, fill-before-overflow through the mouth, safe combos and resizing. Includes the existing FARM preset editor and backend.",
-  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.9-update.zip",
-  "sha256": "8df8e51291d719bc0066e9e39839eddc98026eefeee4918106909bf9a43dfc1f",
-  "mandatory": true,
-  "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
+    "version":  "1.0.9",
+    "notes":  "Monkeyeffect 1.0.9 - Subathon gift add/subtract rules, HH:MM:SS clock, HMS duration UI, effect buttons, overlay preview, frameless timer",
+    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.9-update.zip",
+    "sha256":  "71daea5e6f71729b2124aaacc3f04fd7968e7b33f99d86897508c6055f1a8cbb",
+    "mandatory":  true,
+    "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

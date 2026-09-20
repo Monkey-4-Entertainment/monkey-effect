@@ -1,26 +1,22 @@
-Monkeyeffect online update v1.0.8.9
+Monkeyeffect online update pack v1.0.9
 
-Feed:
+Repo: https://github.com/Monkey-4-Entertainment/monkey-effect
+
+Feed URL (app default / update-feed.url):
 https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json
 
-Package:
-https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.8.9-update.zip
+Zip URL:
+https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.9-update.zip
 
-SHA-256: 8df8e51291d719bc0066e9e39839eddc98026eefeee4918106909bf9a43dfc1f
-Size: 84,244,063 bytes
+Upload steps:
+1) git add update/latest.json update/Monkeyeffect-1.0.9-update.zip
+2) git commit -m "Publish update 1.0.9"
+3) git push origin main
+4) Open the feed URL in a browser to verify
 
-Changes:
-- Gift size follows per-item coin value, capped at 3x. Combo count does not inflate individual gifts.
-- Glass walls, floor, artwork and mouth now align.
-- Gifts remain inside until a stable supported pile reaches the mouth.
-- Overflow clears the rim before moving outside; combo bursts do not create overlapping spawns.
-- Resizing preserves counts and gift sizes.
-- Existing FARM preset editor/backend and assets remain included.
+Note: if the zip is too large for GitHub git (>100MB), use GitHub Releases and edit zipUrl in latest.json
 
-This frontend hotfix keeps the tested 1.0.8.8 backend binary unchanged.
-App and updater version endpoints use wwwroot/version.json (1.0.8.9).
-No userdata, media cache, logs, scratch files or backups are shipped.
-14 isolated browser/physics test groups passed, including 400 gifts in each of 5 jar styles.
-
-Publish latest.json, feed.json and the versioned ZIP together.
-Verify the public ZIP SHA-256 before announcing release availability.
+Desktop files:
+- C:\Users\PC\Desktop\Monkeyeffect-Update\latest.json
+- C:\Users\PC\Desktop\Monkeyeffect-Update\Monkeyeffect-1.0.9-update.zip
+sha256=71daea5e6f71729b2124aaacc3f04fd7968e7b33f99d86897508c6055f1a8cbb
