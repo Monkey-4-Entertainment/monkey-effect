@@ -1696,8 +1696,27 @@ function setNowPlaying(text) {
 let musicHookTimer = null;
 /** Bumps on every stop/replace — cancels in-flight drains so songs never overlap. */
 let musicPlayGen = 0;
-let musicActiveGiftKey = "";
+let musicDraining = false;
+let musicHostWaitResolve = null;
+const musicComboCredit = new Map();
+const MUSIC_COMBO_CREDIT_TTL_MS = 120000;
 const musicLiveAudios = new Set();
+
+function waitForHostSong(song, token) {
+  const start = Math.max(0, Number(song.hookStart) || 0);
+  const length = resolveHookDuration(song) ?? Math.max(0, (Number(song.duration) || 0) - start);
+  if (!length) return Promise.resolve();
+  return new Promise((resolve) => {
+    const finish = () => {
+      clearMusicHookTimer();
+      musicHostWaitResolve = null;
+      resolve();
+    };
+    musicHostWaitResolve = finish;
+    if (token !== musicPlayGen) return finish();
+    musicHookTimer = setTimeout(finish, length * 1000);
+  });
+}
 
 function clearMusicHookTimer() {
   if (musicHookTimer) {
@@ -1726,7 +1745,7 @@ function hardStopAudio(audio) {
 function stopMusic(opts = {}) {
   musicPlayGen += 1;
   musicQueue = [];
-  if (!opts.keepGiftKey) musicActiveGiftKey = "";
+  if (musicHostWaitResolve) musicHostWaitResolve();
   clearMusicHookTimer();
   // Stop host-side player (minimized-safe path).
   // Skip when about to play — PlayAsync already kills; a late stop races and cancels the new song.
@@ -1778,7 +1797,11 @@ async function playSongById(song, token) {
   if (token !== musicPlayGen) return;
   // Prefer host MediaPlayer — keeps playing while main window is minimized.
   const hostOk = await playSongViaHost(song, token);
-  if (hostOk || token !== musicPlayGen) return;
+  if (token !== musicPlayGen) return;
+  if (hostOk) {
+    await waitForHostSong(song, token);
+    return;
+  }
   // Fallback: in-page Audio (foreground only).
   const row = await getAudioBlobCached(song.id);
   if (token !== musicPlayGen) return;
@@ -1893,12 +1916,10 @@ async function drainMusicQueue(token) {
       setNowPlaying(err.message || "เล่นไม่สำเร็จ");
     }
   }
-  if (token === musicPlayGen && !musicQueue.length && !currentAudio) {
-    musicActiveGiftKey = "";
-  }
+  if (token === musicPlayGen && !musicQueue.length && !currentAudio) setNowPlaying("—");
 }
 
-async function playMusicForGift(ruleIdOrGiftName, byId = false) {
+async function playMusicForGift(ruleIdOrGiftName, byId = false, times = 1) {
   if (!musicConfig.enabled && !byId) return;
   const rule = byId
     ? musicConfig.rules.find((r) => r.id === ruleIdOrGiftName)
@@ -1910,47 +1931,62 @@ async function playMusicForGift(ruleIdOrGiftName, byId = false) {
   if (!rule || !rule.songs?.length) return;
   if (rule.enabled === false && !byId) return;
 
-  const giftKey = String(rule.giftName || ruleIdOrGiftName).toLowerCase();
-  // ของชิ้นเดิมกำลังโหลด/เล่นอยู่แล้ว — ห้าม stop+โหลดใหม่ (เคยทำให้เพลงมาช้า ~10วิตอนคอมโบ)
-  if (!byId && musicActiveGiftKey === giftKey) {
-    devLog("music", "skip-same-active", { gift: giftKey });
-    return;
-  }
-
   let songs = [];
-  if (rule.playMode === "all") {
-    songs = [...rule.songs];
-  } else if (rule.playMode === "sequence") {
-    const idx = musicSeqIndex[rule.id] || 0;
-    songs = [rule.songs[idx % rule.songs.length]];
-    musicSeqIndex[rule.id] = idx + 1;
-  } else {
-    songs = [rule.songs[Math.floor(Math.random() * rule.songs.length)]];
+  for (let i = 0; i < Math.max(1, Math.min(200, Number(times) || 1)); i++) {
+    if (rule.playMode === "all") {
+      songs.push(...rule.songs);
+    } else if (rule.playMode === "sequence") {
+      const idx = musicSeqIndex[rule.id] || 0;
+      songs.push(rule.songs[idx % rule.songs.length]);
+      musicSeqIndex[rule.id] = idx + 1;
+    } else {
+      songs.push(rule.songs[Math.floor(Math.random() * rule.songs.length)]);
+    }
   }
 
-  // จอง gift key ก่อน await — กัน gift รัวยิงซ้ำระหว่างโหลดไฟล์
-  musicActiveGiftKey = giftKey;
-  stopMusic({ keepGiftKey: true, silentUi: true, skipHostStop: true });
-  const token = musicPlayGen;
-  musicQueue = songs;
+  if (byId) stopMusic({ silentUi: true, skipHostStop: true });
+  musicQueue.push(...songs);
   // เริ่มดึงไฟล์ล่วงหน้าทันที
   for (const s of songs) {
     if (s?.id) getAudioBlobCached(s.id).catch(() => {});
   }
-  await drainMusicQueue(token);
+  if (musicDraining) return;
+  musicDraining = true;
+  try {
+    await drainMusicQueue(musicPlayGen);
+  } finally {
+    musicDraining = false;
+    if (musicQueue.length) playMusicForGiftQueue();
+  }
+}
+
+async function playMusicForGiftQueue() {
+  if (musicDraining || !musicQueue.length) return;
+  musicDraining = true;
+  try { await drainMusicQueue(musicPlayGen); }
+  finally {
+    musicDraining = false;
+    if (musicQueue.length) playMusicForGiftQueue();
+  }
 }
 
 function handleGiftForMusic(parsed) {
   if (!musicConfig.enabled) return;
   if (parsed.kind !== "gift" && parsed.kind !== "like" && parsed.kind !== "follow") return;
   if (!parsed.giftName) return;
-  const key = String(parsed.giftName).toLowerCase();
-  if (musicActiveGiftKey === key) {
-    devLog("music", "skip-same-active", { gift: parsed.giftName, count: parsed.count });
-    return;
+  const key = parsed.comboKey || `${parsed.kind}|${String(parsed.sender || "").toLowerCase()}|${String(parsed.giftName).toLowerCase()}`;
+  const count = Math.max(1, Number(parsed.count) || 1);
+  const now = Date.now();
+  for (const [k, credit] of musicComboCredit) {
+    if (now - credit.at > MUSIC_COMBO_CREDIT_TTL_MS) musicComboCredit.delete(k);
   }
-  devLog("music", "trigger", { gift: parsed.giftName, kind: parsed.kind, count: parsed.count });
-  playMusicForGift(parsed.giftName, false);
+  const already = musicComboCredit.get(key)?.n || 0;
+  const fire = parsed.phase === "game" ? Math.max(0, count - already) : count;
+  if (parsed.phase === "game") musicComboCredit.delete(key);
+  else musicComboCredit.set(key, { n: already + count, at: now });
+  if (!fire) return;
+  devLog("music", "trigger", { gift: parsed.giftName, kind: parsed.kind, count, fire, phase: parsed.phase || "ui" });
+  playMusicForGift(parsed.giftName, false, fire);
 }
 
 /* ========== Video effects (transparent overlay) ========== */
@@ -6681,6 +6717,7 @@ function fanOutUiFunctions(parsed) {
   // Video starts on UI, then game finalize queues remaining combo units (never drop / never cut).
   if (parsed.phase === "game") {
     if (claimUiFeature("interrupt", parsed)) handleGiftForInterrupt(parsed);
+    if (claimUiFeature("music", parsed)) handleGiftForMusic(parsed);
     if (claimUiFeature("video", parsed)) handleGiftForVideo(parsed);
     return;
   }
@@ -7511,14 +7548,61 @@ async function playKeymapRow(index) {
   if (!r) return;
   const stacked = resolveStackedKeymapRow(r, rules);
   const src = stacked.row;
-  if (!src.key && !src.vk && !r.webhookUrl) {
-    setKeymapMsg("แถวนี้ยังไม่มีคีย์หรือ webhook — ตั้งคีย์ของ +1 ก่อน", true);
-    return;
-  }
   const viaWebhook = !!r.webhookUrl;
+  const viaNative = !src.key && !src.vk && !r.webhookUrl;
   const combo = Math.max(1, Math.min(200, Number(document.getElementById("testCount")?.value) || 1));
   const count = Math.min(200, combo * stacked.stack);
   const pressKey = src.key || r.key;
+  // Runner / RunningGame style: empty key+webhook → forward gift name over WS :15500
+  if (viaNative) {
+    const giftName = r.giftName || "Rose";
+    const isLike = /^like$/i.test(giftName);
+    const isFollow = /^follow$/i.test(giftName);
+    const messageType = isLike ? "SendLike" : isFollow ? "SendFollow" : "SendGift";
+    setKeymapMsg(`กำลังส่ง ${giftName} เข้าเกมทาง WebSocket…`);
+    try {
+      let clients = 0;
+      try {
+        const st = await (await fetch("/api/status", { cache: "no-store" })).json();
+        clients = Number(st.gameClients) || 0;
+      } catch {
+        clients = 0;
+      }
+      if (clients < 1) {
+        setKeymapMsg(
+          "เกมยังไม่ต่อ WebSocket :15500 — เปิด Monkeyeffect ก่อน แล้วค่อยเปิด Runner ใหม่ (ถ้าเปิดเกมค้างไว้ตอนรีสตาร์ทโปรแกรม ให้ปิดเกมแล้วเปิดใหม่)",
+          true
+        );
+        return;
+      }
+      const res = await fetch("/api/test-gift", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          giftName,
+          repeatCount: count,
+          messageType,
+          nickname: "Test User",
+        }),
+      });
+      const data = await res.json();
+      const wsSent = Number(data.wsSent) || 0;
+      const afterClients = Number(data.gameClients) || clients;
+      if (data.ok === false && wsSent < 1) {
+        setKeymapMsg(data.gameError || data.error || "ส่งเข้าเกมไม่สำเร็จ", true);
+      } else if (wsSent < 1 || afterClients < 1) {
+        setKeymapMsg(
+          "ส่งไม่ถึงเกม — ปิด Runner แล้วเปิดใหม่หลัง Monkeyeffect พร้อม (ต้องเห็น gameClients ≥ 1)",
+          true
+        );
+      } else {
+        setKeymapMsg(`ส่ง ${giftName} ×${count} เข้าเกมแล้ว (${r.label || "WS"}) · clients ${afterClients}`);
+      }
+    } catch (e) {
+      setKeymapMsg(e.message || "ส่งไม่สำเร็จ", true);
+    }
+    return;
+  }
   setKeymapMsg(viaWebhook
     ? `กำลังยิงเข้าเกม ×${count}…`
     : `กำลังกด ${pressKey} ×${count} เข้าเกม (${r.label || ""})…`);
@@ -8670,7 +8754,7 @@ loadJarCatalogUi();
 renderJarUiState();
 
 const LIVE_OVERLAY_BASE = "http://127.0.0.1:3847/live-overlay.html";
-const LIVE_OVERLAY_VER = "gal84";
+const LIVE_OVERLAY_VER = "gal86";
 const WELCOME_LINK_URL = "http://127.0.0.1:3847/welcome-9x12.html";
 
 function welcomeObsLink() {

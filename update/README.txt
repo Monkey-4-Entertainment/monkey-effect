@@ -1,22 +1,7 @@
-Monkeyeffect online update pack v1.0.9.2
+Monkeyeffect online update pack v1.0.9.3
 
-Repo: https://github.com/Monkey-4-Entertainment/monkey-effect
+Gift music combo playback now queues one play per gift unit and waits for each song segment before playing the next. Runner native WebSocket improvements from the installed v1.0.9.2 are included.
 
-Feed URL (app default / update-feed.url):
-https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json
+Feed: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json
+ZIP: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.0.9.3/Monkeyeffect-1.0.9.3-update.zip
 
-Zip URL:
-https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.9.2-update.zip
-
-Upload steps:
-1) git add update/latest.json update/Monkeyeffect-1.0.9.2-update.zip
-2) git commit -m "Publish update 1.0.9.2"
-3) git push origin main
-4) Open the feed URL in a browser to verify
-
-Note: if the zip is too large for GitHub git (>100MB), use GitHub Releases and edit zipUrl in latest.json
-
-Desktop files:
-- C:\Users\PC\Desktop\Monkeyeffect-Update\latest.json
-- C:\Users\PC\Desktop\Monkeyeffect-Update\Monkeyeffect-1.0.9.2-update.zip
-sha256=f1d9f58e94de9d92f79f16c7102e4c662f56cc913654d76aaeab123e804b5ca3

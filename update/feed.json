@@ -1,8 +1,8 @@
 {
-    "version":  "1.0.9.2",
-    "notes":  "Monkeyeffect 1.0.9.2 - Fix Runner/RunningGame native WS play button (empty key preset test via WebSocket)",
-    "zipUrl":  "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.0.9.2-update.zip",
-    "sha256":  "f1d9f58e94de9d92f79f16c7102e4c662f56cc913654d76aaeab123e804b5ca3",
-    "mandatory":  true,
-    "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
+  "version": "1.0.9.3",
+  "notes": "Monkeyeffect 1.0.9.3 - Queue every gift music combo unit and play songs in order without cutting active audio; preserve Runner native WebSocket improvements.",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.0.9.3/Monkeyeffect-1.0.9.3-update.zip",
+  "sha256": "115141f20cc4d22a63aace760a9ff29d36baa86495677831d6c0f78b7f7bedc5",
+  "mandatory": true,
+  "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
