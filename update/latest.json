@@ -1,8 +1,8 @@
 {
-  "version": "1.0.9.3",
-  "notes": "Monkeyeffect 1.0.9.3 - Queue every gift music combo unit and play songs in order without cutting active audio; preserve Runner native WebSocket improvements.",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.0.9.3/Monkeyeffect-1.0.9.3-update.zip",
-  "sha256": "115141f20cc4d22a63aace760a9ff29d36baa86495677831d6c0f78b7f7bedc5",
+  "version": "1.0.9.4",
+  "notes": "Monkeyeffect 1.0.9.4 - Gift boats, reliable every-gift delivery, glowing mast ropes, and natural floating gift scatter.",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.0.9.4/Monkeyeffect-1.0.9.4-update.zip",
+  "sha256": "956a41d30b67ede57b042fd9002e4f1170288479378c9d0312f268cbc5b3236e",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
