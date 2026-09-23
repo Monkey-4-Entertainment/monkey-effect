@@ -82,7 +82,7 @@
   </head>
   <body>
     <iframe id="videoLayer" title="Video" allow="autoplay; encrypted-media"></iframe>
-    <iframe id="winLayer" title="Win" src="/win-overlay.html?compact=1&v=chroma4"></iframe>
+    <iframe id="winLayer" title="Win" src="/win-overlay.html?compact=1&v=winfx2"></iframe>
     <div id="rouletteWrap">
       <iframe id="rouletteLayer" title="Roulette"></iframe>
     </div>
@@ -95,7 +95,7 @@
 
         const video = document.getElementById("videoLayer");
         const roulette = document.getElementById("rouletteLayer");
-        const videoSrc = `/overlay.html?mode=${encodeURIComponent(mode)}&embedded=1&v=chroma5`;
+        const videoSrc = `/overlay.html?mode=${encodeURIComponent(mode)}&embedded=1&v=edge2`;
         const rouletteSrc = `/roulette-overlay.html?mode=${encodeURIComponent(mode)}&embedded=1&v=20`;
         const ROULETTE_NATIVE_W = 680;
         const ROULETTE_FIT = 0.45;
@@ -187,7 +187,12 @@
         window.addEventListener("resize", fitRoulette);
         fitRoulette();
         poll();
-        setInterval(poll, 120);
+        setInterval(poll, 800);
+
+        document.addEventListener("mousedown", (e) => {
+          if (e.button !== 0) return;
+          try { window.chrome?.webview?.postMessage("drag"); } catch { /* ignore */ }
+        });
       })();
     </script>
   </body>

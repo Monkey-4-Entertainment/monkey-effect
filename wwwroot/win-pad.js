@@ -24,7 +24,7 @@
     }
   }
 
-  function writeConfig(cfg, reason) {
+  function writeConfig(cfg, reason, delta = 0) {
     localStorage.setItem(WIN_KEY, JSON.stringify(cfg));
     const payload = {
       type: "win-control",
@@ -40,6 +40,7 @@
       score: cfg.score,
       target: cfg.target,
       visible: cfg.showOverlay !== false,
+      delta: Number(delta) || 0,
       at: Date.now(),
     });
     try {
@@ -48,6 +49,7 @@
         score: cfg.score,
         target: cfg.target,
         visible: cfg.showOverlay !== false,
+        delta: Number(delta) || 0,
         at: Date.now(),
       }));
     } catch {
@@ -69,15 +71,16 @@
   function bump(delta) {
     const cfg = readConfig();
     cfg.score = (Number(cfg.score) || 0) + delta;
-    writeConfig(cfg, delta > 0 ? "plus" : "minus");
+    writeConfig(cfg, delta > 0 ? "plus" : "minus", delta);
   }
 
   function applyNumbers() {
     const cfg = readConfig();
+    const before = Number(cfg.score) || 0;
     cfg.score = Number(scoreIn?.value);
     if (!Number.isFinite(cfg.score)) cfg.score = 0;
     cfg.target = Math.max(1, Number(targetIn?.value) || cfg.target || 10);
-    writeConfig(cfg, "set");
+    writeConfig(cfg, "set", cfg.score - before);
   }
 
   document.getElementById("plus")?.addEventListener("click", () => bump(1));
@@ -85,8 +88,9 @@
   document.getElementById("apply")?.addEventListener("click", applyNumbers);
   document.getElementById("reset")?.addEventListener("click", () => {
     const cfg = readConfig();
+    const delta = -(Number(cfg.score) || 0);
     cfg.score = 0;
-    writeConfig(cfg, "reset");
+    writeConfig(cfg, "reset", delta);
   });
 
   window.addEventListener("keydown", (e) => {
@@ -100,8 +104,9 @@
     } else if (e.key === "0") {
       e.preventDefault();
       const cfg = readConfig();
+      const delta = -(Number(cfg.score) || 0);
       cfg.score = 0;
-      writeConfig(cfg, "reset");
+      writeConfig(cfg, "reset", delta);
     }
   });
 

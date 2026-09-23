@@ -1,8 +1,8 @@
 {
-  "version": "1.0.9.4",
-  "notes": "Monkeyeffect 1.0.9.4 - Gift boats, reliable every-gift delivery, glowing mast ropes, and natural floating gift scatter.",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.0.9.4/Monkeyeffect-1.0.9.4-update.zip",
-  "sha256": "956a41d30b67ede57b042fd9002e4f1170288479378c9d0312f268cbc5b3236e",
+  "version": "1.0.9.5",
+  "notes": "Monkeyeffect 1.0.9.5 - Complete boat and glass gift overlay update: gift capacity and natural scatter, eleven size levels, draggable and scalable boats, gifts and Sultan balloons, plus Win counter pulse effects and distinct win/loss sounds.",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.0.9.5/Monkeyeffect-1.0.9.5-update.zip",
+  "sha256": "0f3915ad9053a8675ce6741331be487841867efdc34c5ddff50e623405c60b51",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

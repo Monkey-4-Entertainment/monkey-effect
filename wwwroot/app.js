@@ -255,7 +255,7 @@ const WORKSPACE_META = {
   video: { title: "วิดีโอใส", sub: "" },
   interrupt: { title: "ขัดขวางจอ", sub: "" },
   win: { title: "นับ Win", sub: "" },
-  jar: { title: "โหลแก้วสะสมของขวัญ", sub: "" },
+  jar: { title: "โหลแก้ว / เรือของขวัญ", sub: "" },
   live: { title: "Overlay Gallery", sub: "" },
   tts: { title: "อ่านเสียง AI", sub: "" },
   photoprint: { title: "ปริ้นรูป", sub: "" },
@@ -4613,10 +4613,10 @@ async function seedDefaultWinIfNeeded() {
   }
 }
 
-function saveWinConfig() {
+function saveWinConfig(feedbackDelta = 0) {
   localStorage.setItem(WIN_KEY, JSON.stringify(winConfig));
   renderWinUiState();
-  syncWinScoreToOverlay();
+  syncWinScoreToOverlay(feedbackDelta);
   renderGiftActionOverview();
 }
 
@@ -4634,12 +4634,13 @@ function postWinOverlayCommand(cmd) {
   winChannel?.postMessage(payload);
 }
 
-function syncWinScoreToOverlay() {
+function syncWinScoreToOverlay(delta = 0) {
   postWinOverlayCommand({
     type: "win-score",
     score: winConfig.score,
     target: winConfig.target,
     visible: !!winConfig.showOverlay,
+    delta: Number(delta) || 0,
   });
 }
 
@@ -4656,7 +4657,7 @@ async function openWinOverlay() {
   }
 
   if (!openedNative) {
-    const url = "/chroma-overlay.html?mode=chroma&v=chroma2";
+    const url = "/chroma-overlay.html?mode=chroma&v=winfx2";
     if (!winOverlayWin || winOverlayWin.closed) {
       winOverlayWin = window.open(url, "monkeyeffect_chroma_overlay", "popup=yes,width=540,height=660");
     } else {
@@ -4762,7 +4763,16 @@ function adjustWinScore(delta, reason) {
   const d = Number(delta) || 0;
   if (!d) return;
   winConfig.score = (Number(winConfig.score) || 0) + d;
-  saveWinConfig();
+  saveWinConfig(d);
+  const scoreDisplay = document.getElementById("winScoreDisplay");
+  scoreDisplay?.animate?.(
+    [
+      { transform: "scale(1)", filter: "none" },
+      { transform: "scale(1.55)", color: d > 0 ? "#7dff8f" : "#ff6262", filter: `drop-shadow(0 0 16px ${d > 0 ? "#4bff73" : "#ff3737"})`, offset: .34 },
+      { transform: "scale(1)", filter: "none" },
+    ],
+    { duration: 620, easing: "cubic-bezier(.18,.88,.28,1.25)" }
+  );
   const el = document.getElementById("log");
   if (el && reason) {
     // light feedback via existing poll log is enough; optional console
@@ -4841,11 +4851,12 @@ function handleGiftForWin(parsed) {
   adjustWinScore(rule.delta, `gift ${parsed.giftName}`);
 }
 
-/* ========== Gift jar (โหลแก้วสะสมของขวัญ) ========== */
+/* ========== Gift boat (เรือของขวัญ) ========== */
 const JAR_KEY = "tgr_jar_config";
 const JAR_CHANNEL = "tgr-jar-overlay";
 const JAR_CMD_KEY = "tgr_jar_overlay_cmd";
 const JAR_STATUS_KEY = "tgr_jar_overlay_status";
+const JAR_EVENTS_KEY = "tgr_jar_overlay_events_v1";
 const JAR_OVERLAY_CAP = 5000;
 const jarChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(JAR_CHANNEL) : null;
 let jarOverlayWin = null;
@@ -4858,10 +4869,10 @@ let jarCatalogNames = [];
 
 const JAR_STYLE_OPTIONS = [
   { id: "classic", label: "เมสัน", hint: "ทรงโหลเดิม คอเกลียว" },
-  { id: "round", label: "โหลกลม", hint: "ปากแคบ พุงกลม" },
-  { id: "tall", label: "ขวดสูง", hint: "คอเรียว ตัวสูง" },
-  { id: "wide", label: "โหลป้าน", hint: "ปากกว้าง ตัวเตี้ย" },
   { id: "original", label: "แก้วใส", hint: "แบบ Coin Jar" },
+  { id: "duck-pirate", label: "เรือเป็ดโจรสลัด", hint: "≥100 ลอยผูกเชือก · <100 อยู่ในน้ำ" },
+  { id: "duck-cruise", label: "เรือเป็ดสำราญ", hint: "≥100 ลอยผูกเชือก · <100 อยู่ในน้ำ" },
+  { id: "monkey-pirate", label: "เรือลิงโจรสลัด", hint: "ลิงกัปตัน · ≥100 เป็นช่อผูกเชือก · <100 อยู่ในน้ำ" },
 ];
 const JAR_STYLE_ALIASES = {
   crystal: "round",
@@ -4879,13 +4890,13 @@ const JAR_STYLE_ALIASES = {
 };
 
 function defaultJarConfig() {
-  return { enabled: true, color: "#e8f4ff", style: "classic" };
+  return { enabled: true, color: "#e8f4ff", style: "duck-pirate", sultanBalloons: true, boatScale: 100, sultanScale: 100 };
 }
 
 function normalizeJarStyle(raw) {
   let s = String(raw || "").toLowerCase().trim();
   if (JAR_STYLE_ALIASES[s]) s = JAR_STYLE_ALIASES[s];
-  return JAR_STYLE_OPTIONS.some((x) => x.id === s) ? s : "classic";
+  return JAR_STYLE_OPTIONS.some((x) => x.id === s) ? s : "duck-pirate";
 }
 
 function loadJarConfig() {
@@ -4897,6 +4908,9 @@ function loadJarConfig() {
       enabled: parsed.enabled !== false,
       color,
       style: normalizeJarStyle(parsed.style),
+      sultanBalloons: parsed.sultanBalloons !== false,
+      boatScale: Math.max(10, Math.min(180, Number(parsed.boatScale) || 100)),
+      sultanScale: Math.max(30, Math.min(180, Number(parsed.sultanScale) || 100)),
     };
   } catch {
     return defaultJarConfig();
@@ -4910,7 +4924,10 @@ function saveJarConfig() {
   postJarOverlayCommand({
     type: "jar-style",
     color: jarConfig.color || "#e8f4ff",
-    style: jarConfig.style || "classic",
+    style: jarConfig.style || "duck-pirate",
+    sultanBalloons: jarConfig.sultanBalloons !== false,
+    boatScale: Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100)),
+    sultanScale: Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100)),
   });
 }
 
@@ -4922,27 +4939,52 @@ function renderJarUiState() {
   document.querySelectorAll(".og-jar-enabled").forEach((el) => {
     el.checked = !!jarConfig.enabled;
   });
+  document.querySelectorAll(".og-jar-sultan").forEach((el) => {
+    el.checked = jarConfig.sultanBalloons !== false;
+  });
+  document.querySelectorAll(".og-jar-boat-scale").forEach((el) => {
+    el.value = String(Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100)));
+  });
+  document.querySelectorAll(".og-jar-boat-scale-value").forEach((el) => {
+    el.textContent = `${Math.round(Number(jarConfig.boatScale) || 100)}%`;
+  });
+  document.querySelectorAll(".og-jar-sultan-scale").forEach((el) => {
+    el.value = String(Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100)));
+  });
+  document.querySelectorAll(".og-jar-sultan-scale-value").forEach((el) => {
+    el.textContent = `${Math.round(Number(jarConfig.sultanScale) || 100)}%`;
+  });
   document.querySelectorAll(".og-jar-count").forEach((el) => {
     el.textContent = jarCountLabel();
   });
   document.querySelectorAll(".og-jar-catalog").forEach((el) => {
-    el.textContent = `${jarCatalogNames.length} รูปในคลัง · ของขวัญจากไลฟ์จะตกโหลอัตโนมัติเมื่อเปิดใช้`;
+    el.textContent = `${jarCatalogNames.length} รูปในคลัง · โหมดเรือ: ≥100 ลอยเหนือเรือพร้อมเชือก · <100 อยู่ในน้ำ`;
   });
   document.querySelectorAll(".og-jar-color").forEach((el) => {
     if (document.activeElement === el) return;
     el.value = jarConfig.color || "#e8f4ff";
   });
   document.querySelectorAll(".og-jar-style").forEach((btn) => {
-    const on = btn.dataset.style === (jarConfig.style || "classic");
+    const on = btn.dataset.style === (jarConfig.style || "duck-pirate");
     btn.classList.toggle("is-on", on);
     btn.setAttribute("aria-pressed", on ? "true" : "false");
   });
 }
 
+let jarCommandSeq = 0;
 function postJarOverlayCommand(cmd) {
-  const payload = { ...cmd, at: Date.now() };
+  jarCommandSeq = Math.max(Date.now(), jarCommandSeq + 1);
+  const payload = { ...cmd, at: jarCommandSeq, deliveryId: `cmd:${jarCommandSeq}` };
   try {
     localStorage.setItem(JAR_CMD_KEY, JSON.stringify(payload));
+    if (payload.type === "jar-drop") {
+      let journal = [];
+      try { journal = JSON.parse(localStorage.getItem(JAR_EVENTS_KEY) || "[]"); } catch { journal = []; }
+      if (!Array.isArray(journal)) journal = [];
+      journal.push(payload);
+      if (journal.length > 2000) journal = journal.slice(-1200);
+      localStorage.setItem(JAR_EVENTS_KEY, JSON.stringify(journal));
+    }
   } catch {
     /* ignore */
   }
@@ -4974,8 +5016,11 @@ async function openJarOverlay() {
   }
   if (!openedNative) {
     const color = encodeURIComponent(jarConfig.color || "#e8f4ff");
-    const style = encodeURIComponent(jarConfig.style || "classic");
-    const url = `/jar-overlay.html?v=jar59&color=${color}&style=${style}`;
+    const style = encodeURIComponent(jarConfig.style || "duck-pirate");
+    const sultan = jarConfig.sultanBalloons !== false ? "1" : "0";
+    const boatScale = Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100));
+    const sultanScale = Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100));
+    const url = `/jar-overlay.html?v=duckboat3&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
     if (!jarOverlayWin || jarOverlayWin.closed) {
       jarOverlayWin = window.open(
         url,
@@ -4987,14 +5032,20 @@ async function openJarOverlay() {
       postJarOverlayCommand({
         type: "jar-style",
         color: jarConfig.color || "#e8f4ff",
-        style: jarConfig.style || "classic",
+        style: jarConfig.style || "duck-pirate",
+        sultanBalloons: jarConfig.sultanBalloons !== false,
+        boatScale: Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100)),
+        sultanScale: Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100)),
       });
     }
   } else {
     postJarOverlayCommand({
       type: "jar-style",
       color: jarConfig.color || "#e8f4ff",
-      style: jarConfig.style || "classic",
+      style: jarConfig.style || "duck-pirate",
+      sultanBalloons: jarConfig.sultanBalloons !== false,
+      boatScale: Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100)),
+      sultanScale: Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100)),
     });
   }
 }
@@ -5052,6 +5103,12 @@ function handleGiftForJar(parsed) {
   }
   jarPieces.push({ giftName: name, count: n });
   jarTotalCount += n;
+  postJarOverlayCommand({
+    type: "jar-drop",
+    giftName: name,
+    count: n,
+    sourceEventId: parsed.seq != null ? `gift:${parsed.seq}` : (parsed.eventId || parsed.key || parsed.dedupeKey || ""),
+  });
   renderJarUiState();
 }
 
@@ -6696,9 +6753,9 @@ const UI_FEATURE_DEDUPE_MS = 2500;
 function claimUiFeature(feature, parsed) {
   // Per-event only — backend already emits one ui/roulette announce per combo.
   // Do NOT key by comboKey alone (would suppress a real second gift within 2.5s).
-  const eventId = Number.isFinite(parsed.seq)
+  const eventId = parsed.eventId || (Number.isFinite(parsed.seq)
     ? `seq:${parsed.seq}`
-    : (parsed.key || parsed.dedupeKey || parsed.comboKey || "anon");
+    : (parsed.key || parsed.dedupeKey || parsed.comboKey || "anon"));
   const key = `${feature}|${eventId}`;
   const now = Date.now();
   const last = uiFeatureDedupeAt.get(key) || 0;
@@ -6755,7 +6812,7 @@ function processNewGifts(items) {
   }
   const fresh = [];
   for (const row of keyed) {
-    if (!seenGiftKeys.has(row.key)) fresh.push(row.item);
+    if (!seenGiftKeys.has(row.key)) fresh.push(row);
     seenGiftKeys.add(row.key);
   }
   // เก็บคีย์สะสม — อย่าเหลือแค่หน้าต่างล็อกล่าสุด (เคยทำให้ของเก่าหลุดแล้วเข้าใหม่ซ้ำ)
@@ -6767,9 +6824,10 @@ function processNewGifts(items) {
     seenGiftKeys = next;
   }
   // ล็อก API เรียงใหม่→เก่า — ประมวลผลเก่า→ใหม่ให้คอมโบตามลำดับเวลา
-  for (const item of fresh.reverse()) {
-    const parsed = parseGiftFromLog(item);
+  for (const row of fresh.reverse()) {
+    const parsed = parseGiftFromLog(row.item);
     if (!parsed) continue;
+    parsed.eventId = row.key;
     fanOutUiFunctions(parsed);
   }
 }
@@ -8938,14 +8996,17 @@ const OVERLAY_GALLERY = [
   { id: "songs", name: "Song Requests", desc: "เพลงที่กำลังเล่น / คิวขอเพลง", cat: "ยูทิลิตี้", w: 520, h: 240 },
   { id: "buddies", name: "Stream Buddies", desc: "ตัวละครผู้ชมลอยบนจอ", cat: "ตัวละคร", w: 1280, h: 720, fx: 1 },
   { id: "tiny", name: "Tiny Diny", desc: "ลิงน้อยกระโดดเมื่อมีของขวัญ", cat: "ตัวละคร", w: 360, h: 360 },
-  { id: "jar", name: "โหลแก้ว (ฟิสิกส์)", desc: "โหลแก้วตั้ง ของขวัญตกกอง · เลือกทรงได้ 5 แบบ · ปรับสีได้", cat: "พิเศษ", w: 720, h: 1080 },
+  { id: "jar", name: "โหลแก้ว / เรือของขวัญ (ฟิสิกส์)", desc: "เลือกโหลแก้ว เรือเป็ด หรือเรือลิง · ของขวัญในโหมดเรือ ≥100 ลอยผูกเชือก · ต่ำกว่า 100 อยู่ในน้ำ", cat: "พิเศษ", w: 900, h: 900 },
   { id: "roulette", name: "กล่องสุ่มเกม", desc: "หมุนสุ่มผลแล้วค่อยส่งเข้าเกม", cat: "พิเศษ", w: 720, h: 720, url: "http://127.0.0.1:3847/roulette-overlay.html" },
 ];
 
 function jarOverlayObsUrl() {
   const color = encodeURIComponent(jarConfig.color || "#e8f4ff");
-  const style = encodeURIComponent(jarConfig.style || "classic");
-  return `http://127.0.0.1:3847/jar-overlay.html?v=jar59&color=${color}&style=${style}`;
+  const style = encodeURIComponent(jarConfig.style || "duck-pirate");
+  const sultan = jarConfig.sultanBalloons !== false ? "1" : "0";
+  const boatScale = Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100));
+  const sultanScale = Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100));
+  return `http://127.0.0.1:3847/jar-overlay.html?v=duckboat3&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
 }
 
 function refreshJarGalleryUrls() {
@@ -9002,7 +9063,7 @@ function overlayPopFieldHtml(kind) {
   if (kind === "jarControls") {
     const countLabel = jarCountLabel();
     const color = jarConfig.color || "#e8f4ff";
-    const style = jarConfig.style || "classic";
+    const style = jarConfig.style || "duck-pirate";
     const styleBtns = JAR_STYLE_OPTIONS.map(
       (opt) =>
         `<button type="button" class="og-jar-style${opt.id === style ? " is-on" : ""}" data-style="${escapeHtml(opt.id)}" aria-pressed="${opt.id === style ? "true" : "false"}" title="${escapeHtml(opt.hint)}">
@@ -9012,27 +9073,35 @@ function overlayPopFieldHtml(kind) {
     ).join("");
     return `<label class="toggle option-check">
         <input type="checkbox" class="og-jar-enabled"${jarConfig.enabled ? " checked" : ""} />
-        <span>เปิดใช้โหลแก้ว</span>
+        <span>เปิดใช้โหลแก้ว / เรือของขวัญ</span>
       </label>
-      <label>ทรงโหล</label>
+      <label class="toggle option-check">
+        <input type="checkbox" class="og-jar-sultan"${jarConfig.sultanBalloons !== false ? " checked" : ""} />
+        <span>แสดงอันดับสุลต่านเป็นลูกโป่งเหนือของขวัญ</span>
+      </label>
+      <label>ขนาดเรือ <strong class="og-jar-boat-scale-value">${Math.round(Number(jarConfig.boatScale) || 100)}%</strong></label>
+      <input class="field og-jar-boat-scale" type="range" min="10" max="180" step="5" value="${Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100))}" />
+      <label>ขนาดลูกโป่งสุลต่าน <strong class="og-jar-sultan-scale-value">${Math.round(Number(jarConfig.sultanScale) || 100)}%</strong></label>
+      <input class="field og-jar-sultan-scale" type="range" min="30" max="180" step="5" value="${Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100))}" />
+      <label>รูปแบบเอฟเฟกต์</label>
       <div class="og-jar-styles">${styleBtns}</div>
-      <label>สีโหล</label>
+      <label>สีโหลแก้ว</label>
       <div class="og-pop-actions" style="align-items:center">
         <input class="og-jar-color" type="color" value="${escapeHtml(color)}" title="สีโหลแก้ว" style="width:48px;height:36px;padding:0;border:0;background:transparent;cursor:pointer" />
-        <span class="og-pop-hint" style="margin:0">ปรับสีขอบได้ทุกทรง</span>
+        <span class="og-pop-hint" style="margin:0">ใช้กับเมสันและแก้วใส · โหมดเรือแบ่งของขวัญตามราคา 100 เหรียญ</span>
       </div>
       <div class="og-jar-count win-score-display" style="margin:8px 0">${escapeHtml(countLabel)}</div>
       <div class="og-pop-actions">
         <button type="button" class="btn primary small og-jar-open">เปิด Overlay</button>
         <button type="button" class="btn ghost small og-jar-close">ปิด Overlay</button>
-        <button type="button" class="btn secondary small og-jar-reset">รีเซ็ตโหล</button>
+        <button type="button" class="btn secondary small og-jar-reset">รีเซ็ตเอฟเฟกต์</button>
       </div>
-      <label>ทดสอบตกโหล — ชื่อของขวัญ</label>
+      <label>ทดสอบของขวัญ — ชื่อของขวัญ</label>
       <input class="field og-jar-test-gift" type="text" list="jarGiftList" value="Rose" placeholder="Rose" autocomplete="off" />
       <label>จำนวน (1:1)</label>
       <input class="field og-jar-test-count" type="number" min="1" max="9999" value="10" />
       <div class="og-pop-actions">
-        <button type="button" class="btn secondary small og-jar-test">ทดสอบตกโหล</button>
+        <button type="button" class="btn secondary small og-jar-test">ทดสอบเอฟเฟกต์</button>
       </div>
       <p class="og-pop-hint og-jar-catalog">${jarCatalogNames.length} รูปในคลัง · ของขวัญจากไลฟ์จะตกโหลอัตโนมัติเมื่อเปิดใช้</p>`;
   }
@@ -9667,6 +9736,21 @@ document.getElementById("overlayGallery")?.addEventListener("change", (e) => {
     saveJarConfig();
     return;
   }
+  if (e.target.classList?.contains("og-jar-sultan")) {
+    jarConfig.sultanBalloons = !!e.target.checked;
+    saveJarConfig();
+    return;
+  }
+  if (e.target.classList?.contains("og-jar-boat-scale")) {
+    jarConfig.boatScale = Math.max(10, Math.min(180, Number(e.target.value) || 100));
+    saveJarConfig();
+    return;
+  }
+  if (e.target.classList?.contains("og-jar-sultan-scale")) {
+    jarConfig.sultanScale = Math.max(30, Math.min(180, Number(e.target.value) || 100));
+    saveJarConfig();
+    return;
+  }
   if (e.target.classList?.contains("og-jar-color")) {
     const hex = String(e.target.value || "").trim();
     if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
@@ -9703,6 +9787,24 @@ document.getElementById("overlayGallery")?.addEventListener("change", (e) => {
   _liveSettingsTimer = setTimeout(() => saveLiveSettings().catch(() => {}), 200);
 });
 document.getElementById("overlayGallery")?.addEventListener("input", (e) => {
+  if (e.target.classList?.contains("og-jar-boat-scale")) {
+    jarConfig.boatScale = Math.max(10, Math.min(180, Number(e.target.value) || 100));
+    document.querySelectorAll(".og-jar-boat-scale-value").forEach((el) => {
+      el.textContent = `${Math.round(jarConfig.boatScale)}%`;
+    });
+    clearTimeout(_liveSettingsTimer);
+    _liveSettingsTimer = setTimeout(saveJarConfig, 80);
+    return;
+  }
+  if (e.target.classList?.contains("og-jar-sultan-scale")) {
+    jarConfig.sultanScale = Math.max(30, Math.min(180, Number(e.target.value) || 100));
+    document.querySelectorAll(".og-jar-sultan-scale-value").forEach((el) => {
+      el.textContent = `${Math.round(jarConfig.sultanScale)}%`;
+    });
+    clearTimeout(_liveSettingsTimer);
+    _liveSettingsTimer = setTimeout(saveJarConfig, 80);
+    return;
+  }
   const input = e.target.closest(".og-pop-input");
   if (!input || input.type === "number") return;
   syncPopInputToStore(input);

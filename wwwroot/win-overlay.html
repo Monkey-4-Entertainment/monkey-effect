@@ -48,6 +48,22 @@
       #winHud.hidden {
         display: none;
       }
+      #winHud.score-plus {
+        animation: win-score-plus 620ms cubic-bezier(.18,.88,.28,1.25) both;
+      }
+      #winHud.score-minus {
+        animation: win-score-minus 620ms cubic-bezier(.18,.88,.28,1.25) both;
+      }
+      @keyframes win-score-plus {
+        0% { transform: scale(1); color: #fff; filter: none; }
+        34% { transform: scale(1.58); color: #7dff8f; filter: drop-shadow(0 0 18px rgba(75,255,115,.95)); }
+        100% { transform: scale(1); color: #fff; filter: none; }
+      }
+      @keyframes win-score-minus {
+        0% { transform: scale(1); filter: none; }
+        34% { transform: scale(1.58); color: #ff6262; filter: drop-shadow(0 0 18px rgba(255,55,55,.95)); }
+        100% { transform: scale(1); filter: none; }
+      }
       html.compact #winHud {
         font-size: 40px;
         -webkit-text-stroke: 3px #111;
@@ -61,6 +77,6 @@
   </head>
   <body>
     <div id="winHud" aria-live="polite">0/5</div>
-    <script src="/win-overlay.js?v=chroma1"></script>
+    <script src="/win-overlay.js?v=winfx2"></script>
   </body>
 </html>
