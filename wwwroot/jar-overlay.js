@@ -77,6 +77,7 @@
   const monkeyPirateArt = new Image();
   const bambooRaftArt = new Image();
   const woodenLongboatArt = new Image();
+  const monkeyRepairCrewArt = new Image();
   glassBody.decoding = "async";
   glassBase.decoding = "async";
   glassRim.decoding = "async";
@@ -88,11 +89,13 @@
   monkeyPirateArt.decoding = "async";
   bambooRaftArt.decoding = "async";
   woodenLongboatArt.decoding = "async";
+  monkeyRepairCrewArt.decoding = "async";
   duckPirateArt.src = "/gifts/jar/art/duck-pirate-3d.png?v=duckboat2";
   duckCruiseArt.src = "/gifts/jar/art/duck-cruise-3d.png?v=duckboat2";
   monkeyPirateArt.src = "/gifts/jar/art/monkey-pirate-3d.png?v=duckboat3";
   bambooRaftArt.src = "/gifts/jar/art/bamboo-raft-3d.png?v=boatart2";
   woodenLongboatArt.src = "/gifts/jar/art/wooden-longboat-3d.png?v=boatart1";
+  monkeyRepairCrewArt.src = "/gifts/jar/art/monkey-repair-crew-3d.png?v=repairfx4";
   function onGlassArtLoad() {
     resize();
   }
@@ -104,6 +107,7 @@
   monkeyPirateArt.onload = onGlassArtLoad;
   bambooRaftArt.onload = onGlassArtLoad;
   woodenLongboatArt.onload = onGlassArtLoad;
+  monkeyRepairCrewArt.onload = onGlassArtLoad;
 
   const { Engine, World, Bodies, Body, Composite, Runner, Sleeping, Events } = Matter;
   const CAT_INNER = 0x0001;
@@ -151,6 +155,50 @@
   let fullSince = 0;
   let lastPileCheck = -Infinity;
   let totalLiveCoins = 0;
+  let displayedBoatLevel = 1;
+  let boatUpgradeFx = null;
+  let repairAudioCtx = null;
+
+  function playRepairSound(kind = "hammer") {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!repairAudioCtx) repairAudioCtx = new AudioCtx();
+      if (repairAudioCtx.state === "suspended") repairAudioCtx.resume().catch(() => {});
+      const ac = repairAudioCtx;
+      const now = ac.currentTime;
+      const gain = ac.createGain();
+      gain.connect(ac.destination);
+      if (kind === "hammer") {
+        const osc = ac.createOscillator();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(190, now);
+        osc.frequency.exponentialRampToValueAtTime(72, now + .095);
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.exponentialRampToValueAtTime(.12, now + .008);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + .13);
+        osc.connect(gain); osc.start(now); osc.stop(now + .14);
+      } else if (kind === "saw") {
+        const osc = ac.createOscillator();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(145, now);
+        osc.frequency.linearRampToValueAtTime(230, now + .18);
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.linearRampToValueAtTime(.035, now + .025);
+        gain.gain.linearRampToValueAtTime(.0001, now + .22);
+        osc.connect(gain); osc.start(now); osc.stop(now + .23);
+      } else {
+        const osc = ac.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(650, now);
+        osc.frequency.exponentialRampToValueAtTime(1550, now + .24);
+        gain.gain.setValueAtTime(.0001, now);
+        gain.gain.exponentialRampToValueAtTime(.08, now + .015);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + .34);
+        osc.connect(gain); osc.start(now); osc.stop(now + .35);
+      }
+    } catch (_) {}
+  }
   let boatPosition = { x: 0, y: 0 };
   let sultanPositions = {
     1: { x: 0, y: 0 },
@@ -768,6 +816,8 @@
     lastPileCheck = -Infinity;
     spawnWait = 0;
     totalLiveCoins = 0;
+    displayedBoatLevel = 1;
+    boatUpgradeFx = null;
     Composite.clear(engine.world, false, true);
     wallBodies = [];
     if (geom) rebuildWalls();
@@ -1004,10 +1054,52 @@
     return currentDuckArt();
   }
 
-  function boatLevel() {
+  function targetBoatLevel() {
     if (totalLiveCoins >= 5000) return 3;
     if (totalLiveCoins >= 1000) return 2;
     return 1;
+  }
+
+  function boatLevel() {
+    return displayedBoatLevel;
+  }
+
+  function updateBoatUpgradeFx(nowMs) {
+    const target = targetBoatLevel();
+    if (target < displayedBoatLevel) {
+      displayedBoatLevel = target;
+      boatUpgradeFx = null;
+      return;
+    }
+    if (!boatUpgradeFx && target > displayedBoatLevel) {
+      boatUpgradeFx = {
+        from: displayedBoatLevel,
+        to: displayedBoatLevel + 1,
+        startedAt: nowMs,
+        swapped: false,
+        nextSoundAt: nowMs + 350,
+        soundStep: 0,
+        seeds: Array.from({ length: 132 }, (_, i) => ({
+          a: halton(i + 1, 2) * Math.PI * 2,
+          d: .18 + halton(i + 1, 3) * .82,
+          s: .65 + halton(i + 1, 5) * 1.35,
+          r: .45 + halton(i + 1, 7) * 1.15,
+        })),
+      };
+    }
+    if (!boatUpgradeFx) return;
+    const elapsed = (nowMs - boatUpgradeFx.startedAt) / 1000;
+    if (nowMs >= boatUpgradeFx.nextSoundAt && elapsed < 8.8) {
+      playRepairSound(boatUpgradeFx.soundStep % 3 === 1 ? "saw" : "hammer");
+      boatUpgradeFx.soundStep++;
+      boatUpgradeFx.nextSoundAt = nowMs + (boatUpgradeFx.soundStep % 3 === 1 ? 430 : 610);
+    }
+    if (!boatUpgradeFx.swapped && elapsed >= 5) {
+      displayedBoatLevel = boatUpgradeFx.to;
+      boatUpgradeFx.swapped = true;
+      playRepairSound("spark");
+    }
+    if (elapsed >= 10) boatUpgradeFx = null;
   }
 
   function duckBoatBounds() {
@@ -1390,6 +1482,138 @@
     return String(Math.round(n));
   }
 
+  function drawBoatUpgradeFx(nowMs) {
+    if (!boatUpgradeFx || !geom || !isDuckBoat()) return;
+    const bounds = duckBoatBounds();
+    if (!bounds) return;
+    const t = Math.max(0, (nowMs - boatUpgradeFx.startedAt) / 1000);
+    ctx.save();
+    if (monkeyRepairCrewArt.complete && monkeyRepairCrewArt.naturalWidth) {
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      const iw = monkeyRepairCrewArt.naturalWidth;
+      const ih = monkeyRepairCrewArt.naturalHeight;
+      const sprites = [
+        { crop:[0,0,.2,1], x:-.36, y:-.02, w:.22, phase:.1, job:"plank" },
+        { crop:[.2,0,.2,1], x:-.18, y:-.22, w:.20, phase:1.6, job:"hammer" },
+        { crop:[.4,0,.2,1], x:0, y:-.02, w:.22, phase:3.1, job:"saw" },
+        { crop:[.6,0,.2,1], x:.19, y:-.19, w:.21, phase:4.4, job:"rope" },
+        { crop:[.8,0,.2,1], x:.37, y:-.02, w:.21, phase:5.7, job:"paint" },
+      ];
+      sprites.forEach((m, i) => {
+        const localEnter = Math.max(0, Math.min(1, (t - i * .14) / .72));
+        const localLeave = Math.max(0, Math.min(1, (t - (8.55 + i * .09)) / .82));
+        const easeIn = 1 - Math.pow(1 - localEnter, 3);
+        const easeOut = localLeave * localLeave;
+        const alpha = Math.max(0, easeIn * (1 - easeOut));
+        if (alpha <= 0) return;
+        const [nx, ny, nw, nh] = m.crop;
+        const sw = iw * nw, sh = ih * nh;
+        const dw = bounds.w * m.w;
+        const dh = dw * sh / sw;
+        const work = t > .7 && t < 9 ? 1 : 0;
+        const bob = Math.abs(Math.sin(t * (m.job === "saw" ? 10 : 8) + m.phase)) * bounds.h * .025 * work;
+        const actionX = m.job === "saw" ? Math.sin(t * 15) * bounds.w * .018 * work
+          : m.job === "rope" ? Math.sin(t * 6 + m.phase) * bounds.w * .01 * work : 0;
+        const actionRot = m.job === "hammer" ? Math.sin(t * 11 + m.phase) * .09 * work
+          : m.job === "rope" ? -.08 + Math.sin(t * 5) * .025 : Math.sin(t * 7 + m.phase) * .018;
+        const arrivalX = (1 - easeIn) * (i < 2 ? -1 : 1) * bounds.w * .45;
+        const exitX = easeOut * (i < 3 ? -1 : 1) * bounds.w * .48;
+        const x = bounds.cx + bounds.w * m.x + arrivalX + exitX + actionX;
+        const y = bounds.boatY - bounds.h * .1 + bounds.h * m.y - dh * .54 - bob;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(x, y + dh * .5);
+        ctx.rotate(actionRot);
+        ctx.drawImage(monkeyRepairCrewArt, iw*nx, ih*ny, sw, sh, -dw*.5, -dh*.5, dw, dh);
+        ctx.restore();
+      });
+    }
+    const sceneAlpha = Math.min(1, t / .45) * (1 - Math.max(0, Math.min(1, (t - 9.1) / .9)));
+    const impact = Math.exp(-Math.pow((t - 5) / .68, 2));
+    const dustPower = sceneAlpha * Math.min(1, .38 + impact * .9 + Math.abs(Math.sin(t * 4.2)) * .18);
+    // Layered white cartoon smoke clouds, inspired by classic repair/fight puffs.
+    const drawPuff = (x, y, size, life, flip) => {
+      if (life <= 0) return;
+      const puff = Math.sin(Math.min(1, life) * Math.PI * .5);
+      const fade = 1 - Math.max(0, (life - .62) / .38);
+      const s = size * (.45 + puff * .65);
+      const lobes = [
+        [0,0,.34],[-.3,.06,.24],[.3,.04,.27],[-.16,-.25,.25],[.13,-.3,.29],
+        [-.39,-.15,.18],[.42,-.18,.19],[-.07,.27,.23],[.22,.23,.18]
+      ];
+      ctx.save();
+      ctx.translate(x + flip * life * size * .18, y - life * size * .22);
+      ctx.globalAlpha = sceneAlpha * fade * .9;
+      ctx.lineJoin = "round";
+      ctx.lineWidth = Math.max(1.5, s * .035);
+      ctx.strokeStyle = "rgba(150,165,173,.88)";
+      for (let j = 0; j < lobes.length; j++) {
+        const l = lobes[j];
+        ctx.fillStyle = j % 4 === 0 ? "#dce5e9" : "#ffffff";
+        ctx.beginPath();
+        ctx.arc(l[0]*s, l[1]*s, l[2]*s, 0, Math.PI*2);
+        ctx.fill(); ctx.stroke();
+      }
+      // Curved speed tails make the cloud feel hand drawn and directional.
+      ctx.globalAlpha = sceneAlpha * fade * .72;
+      ctx.strokeStyle = "#eef5f7";
+      ctx.lineWidth = Math.max(2, s*.055);
+      for (let j=0; j<3; j++) {
+        ctx.beginPath();
+        ctx.moveTo(-flip*s*(.35+j*.12), s*(.05+j*.13));
+        ctx.quadraticCurveTo(-flip*s*(.62+j*.14), s*(.12+j*.16), -flip*s*(.88+j*.12), s*(.08+j*.18));
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+    for (let i=0; i<7; i++) {
+      const cycle = (t*.72 + i*.19) % 1;
+      const side = i%2 ? 1 : -1;
+      const x = bounds.cx + bounds.w * (-.36 + i*.12) + Math.sin(i*3.1)*bounds.w*.025;
+      const y = bounds.boatY - bounds.h*(.02 + (i%3)*.08);
+      drawPuff(x, y, bounds.w*(.10 + (i%3)*.018)*(1+impact*.32), cycle, side);
+    }
+    // A larger burst masks the exact model swap without hiding the whole boat.
+    drawPuff(bounds.cx-bounds.w*.23, bounds.boatY-bounds.h*.06, bounds.w*.17, Math.min(1, impact*1.35), -1);
+    drawPuff(bounds.cx+bounds.w*.22, bounds.boatY-bounds.h*.08, bounds.w*.18, Math.min(1, impact*1.35), 1);
+    for (let i = 0; i < boatUpgradeFx.seeds.length; i++) {
+      const p = boatUpgradeFx.seeds[i];
+      const cycle = (t * (.42 + p.s * .11) + p.d * 2.7) % 1;
+      const spread = bounds.w * (.08 + p.d * .43) * (1 + impact * .3);
+      const x = bounds.cx + Math.cos(p.a) * spread + Math.sin(t * 2 + p.a) * bounds.w * .018;
+      const y = bounds.boatY + bounds.h * .02 + Math.sin(p.a) * bounds.h * .2 - cycle * bounds.h * .34;
+      const radius = Math.max(1.5, bounds.w * .0065 * p.r) * (.45 + cycle * .8);
+      ctx.globalAlpha = dustPower * (1-cycle) * (.24 + p.d * .46);
+      ctx.fillStyle = i % 7 === 0 ? "#b9c7cd" : i % 3 === 0 ? "#dce5e9" : "#ffffff";
+      ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = sceneAlpha * Math.min(1, .18 + impact);
+    ctx.strokeStyle = "#f7fcff";
+    ctx.lineWidth = Math.max(2, bounds.w * .004);
+    for (let i = 0; i < 16; i++) {
+      const a = i / 16 * Math.PI * 2 + t * .7;
+      const r1 = bounds.w * (.11 + (i%3)*.025);
+      const r2 = r1 + bounds.w * (.055 + (i%4)*.009);
+      ctx.beginPath();
+      ctx.moveTo(bounds.cx + Math.cos(a) * r1, bounds.boatY - bounds.h * .13 + Math.sin(a) * r1 * .35);
+      ctx.lineTo(bounds.cx + Math.cos(a) * r2, bounds.boatY - bounds.h * .13 + Math.sin(a) * r2 * .35);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 22; i++) {
+      const a = i * 2.399 + t * 1.3;
+      const r = bounds.w * (.12 + (i%7)*.035) * (.7 + impact*.45);
+      const x = bounds.cx + Math.cos(a)*r;
+      const y = bounds.boatY - bounds.h*.08 + Math.sin(a)*r*.32;
+      ctx.save(); ctx.translate(x,y); ctx.rotate(a+t*4);
+      ctx.globalAlpha = sceneAlpha * (.28 + impact*.5);
+      ctx.fillStyle = i%2 ? "#9a5527" : "#efb64a";
+      ctx.fillRect(-bounds.w*.009,-bounds.w*.002,bounds.w*.018,bounds.w*.004);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
   function drawSultanBalloons() {
     if (!showSultanBalloons || !geom || !isDuckBoat() || !sultanRows.length) {
       sultanHitBounds = [];
@@ -1766,6 +1990,8 @@
 
   function draw() {
     if (!geom) return;
+    const nowMs = performance.now();
+    updateBoatUpgradeFx(nowMs);
     if (chroma) {
       ctx.fillStyle = "#00ff00";
       ctx.fillRect(0, 0, geom.w, geom.h);
@@ -1794,6 +2020,7 @@
       // over their rope ends so each cord still looks tied behind its icon.
       drawDuckRopes(gifts);
       for (const b of gifts) if (b.plugin?.premium && !b.plugin?.spilled) drawOne(b);
+      drawBoatUpgradeFx(nowMs);
     }
     for (const b of gifts) {
       if (b.plugin && b.plugin.spilled) drawOne(b);

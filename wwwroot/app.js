@@ -216,6 +216,11 @@ async function runInterruptBurstTest() {
 
 function unlockAudio() {
   try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      if (!boatRepairAudioCtx) boatRepairAudioCtx = new AudioCtx();
+      if (boatRepairAudioCtx.state === "suspended") boatRepairAudioCtx.resume().catch(() => {});
+    }
     const a = new Audio(
       "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"
     );
@@ -1716,6 +1721,95 @@ function waitForHostSong(song, token) {
     if (token !== musicPlayGen) return finish();
     musicHookTimer = setTimeout(finish, length * 1000);
   });
+}
+
+let boatRepairAudioCtx = null;
+let boatRepairSoundQueue = 0;
+let boatRepairSoundBusy = false;
+let boatRepairSoundAudio = null;
+
+function boatStageForCoins(coins) {
+  if (coins >= 5000) return 3;
+  if (coins >= 1000) return 2;
+  return 1;
+}
+
+function playBoatRepairHit(kind = "hammer") {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!boatRepairAudioCtx) boatRepairAudioCtx = new AudioCtx();
+    if (boatRepairAudioCtx.state === "suspended") boatRepairAudioCtx.resume().catch(() => {});
+    const ac = boatRepairAudioCtx;
+    const now = ac.currentTime;
+    const gain = ac.createGain();
+    gain.connect(ac.destination);
+    const osc = ac.createOscillator();
+    osc.connect(gain);
+    if (kind === "hammer") {
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(210, now);
+      osc.frequency.exponentialRampToValueAtTime(68, now + .11);
+      gain.gain.setValueAtTime(.0001, now);
+      gain.gain.exponentialRampToValueAtTime(.2, now + .008);
+      gain.gain.exponentialRampToValueAtTime(.0001, now + .16);
+      osc.start(now); osc.stop(now + .17);
+    } else if (kind === "saw") {
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(130, now);
+      osc.frequency.linearRampToValueAtTime(245, now + .22);
+      gain.gain.setValueAtTime(.0001, now);
+      gain.gain.linearRampToValueAtTime(.055, now + .025);
+      gain.gain.linearRampToValueAtTime(.0001, now + .25);
+      osc.start(now); osc.stop(now + .26);
+    } else {
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(620, now);
+      osc.frequency.exponentialRampToValueAtTime(1700, now + .3);
+      gain.gain.setValueAtTime(.0001, now);
+      gain.gain.exponentialRampToValueAtTime(.14, now + .015);
+      gain.gain.exponentialRampToValueAtTime(.0001, now + .4);
+      osc.start(now); osc.stop(now + .41);
+    }
+  } catch (_) {}
+}
+
+function queueBoatRepairSound(stages = 1) {
+  boatRepairSoundQueue += Math.max(0, Math.floor(stages));
+  if (boatRepairSoundBusy || !boatRepairSoundQueue) return;
+  const run = () => {
+    if (!boatRepairSoundQueue) { boatRepairSoundBusy = false; return; }
+    boatRepairSoundBusy = true;
+    boatRepairSoundQueue--;
+    const audio = new Audio("/gifts/jar/audio/boat-repair-10s-real.wav?v=repairaudio2");
+    boatRepairSoundAudio = audio;
+    audio.preload = "auto";
+    audio.volume = .62;
+    let finished = false;
+    let fallbackStarted = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      if (boatRepairSoundAudio === audio) boatRepairSoundAudio = null;
+      setTimeout(run, 80);
+    };
+    const fallback = () => {
+      if (fallbackStarted || finished) return;
+      fallbackStarted = true;
+      let step = 0;
+      const timer = setInterval(() => {
+        if (step * .55 >= 10) { clearInterval(timer); finish(); return; }
+        if (step === 9) playBoatRepairHit("spark");
+        else playBoatRepairHit(step % 3 === 1 ? "saw" : "hammer");
+        step++;
+      }, 550);
+    };
+    audio.onended = finish;
+    audio.onerror = fallback;
+    const promise = audio.play();
+    if (promise && typeof promise.catch === "function") promise.catch(fallback);
+  };
+  run();
 }
 
 function clearMusicHookTimer() {
@@ -5038,7 +5132,7 @@ async function openJarOverlay() {
     const sultan = jarConfig.sultanBalloons !== false ? "1" : "0";
     const boatScale = Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100));
     const sultanScale = Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100));
-    const url = `/jar-overlay.html?v=boatart2&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
+    const url = `/jar-overlay.html?v=repairfx4&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
     if (!jarOverlayWin || jarOverlayWin.closed) {
       jarOverlayWin = window.open(
         url,
@@ -5106,7 +5200,10 @@ function dropGiftsIntoJar(giftName, count, { test = false } = {}) {
   const coins = jarGiftCoins(name);
   jarPieces.push({ giftName: name, count: n, coins });
   jarTotalCount += n;
+  const previousBoatStage = boatStageForCoins(jarTotalCoins);
   jarTotalCoins += coins * n;
+  const nextBoatStage = boatStageForCoins(jarTotalCoins);
+  if (nextBoatStage > previousBoatStage) queueBoatRepairSound(nextBoatStage - previousBoatStage);
   postJarOverlayCommand({ type: "jar-drop", giftName: name, count: n, coins, totalCoins: jarTotalCoins });
   renderJarUiState();
 }
@@ -5125,7 +5222,10 @@ function handleGiftForJar(parsed) {
   const coins = jarGiftCoins(name);
   jarPieces.push({ giftName: name, count: n, coins });
   jarTotalCount += n;
+  const previousBoatStage = boatStageForCoins(jarTotalCoins);
   jarTotalCoins += coins * n;
+  const nextBoatStage = boatStageForCoins(jarTotalCoins);
+  if (nextBoatStage > previousBoatStage) queueBoatRepairSound(nextBoatStage - previousBoatStage);
   postJarOverlayCommand({
     type: "jar-drop",
     giftName: name,
@@ -9041,7 +9141,7 @@ function jarOverlayObsUrl() {
   const sultan = jarConfig.sultanBalloons !== false ? "1" : "0";
   const boatScale = Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100));
   const sultanScale = Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100));
-  return `http://127.0.0.1:3847/jar-overlay.html?v=boatart2&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
+  return `http://127.0.0.1:3847/jar-overlay.html?v=repairfx4&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
 }
 
 function refreshJarGalleryUrls() {

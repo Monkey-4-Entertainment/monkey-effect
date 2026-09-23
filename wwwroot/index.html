@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v1188-jar-original" />
+    <link rel="stylesheet" href="/style.css?v=v1188-subathon-hms-shell" />
   </head>
   <body>
     <div class="bg"></div>
@@ -433,7 +433,7 @@
             <span class="chip" id="effectsImportStatus">preset</span>
           </div>
           <p class="hint">
-            หน้านี้เริ่มว่าง — กดนำเข้าพรีเซ็ตแล้วเลือกไฟล์เอง (.json ของ Monkeyeffect หรือ .tfc ของ TikFinity)
+            หน้านี้เริ่มว่าง — กดนำเข้าพรีเซ็ตแล้วเลือกไฟล์เอง (.json ของ Monkeyeffect / TikSpark / FARM เช่น defaults/FARM-DEFENSE-Monkeyeffect-v10.json หรือ .tfc ของ TikFinity)
             · อัปโหลดอันไหน แอพไปใช้พรีเซ็ตอันนั้น · ส่งออกเพื่อแชร์หรือย้ายเครื่อง
           </p>
           <div class="actions tight" style="margin-top:.75rem">
@@ -1316,20 +1316,27 @@ Facebook Fanpage</textarea>
               <span>ยืดเวลาเมื่อมีของขวัญ</span>
             </label>
           </div>
-          <p class="hint">เริ่มจับเวลาแล้วของขวัญจะต่อเวลาให้อัตโนมัติ — Overlay ใช้ตัว Timer ใน Gallery หรือแผง Subathon</p>
+          <p class="hint">เริ่มจับเวลาแล้วของขวัญจะปรับเวลาให้อัตโนมัติ — ตั้งของขวัญเฉพาะชิ้นด้านล่างได้ (เพิ่มหรือลด)</p>
           <div class="live-stats-preview">
             <div class="live-stat-box">
               <div class="live-stat-label">เวลาที่เหลือ</div>
-              <div id="subathonClock" class="win-score-display">00:00</div>
+              <div id="subathonClock" class="win-score-display">00:00:00</div>
             </div>
           </div>
+          <label for="subathonObsUrl">ลิงก์ Overlay สำหรับไลฟ์ (OBS / TikTok LIVE Studio)</label>
+          <div class="welcome-obs-row">
+            <input id="subathonObsUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/live-overlay.html?panel=subathon" />
+            <button type="button" class="btn ghost" id="subathonPreviewObsBtn">พรีวิว</button>
+            <button type="button" class="btn primary" id="subathonCopyObsUrl">คัดลอกลิงก์</button>
+          </div>
+          <p class="hint">กดพรีวิวดูในแอพก่อน · หรือคัดลอกวางเป็น Browser Source · แนะนำขนาดประมาณ 420×260</p>
           <div class="form-grid">
             <div>
-              <label for="subathonSecPerCoin">วินาทีต่อ 1 เพชร</label>
+              <label for="subathonSecPerCoin">วินาทีต่อ 1 เพชร (ของที่ไม่ได้ตั้งรายชิ้น)</label>
               <input id="subathonSecPerCoin" class="field" type="number" min="0" max="3600" value="1" />
             </div>
             <div>
-              <label for="subathonSecPerGift">วินาทีต่อ 1 ชิ้น (เพิ่มจากเพชร)</label>
+              <label for="subathonSecPerGift">วินาทีต่อ 1 ชิ้น เพิ่มจากเพชร</label>
               <input id="subathonSecPerGift" class="field" type="number" min="0" max="3600" value="0" />
             </div>
             <div>
@@ -1341,11 +1348,50 @@ Facebook Fanpage</textarea>
               <input id="subathonMaxSeconds" class="field" type="number" min="60" max="86400" value="14400" />
             </div>
           </div>
+
+          <h3 style="margin:1.1rem 0 .4rem;font-size:1rem">ของขวัญรายชิ้น — เพิ่ม / ลดเวลา</h3>
+          <p class="hint">ใส่ชื่อของขวัญตรงกับ TikTok · เลือกเพิ่มหรือลด · ตั้งเวลาต่อ 1 ชิ้นเป็นชั่วโมง/นาที/วินาที (คอมโบคูณจำนวน) · ของที่อยู่ในรายการนี้จะใช้กฎนี้แทนเพชรด้านบน</p>
+          <div class="form-grid" style="align-items:end">
+            <div>
+              <label for="subathonGiftName">ชื่อของขวัญ</label>
+              <input id="subathonGiftName" class="field" type="text" placeholder="เช่น Rose / Night Star" autocomplete="off" />
+            </div>
+            <div>
+              <label>ผลต่อเวลา</label>
+              <div id="subathonGiftEffect" class="subathon-effect-picks" data-effect="add" role="group" aria-label="ผลต่อเวลา">
+                <button type="button" class="subathon-effect-btn is-on" data-effect="add">เพิ่มเวลา</button>
+                <button type="button" class="subathon-effect-btn" data-effect="sub">ลดเวลา</button>
+              </div>
+            </div>
+          </div>
+          <div class="subathon-hms-row">
+            <div class="subathon-hms-shell" role="group" aria-label="เวลาต่อชิ้น">
+              <span class="subathon-hms-caption">เวลาต่อชิ้น</span>
+              <div class="subathon-hms-clock">
+                <label class="subathon-hms-seg" for="subathonGiftHours">
+                  <input id="subathonGiftHours" class="subathon-hms-input" type="number" min="0" max="24" value="0" inputmode="numeric" />
+                  <span>ชม.</span>
+                </label>
+                <span class="subathon-hms-colon" aria-hidden="true">:</span>
+                <label class="subathon-hms-seg" for="subathonGiftMinutes">
+                  <input id="subathonGiftMinutes" class="subathon-hms-input" type="number" min="0" max="59" value="0" inputmode="numeric" />
+                  <span>นาที</span>
+                </label>
+                <span class="subathon-hms-colon" aria-hidden="true">:</span>
+                <label class="subathon-hms-seg" for="subathonGiftSecs">
+                  <input id="subathonGiftSecs" class="subathon-hms-input" type="number" min="0" max="59" value="30" inputmode="numeric" />
+                  <span>วิ</span>
+                </label>
+              </div>
+            </div>
+            <button id="subathonGiftAddBtn" class="btn secondary" type="button">เพิ่มกฎ</button>
+          </div>
+          <div id="subathonGiftRulesList" class="rules-list" style="margin-top:.75rem"></div>
+
           <div class="actions">
             <button id="subathonSaveBtn" class="btn secondary" type="button">บันทึกกฎ</button>
             <button id="subathonStartBtn" class="btn primary" type="button">เริ่มจับเวลา</button>
             <button id="subathonStopBtn" class="btn ghost" type="button">หยุด</button>
-            <button id="subathonTestBtn" class="btn ghost" type="button">เทส Rose +เวลา</button>
           </div>
           <p id="subathonActivity" class="hint">ยังไม่เริ่ม — กดเริ่มจับเวลาก่อนแล้วค่อยส่งของขวัญ</p>
         </section>
@@ -1607,8 +1653,9 @@ Facebook Fanpage</textarea>
     </main>
 
     <div id="giftPicker" class="gift-picker hidden" hidden></div>
-    <script src="/app.js?v=v1201-jar-morph"></script>
-    <script src="/studio.js?v=studio13"></script>
+    <script src="/app.js?v=boatrepairaudio3"></script>
+    <script src="/studio.js?v=studio18"></script>
     <script src="/members.js?v=m13-login"></script>
+    <script src="/farm-preset-editor.js?v=10"></script>
   </body>
 </html>
