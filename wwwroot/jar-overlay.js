@@ -75,6 +75,8 @@
   const duckPirateArt = new Image();
   const duckCruiseArt = new Image();
   const monkeyPirateArt = new Image();
+  const bambooRaftArt = new Image();
+  const woodenLongboatArt = new Image();
   glassBody.decoding = "async";
   glassBase.decoding = "async";
   glassRim.decoding = "async";
@@ -84,9 +86,13 @@
   duckPirateArt.decoding = "async";
   duckCruiseArt.decoding = "async";
   monkeyPirateArt.decoding = "async";
+  bambooRaftArt.decoding = "async";
+  woodenLongboatArt.decoding = "async";
   duckPirateArt.src = "/gifts/jar/art/duck-pirate-3d.png?v=duckboat2";
   duckCruiseArt.src = "/gifts/jar/art/duck-cruise-3d.png?v=duckboat2";
   monkeyPirateArt.src = "/gifts/jar/art/monkey-pirate-3d.png?v=duckboat3";
+  bambooRaftArt.src = "/gifts/jar/art/bamboo-raft-3d.png?v=boatart2";
+  woodenLongboatArt.src = "/gifts/jar/art/wooden-longboat-3d.png?v=boatart1";
   function onGlassArtLoad() {
     resize();
   }
@@ -96,6 +102,8 @@
   duckPirateArt.onload = onGlassArtLoad;
   duckCruiseArt.onload = onGlassArtLoad;
   monkeyPirateArt.onload = onGlassArtLoad;
+  bambooRaftArt.onload = onGlassArtLoad;
+  woodenLongboatArt.onload = onGlassArtLoad;
 
   const { Engine, World, Bodies, Body, Composite, Runner, Sleeping, Events } = Matter;
   const CAT_INNER = 0x0001;
@@ -142,9 +150,14 @@
   let pileAreaRatio = 0;
   let fullSince = 0;
   let lastPileCheck = -Infinity;
+  let totalLiveCoins = 0;
   let boatPosition = { x: 0, y: 0 };
-  let sultanPosition = { x: 0, y: 0 };
-  let sultanHitBounds = null;
+  let sultanPositions = {
+    1: { x: 0, y: 0 },
+    2: { x: 0, y: 0 },
+    3: { x: 0, y: 0 },
+  };
+  let sultanHitBounds = [];
   try {
     const savedBoatPosition = JSON.parse(localStorage.getItem(BOAT_POS_KEY) || "null");
     if (savedBoatPosition && Number.isFinite(savedBoatPosition.x) && Number.isFinite(savedBoatPosition.y)) {
@@ -158,11 +171,17 @@
   }
   try {
     const savedSultanPosition = JSON.parse(localStorage.getItem(SULTAN_POS_KEY) || "null");
-    if (savedSultanPosition && Number.isFinite(savedSultanPosition.x) && Number.isFinite(savedSultanPosition.y)) {
-      sultanPosition = {
-        x: Math.max(-0.42, Math.min(0.42, savedSultanPosition.x)),
-        y: Math.max(-0.38, Math.min(0.38, savedSultanPosition.y)),
-      };
+    if (savedSultanPosition) {
+      const legacy = Number.isFinite(savedSultanPosition.x) && Number.isFinite(savedSultanPosition.y)
+        ? savedSultanPosition : null;
+      for (const rank of [1, 2, 3]) {
+        const saved = savedSultanPosition[rank] || legacy;
+        if (!saved || !Number.isFinite(saved.x) || !Number.isFinite(saved.y)) continue;
+        sultanPositions[rank] = {
+          x: Math.max(-0.48, Math.min(0.48, saved.x)),
+          y: Math.max(-0.44, Math.min(0.44, saved.y)),
+        };
+      }
     }
   } catch {
     /* use centered default */
@@ -221,7 +240,9 @@
 
   function normKey(name) {
     return String(name || "")
+      .normalize("NFKC")
       .toLowerCase()
+      .replace(/[\u200B-\u200D\uFEFF]/g, "")
       .replace(/[_-]+/g, " ")
       .replace(/\s+/g, " ")
       .trim();
@@ -256,8 +277,8 @@
     }
   }
 
-  function giftSizeScale(giftName) {
-    const coins = catalogByKey.get(normKey(giftName))?.coins || 1;
+  function giftSizeScale(giftName, suppliedCoins = 0) {
+    const coins = Math.max(1, Number(suppliedCoins) || catalogByKey.get(normKey(giftName))?.coins || 1);
     // Eleven price tiers shared by the jar and boat overlays. Level one keeps
     // the current smallest size; every following level grows only slightly.
     if (coins >= 10001) return 2.12;
@@ -273,16 +294,16 @@
     return 0.36;
   }
 
-  function giftCoins(giftName) {
-    return catalogByKey.get(normKey(giftName))?.coins || 1;
+  function giftCoins(giftName, suppliedCoins = 0) {
+    return Math.max(1, Number(suppliedCoins) || catalogByKey.get(normKey(giftName))?.coins || 1);
   }
 
-  function giftRadius(giftName) {
+  function giftRadius(giftName, suppliedCoins = 0) {
     const lipR = Math.max(5, geom.wallT * 0.62);
     const maxR = Math.max(4, (geom.mouthW / 2 - lipR - 4) * 0.82);
     // Scale the whole range down for narrow jars so even the largest gift fits.
     const baseR = Math.min(geom.pieceR, maxR / MAX_GIFT_SCALE);
-    return baseR * giftSizeScale(giftName);
+    return baseR * giftSizeScale(giftName, suppliedCoins);
   }
 
   function iconUrl(giftName) {
@@ -645,7 +666,7 @@
     fullSince = 0;
     lastPileCheck = -Infinity;
     for (const body of giftBodies()) {
-      const r = giftRadius(body.plugin.giftName) * (body.plugin.sizeJitter || 1);
+      const r = giftRadius(body.plugin.giftName, body.plugin.coins) * (body.plugin.sizeJitter || 1);
       const ratio = r / (body.circleRadius || body.plugin.r);
       Body.scale(body, ratio, ratio);
       body.plugin.r = r;
@@ -661,12 +682,19 @@
     }
   }
 
-  function enqueueDrop(giftName, count) {
+  function enqueueDrop(giftName, count, suppliedCoins = 0, countCoins = true) {
     const n = Math.max(0, Math.floor(Number(count) || 0));
     if (!n || !giftName) return;
     const take = Math.min(n, roomLeft());
     if (!take) return;
-    spawnQ.push({ giftName: String(giftName), left: take, img: null });
+    const coins = giftCoins(giftName, suppliedCoins);
+    if (countCoins) totalLiveCoins += coins * take;
+    spawnQ.push({
+      giftName: String(giftName),
+      coins,
+      left: take,
+      img: null,
+    });
   }
 
   function boatWaterIsFull() {
@@ -700,7 +728,7 @@
   const seenSourceIds = new Set();
   const seenJournalIds = new Set();
   let lastDirectDropAt = 0;
-  function acceptDrop(giftName, count, eventId = "", sourceEventId = "") {
+  function acceptDrop(giftName, count, eventId = "", sourceEventId = "", suppliedCoins = 0) {
     const n = Math.max(0, Math.floor(Number(count) || 0));
     const name = String(giftName || "").trim();
     if (!name || !n) return;
@@ -729,7 +757,7 @@
     if (!stableId && recentDrops.some((d) => d.key === key && t - d.t < 120)) return;
     recentDrops.push({ key, t });
     if (recentDrops.length > 48) recentDrops.shift();
-    enqueueDrop(name, n);
+    enqueueDrop(name, n, suppliedCoins, true);
   }
 
   function resetJar() {
@@ -739,6 +767,7 @@
     fullSince = 0;
     lastPileCheck = -Infinity;
     spawnWait = 0;
+    totalLiveCoins = 0;
     Composite.clear(engine.world, false, true);
     wallBodies = [];
     if (geom) rebuildWalls();
@@ -756,19 +785,19 @@
       // queue must never delay gifts that should float above the boat.
       let itemIndex = 0;
       if (isDuckBoat()) {
-        const premiumIndex = spawnQ.findIndex((q) => giftCoins(q.giftName) >= 100);
+        const premiumIndex = spawnQ.findIndex((q) => giftCoins(q.giftName, q.coins) >= 100);
         if (premiumIndex >= 0) itemIndex = premiumIndex;
       }
       const item = spawnQ[itemIndex];
       if (!item.img) item.img = loadImage(item.giftName);
       // A little size variation prevents equal circles from settling into a
       // mechanical honeycomb while keeping every low-tier sticker small.
-      const baseGiftR = giftRadius(item.giftName);
-      const sizeJitter = isDuckBoat() && giftCoins(item.giftName) < 10
+      const baseGiftR = giftRadius(item.giftName, item.coins);
+      const sizeJitter = isDuckBoat() && giftCoins(item.giftName, item.coins) < 10
         ? 0.82 + Math.random() * 0.28
         : 1;
       const r = baseGiftR * sizeJitter;
-      const premium = isDuckBoat() && giftCoins(item.giftName) >= 100;
+      const premium = isDuckBoat() && giftCoins(item.giftName, item.coins) >= 100;
       const lipR = Math.max(5, geom.wallT * 0.62);
       const spread = Math.max(0, Math.min(geom.mouthW * 0.28, geom.mouthW / 2 - lipR - r - 4));
       const waterOverflow = isDuckBoat() && !premium && boatWaterIsFull();
@@ -807,7 +836,7 @@
       Body.setVelocity(body, { x: (Math.random() * 2 - 1) * 0.6, y: 1.2 });
       body.plugin = {
         kind: "gift", img: item.img, giftName: item.giftName, r, spilled: false,
-        premium, waterOverflow, sizeJitter,
+        premium, waterOverflow, sizeJitter, coins: item.coins,
         tetherSlot: premium ? giftBodies().filter((b) => b.plugin?.premium).length : -1,
         bobSeed: Math.random() * Math.PI * 2,
       };
@@ -968,9 +997,22 @@
         : duckPirateArt;
   }
 
+  function currentBoatArt() {
+    const level = boatLevel();
+    if (level === 1) return bambooRaftArt;
+    if (level === 2) return woodenLongboatArt;
+    return currentDuckArt();
+  }
+
+  function boatLevel() {
+    if (totalLiveCoins >= 5000) return 3;
+    if (totalLiveCoins >= 1000) return 2;
+    return 1;
+  }
+
   function duckBoatBounds() {
     if (!geom) return null;
-    const art = currentDuckArt();
+    const art = currentBoatArt();
     const maxW = geom.jarW * .96 * boatScale;
     const maxH = geom.h * .72 * boatScale;
     const ratio = art.naturalWidth && art.naturalHeight ? art.naturalWidth / art.naturalHeight : 1.55;
@@ -989,10 +1031,9 @@
     // of the main mast. All premium-gift ropes radiate from this one point.
     const bounds = duckBoatBounds();
     if (!bounds) return { x: geom?.cx || 0, y: geom?.top || 0 };
-    return {
-      x: bounds.x + bounds.w * .505,
-      y: bounds.y + bounds.h * .075,
-    };
+    if (boatLevel() === 1) return { x: bounds.x + bounds.w * .52, y: bounds.y + bounds.h * .055 };
+    if (boatLevel() === 2) return { x: bounds.x + bounds.w * .47, y: bounds.y + bounds.h * .04 };
+    return { x: bounds.x + bounds.w * .505, y: bounds.y + bounds.h * .075 };
   }
 
   function halton(index, base) {
@@ -1135,9 +1176,80 @@
     ctx.restore();
   }
 
+  function drawEvolvingBoat(back, bounds) {
+    const level = boatLevel();
+    if (level >= 3 || !bounds) return false;
+    const art = currentBoatArt();
+    if (art.complete && art.naturalWidth) {
+      if (!back) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(art, bounds.x, bounds.y, bounds.w, bounds.h);
+        ctx.restore();
+      }
+      return true;
+    }
+    const { cx, boatY, w, h } = bounds;
+    ctx.save();
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    if (level === 1) {
+      const rw = w * .66;
+      const rh = Math.max(28, h * .13);
+      const x = cx - rw * .5;
+      const y = boatY - rh * .48;
+      if (back) {
+        ctx.strokeStyle = "#765028";
+        ctx.lineWidth = Math.max(5, w * .009);
+        ctx.beginPath(); ctx.moveTo(cx, y + rh * .1); ctx.lineTo(cx, y - h * .25); ctx.stroke();
+        ctx.fillStyle = "#f0d477";
+        ctx.strokeStyle = "#80562b";
+        ctx.lineWidth = Math.max(2, w * .004);
+        ctx.beginPath();
+        ctx.moveTo(cx + 3, y - h * .23); ctx.lineTo(cx + rw * .18, y - h * .08); ctx.lineTo(cx + 3, y - h * .04); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      } else {
+        for (let i = 0; i < 8; i++) {
+          const by = y + i * rh / 8;
+          const grad = ctx.createLinearGradient(x, by, x + rw, by);
+          grad.addColorStop(0, "#9a5a20"); grad.addColorStop(.5, "#e4aa43"); grad.addColorStop(1, "#8a4b19");
+          ctx.fillStyle = grad; ctx.strokeStyle = "#5e3517"; ctx.lineWidth = Math.max(1.5, w * .0025);
+          ctx.beginPath(); ctx.roundRect(x, by, rw, rh / 6.5, rh / 12); ctx.fill(); ctx.stroke();
+        }
+        ctx.strokeStyle = "#e8c36b"; ctx.lineWidth = Math.max(3, w * .006);
+        for (const sx of [x + rw * .13, x + rw * .87]) { ctx.beginPath(); ctx.moveTo(sx, y - 3); ctx.lineTo(sx, y + rh + 3); ctx.stroke(); }
+      }
+      ctx.restore();
+      return true;
+    }
+    const bw = w * .78;
+    const bh = Math.max(65, h * .25);
+    const x = cx - bw * .5;
+    const y = boatY - bh * .72;
+    if (back) {
+      ctx.strokeStyle = "#603416"; ctx.lineWidth = Math.max(6, w * .01);
+      ctx.beginPath(); ctx.moveTo(cx, y + bh * .45); ctx.lineTo(cx, y - h * .26); ctx.stroke();
+      ctx.fillStyle = "#ead9a7"; ctx.strokeStyle = "#8b541f"; ctx.lineWidth = Math.max(3, w * .005);
+      ctx.beginPath(); ctx.moveTo(cx + 3, y - h * .23); ctx.lineTo(cx + bw * .25, y + bh * .1); ctx.lineTo(cx + 3, y + bh * .02); ctx.closePath(); ctx.fill(); ctx.stroke();
+    } else {
+      const hull = ctx.createLinearGradient(0, y, 0, y + bh);
+      hull.addColorStop(0, "#b56a28"); hull.addColorStop(.5, "#74401e"); hull.addColorStop(1, "#3f2518");
+      ctx.fillStyle = hull; ctx.strokeStyle = "#d7993c"; ctx.lineWidth = Math.max(4, w * .007);
+      ctx.beginPath(); ctx.moveTo(x, y + bh * .2); ctx.quadraticCurveTo(cx, y + bh * .5, x + bw, y + bh * .12); ctx.lineTo(x + bw * .86, y + bh); ctx.quadraticCurveTo(cx, y + bh * 1.18, x + bw * .12, y + bh * .88); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = "rgba(245,190,89,.75)"; ctx.lineWidth = Math.max(2, w * .003);
+      for (let i = 1; i <= 3; i++) { const ly=y+bh*(.28+i*.16); ctx.beginPath(); ctx.moveTo(x+bw*.12,ly); ctx.lineTo(x+bw*.88,ly-bh*.06); ctx.stroke(); }
+      ctx.fillStyle = "#dfaa4a";
+      for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(x + bw * (.3 + i * .14), y + bh * .56, Math.max(4, w * .009), 0, Math.PI * 2); ctx.fill(); }
+    }
+    ctx.restore();
+    return true;
+  }
+
   function drawDuckBoat(back) {
     if (!geom || !isDuckBoat()) return;
     const bounds = duckBoatBounds();
+    if (drawEvolvingBoat(back, bounds)) return;
     const { cx, boatY } = bounds || { cx: geom.cx, boatY: geom.boatY };
     const jarW = geom.jarW;
     const art = currentDuckArt();
@@ -1280,9 +1392,10 @@
 
   function drawSultanBalloons() {
     if (!showSultanBalloons || !geom || !isDuckBoat() || !sultanRows.length) {
-      sultanHitBounds = null;
+      sultanHitBounds = [];
       return;
     }
+    sultanHitBounds = [];
     const now = performance.now() * .001;
     const ranked = sultanRows.slice(0, 3).map((row, i) => ({ row, rank: i + 1 }));
     // Podium order: silver on the left, gold high in the centre, bronze right.
@@ -1302,6 +1415,7 @@
     ctx.textBaseline = "middle";
     for (let i = 0; i < balloons.length; i++) {
       const { row = {}, rank = i + 1 } = balloons[i];
+      const position = sultanPositions[rank] || sultanPositions[1];
       const color = colors[rank - 1];
       const rankScale = rank === 1 ? 1.14 : 1;
       const rx = Math.max(29, Math.min(52, geom.w * .038)) * rankScale * sultanScale;
@@ -1309,9 +1423,9 @@
       const baseX = balloons.length >= 3
         ? startX + step * i
         : rank === 1 ? geom.cx : geom.cx - span * .5;
-      const x = baseX + sultanPosition.x * geom.w + Math.sin(now * .55 + i * 1.7) * 6;
+      const x = baseX + position.x * geom.w + Math.sin(now * .55 + i * 1.7) * 6;
       const sideY = geom.top + ry + Math.max(24, geom.h * .045);
-      const y = sideY + sultanPosition.y * geom.h - (rank === 1 ? Math.max(25, ry * .52) : 0) + Math.sin(now * .8 + rank * 1.25) * 5;
+      const y = sideY + position.y * geom.h - (rank === 1 ? Math.max(25, ry * .52) : 0) + Math.sin(now * .8 + rank * 1.25) * 5;
       const tailY = y + ry + Math.max(14, geom.h * .025);
       const grad = ctx.createRadialGradient(x - rx * .32, y - ry * .35, rx * .08, x, y, ry * 1.12);
       grad.addColorStop(0, "rgba(255,255,255,.98)");
@@ -1369,17 +1483,13 @@
       ctx.quadraticCurveTo(x + Math.sin(i * 2.4) * 10, (y + ry + tailY) * .5, x + Math.sin(i) * 5, tailY);
       ctx.stroke();
       ctx.shadowBlur = 0;
-    }
-    if (balloons.length) {
-      const pad = Math.max(10, geom.w * .01);
-      const left = balloons.length >= 3 ? startX - Math.max(35, geom.w * .04) * sultanScale : geom.cx - span * .5 - pad;
-      const right = balloons.length >= 3 ? startX + span + Math.max(35, geom.w * .04) * sultanScale : geom.cx + Math.max(35, geom.w * .04) * sultanScale;
-      sultanHitBounds = {
-        x: left + sultanPosition.x * geom.w - pad,
-        y: geom.top + sultanPosition.y * geom.h - Math.max(10, geom.h * .02),
-        w: right - left + pad * 2,
-        h: Math.max(120, geom.h * .30) * sultanScale,
-      };
+      sultanHitBounds.push({
+        rank,
+        x: x - rx * 1.08,
+        y: y - ry * 1.12,
+        w: rx * 2.16,
+        h: ry * 2.45,
+      });
     }
     ctx.restore();
   }
@@ -1713,8 +1823,12 @@
         data.giftName,
         data.count,
         data.deliveryId || (data.at ? `cmd:${data.at}` : ""),
-        data.sourceEventId || data.eventId || ""
+        data.sourceEventId || data.eventId || "",
+        data.coins
       );
+      if (Number.isFinite(Number(data.totalCoins))) {
+        totalLiveCoins = Math.max(totalLiveCoins, Math.max(0, Number(data.totalCoins)));
+      }
       return;
     }
     if (data.at && data.at <= lastCmdAt) return;
@@ -1726,7 +1840,9 @@
     if (data.type === "jar-sync") {
       if (giftBodies().length || spawnQ.length) return;
       const pieces = Array.isArray(data.pieces) ? data.pieces : [];
-      for (const p of pieces) enqueueDrop(p.giftName || p.name, p.count);
+      totalLiveCoins = 0;
+      for (const p of pieces) enqueueDrop(p.giftName || p.name, p.count, p.coins, true);
+      if (Number.isFinite(Number(data.totalCoins))) totalLiveCoins = Math.max(0, Number(data.totalCoins));
       return;
     }
     if (data.type === "jar-style") {
@@ -1792,6 +1908,13 @@
   let boatDrag = null;
   let sultanDrag = null;
   let giftDrag = null;
+  function sultanBalloonAt(x, y) {
+    for (let i = sultanHitBounds.length - 1; i >= 0; i--) {
+      const b = sultanHitBounds[i];
+      if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) return b;
+    }
+    return null;
+  }
   function floatingGiftAt(x, y) {
     const premium = giftBodies().filter((b) => b.plugin?.premium && !b.plugin?.spilled);
     for (let i = premium.length - 1; i >= 0; i--) {
@@ -1813,14 +1936,15 @@
       e.stopPropagation();
       return;
     }
-    if (showSultanBalloons && sultanHitBounds &&
-        e.clientX >= sultanHitBounds.x && e.clientX <= sultanHitBounds.x + sultanHitBounds.w &&
-        e.clientY >= sultanHitBounds.y && e.clientY <= sultanHitBounds.y + sultanHitBounds.h) {
+    const pickedSultan = showSultanBalloons ? sultanBalloonAt(e.clientX, e.clientY) : null;
+    if (pickedSultan) {
+      const position = sultanPositions[pickedSultan.rank];
       sultanDrag = {
+        rank: pickedSultan.rank,
         startX: e.clientX,
         startY: e.clientY,
-        originX: sultanPosition.x,
-        originY: sultanPosition.y,
+        originX: position.x,
+        originY: position.y,
       };
       canvas.style.cursor = "grabbing";
       e.preventDefault();
@@ -1856,9 +1980,10 @@
       return;
     }
     if (sultanDrag && geom) {
-      sultanPosition.x = Math.max(-0.42, Math.min(0.42,
+      const position = sultanPositions[sultanDrag.rank];
+      position.x = Math.max(-0.48, Math.min(0.48,
         sultanDrag.originX + (e.clientX - sultanDrag.startX) / Math.max(1, geom.w)));
-      sultanPosition.y = Math.max(-0.38, Math.min(0.38,
+      position.y = Math.max(-0.44, Math.min(0.44,
         sultanDrag.originY + (e.clientY - sultanDrag.startY) / Math.max(1, geom.h)));
       e.preventDefault();
       return;
@@ -1873,9 +1998,7 @@
     }
     if (!isDuckBoat()) { canvas.style.cursor = "default"; return; }
     const overGift = isDuckBoat() && !!floatingGiftAt(e.clientX, e.clientY);
-    const overSultan = showSultanBalloons && sultanHitBounds &&
-      e.clientX >= sultanHitBounds.x && e.clientX <= sultanHitBounds.x + sultanHitBounds.w &&
-      e.clientY >= sultanHitBounds.y && e.clientY <= sultanHitBounds.y + sultanHitBounds.h;
+    const overSultan = showSultanBalloons && !!sultanBalloonAt(e.clientX, e.clientY);
     const b = duckBoatBounds();
     const overBoat = b && e.clientX >= b.x && e.clientX <= b.x + b.w && e.clientY >= b.y && e.clientY <= b.y + b.h;
     canvas.style.cursor = overGift || overSultan || overBoat ? "grab" : "default";
@@ -1888,7 +2011,7 @@
     if (sultanDrag) {
       sultanDrag = null;
       canvas.style.cursor = "grab";
-      try { localStorage.setItem(SULTAN_POS_KEY, JSON.stringify(sultanPosition)); } catch { /* ignore */ }
+      try { localStorage.setItem(SULTAN_POS_KEY, JSON.stringify(sultanPositions)); } catch { /* ignore */ }
     }
     if (!boatDrag) return;
     boatDrag = null;
@@ -1921,6 +2044,14 @@
       floorY: geom && geom.innerBottom,
       full: pileFull,
       pileAreaRatio,
+      premium: gifts.filter((b) => b.plugin?.premium).length,
+      submerged: gifts.filter((b) => !b.plugin?.premium).length,
+      gifts: gifts.map((b) => ({
+        name: b.plugin?.giftName,
+        coins: b.plugin?.coins || giftCoins(b.plugin?.giftName),
+        premium: !!b.plugin?.premium,
+        y: Math.round(b.position.y),
+      })),
       engine: "matter",
     };
   };

@@ -1,8 +1,8 @@
 {
-  "version": "1.0.9.5",
-  "notes": "Monkeyeffect 1.0.9.5 - Complete boat and glass gift overlay update: gift capacity and natural scatter, eleven size levels, draggable and scalable boats, gifts and Sultan balloons, plus Win counter pulse effects and distinct win/loss sounds.",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.0.9.5/Monkeyeffect-1.0.9.5-update.zip",
-  "sha256": "0f3915ad9053a8675ce6741331be487841867efdc34c5ddff50e623405c60b51",
+  "version": "1.0.9.6",
+  "notes": "Monkeyeffect 1.0.9.6 - Three-stage live coin boat evolution with new transparent 3D damaged bamboo raft and Thai longboat art, reliable premium gift pricing, individually draggable Sultan balloons, and Win counter feedback.",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.0.9.6/Monkeyeffect-1.0.9.6-update.zip",
+  "sha256": "dd81464f6029e64ff1eb9ee81394f8c279a60d88c8cfac735300d68f16a58ff2",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

@@ -4863,9 +4863,26 @@ let jarOverlayWin = null;
 let jarConfig = loadJarConfig();
 let jarPieces = [];
 let jarTotalCount = 0;
+let jarTotalCoins = 0;
 let jarSessionLive = false;
 let jarLiveKnown = false;
 let jarCatalogNames = [];
+const jarCatalogCoins = new Map();
+
+function jarGiftKey(name) {
+  return String(name || "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function jarGiftCoins(name) {
+  const coins = Number(jarCatalogCoins.get(jarGiftKey(name)));
+  return Number.isFinite(coins) && coins > 0 ? coins : 0;
+}
 
 const JAR_STYLE_OPTIONS = [
   { id: "classic", label: "เมสัน", hint: "ทรงโหลเดิม คอเกลียว" },
@@ -4932,7 +4949,8 @@ function saveJarConfig() {
 }
 
 function jarCountLabel() {
-  return jarTotalCount >= JAR_OVERLAY_CAP ? `${JAR_OVERLAY_CAP} ชิ้น · Overlay เต็ม` : `${jarTotalCount} ชิ้น`;
+  const pieces = jarTotalCount >= JAR_OVERLAY_CAP ? `${JAR_OVERLAY_CAP} ชิ้น · Overlay เต็ม` : `${jarTotalCount} ชิ้น`;
+  return `${pieces} · ◆${jarTotalCoins.toLocaleString()}`;
 }
 
 function renderJarUiState() {
@@ -4997,10 +5015,10 @@ function syncJarToOverlay() {
   for (const p of jarPieces) {
     if (left <= 0) break;
     const c = Math.min(p.count, left);
-    pieces.push({ giftName: p.giftName, count: c });
+    pieces.push({ giftName: p.giftName, count: c, coins: p.coins || jarGiftCoins(p.giftName) });
     left -= c;
   }
-  postJarOverlayCommand({ type: "jar-sync", pieces });
+  postJarOverlayCommand({ type: "jar-sync", pieces, totalCoins: jarTotalCoins });
 }
 
 async function openJarOverlay() {
@@ -5020,7 +5038,7 @@ async function openJarOverlay() {
     const sultan = jarConfig.sultanBalloons !== false ? "1" : "0";
     const boatScale = Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100));
     const sultanScale = Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100));
-    const url = `/jar-overlay.html?v=duckboat3&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
+    const url = `/jar-overlay.html?v=boatart2&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
     if (!jarOverlayWin || jarOverlayWin.closed) {
       jarOverlayWin = window.open(
         url,
@@ -5069,6 +5087,7 @@ async function closeJarOverlay() {
 function resetJarForNewLive() {
   jarPieces = [];
   jarTotalCount = 0;
+  jarTotalCoins = 0;
   postJarOverlayCommand({ type: "jar-reset" });
   renderJarUiState();
   devLog("jar", "reset for new live");
@@ -5084,9 +5103,11 @@ function dropGiftsIntoJar(giftName, count, { test = false } = {}) {
     renderJarUiState();
     return;
   }
-  jarPieces.push({ giftName: name, count: n });
+  const coins = jarGiftCoins(name);
+  jarPieces.push({ giftName: name, count: n, coins });
   jarTotalCount += n;
-  postJarOverlayCommand({ type: "jar-drop", giftName: name, count: n });
+  jarTotalCoins += coins * n;
+  postJarOverlayCommand({ type: "jar-drop", giftName: name, count: n, coins, totalCoins: jarTotalCoins });
   renderJarUiState();
 }
 
@@ -5101,12 +5122,16 @@ function handleGiftForJar(parsed) {
     renderJarUiState();
     return;
   }
-  jarPieces.push({ giftName: name, count: n });
+  const coins = jarGiftCoins(name);
+  jarPieces.push({ giftName: name, count: n, coins });
   jarTotalCount += n;
+  jarTotalCoins += coins * n;
   postJarOverlayCommand({
     type: "jar-drop",
     giftName: name,
     count: n,
+    coins,
+    totalCoins: jarTotalCoins,
     sourceEventId: parsed.seq != null ? `gift:${parsed.seq}` : (parsed.eventId || parsed.key || parsed.dedupeKey || ""),
   });
   renderJarUiState();
@@ -5129,6 +5154,16 @@ async function loadJarCatalogUi() {
     if (!res.ok) return;
     const pack = await res.json();
     jarCatalogNames = (pack.gifts || []).map((g) => g.name).filter(Boolean);
+    jarCatalogCoins.clear();
+    for (const g of pack.gifts || []) {
+      const coins = Math.max(1, Number(g.coins) || 1);
+      if (g.name) jarCatalogCoins.set(jarGiftKey(g.name), coins);
+      if (g.key) jarCatalogCoins.set(jarGiftKey(g.key), coins);
+    }
+    for (const [alias, target] of Object.entries(pack.aliases || {})) {
+      const coins = jarCatalogCoins.get(jarGiftKey(target));
+      if (coins && !jarCatalogCoins.has(jarGiftKey(alias))) jarCatalogCoins.set(jarGiftKey(alias), coins);
+    }
     const list = document.getElementById("jarGiftList");
     if (list) {
       list.innerHTML = jarCatalogNames
@@ -9006,7 +9041,7 @@ function jarOverlayObsUrl() {
   const sultan = jarConfig.sultanBalloons !== false ? "1" : "0";
   const boatScale = Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100));
   const sultanScale = Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100));
-  return `http://127.0.0.1:3847/jar-overlay.html?v=duckboat3&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
+  return `http://127.0.0.1:3847/jar-overlay.html?v=boatart2&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
 }
 
 function refreshJarGalleryUrls() {
