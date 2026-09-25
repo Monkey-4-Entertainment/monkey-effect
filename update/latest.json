@@ -1,8 +1,8 @@
 {
-  "version": "1.0.9.7",
-  "notes": "Monkeyeffect 1.0.9.7 - 10-second animated boat upgrade scene with independently moving monkey repair crew, layered cartoon dust clouds, and a balanced stereo realistic wood repair soundtrack.",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.0.9.7/Monkeyeffect-1.0.9.7-update.zip",
-  "sha256": "b1be5adf3ad819f76a35d9effe27dd73b7038521124ce2fb5754f030a108f0a2",
-  "mandatory": true,
-  "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
+    "version":  "1.2.0",
+    "notes":  "Monkeyeffect 1.2.0 - Widgets, pirate ship, dragon overlay, Temple Escape source preset, and premium gift card.",
+    "zipUrl":  "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.2.0/Monkeyeffect-1.2.0-update.zip",
+    "sha256":  "7a58063e76d5a5bb36c078eec50926f483cefa5cbc70c931147ecf9ea57634ac",
+    "mandatory":  true,
+    "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
