@@ -1,8 +1,8 @@
 {
-  "version": "1.2.1",
-  "notes": "Monkeyeffect 1.2.1 - Correct pirate gift identity and combos; 1000+ Coin cannon fireworks with sender card and continuous return to a tethered balloon; green-screen Dragon and Pirate overlays.",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.2.1/Monkeyeffect-1.2.1-update.zip",
-  "sha256": "521f230fecda9e94e9b490db84920e80df4a8e65a190eb8f5e12c8455cd4db7b",
+  "version": "1.2.2",
+  "notes": "Monkeyeffect 1.2.2 - Special gift effects from 500 coins per gift for Pirate and Dragon; true transparent overlays with framed native windows; independently draggable Dragon top-three ranks; version labels synchronized.",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.2.2/Monkeyeffect-1.2.2-update.zip",
+  "sha256": "6d843b8f4fcc565f2be0e0f2fb7dc927f87444d33ba27209116201f71859cb4d",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
