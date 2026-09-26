@@ -1,8 +1,5 @@
 (() => {
   const params = new URLSearchParams(location.search);
-  const chroma = params.get("chroma") === "1";
-  document.documentElement.classList.toggle("chroma", chroma);
-  document.body.classList.toggle("chroma", chroma);
 
   const CHANNEL = "tgr-jar-overlay";
   const STORAGE_KEY = "tgr_jar_overlay_cmd";
@@ -11,7 +8,8 @@
   const BOAT_POS_KEY = "tgr_jar_boat_position_v1";
   const SULTAN_POS_KEY = "tgr_jar_sultan_position_v1";
   const ICONS = "/gifts/jar/icons/";
-  const UNKNOWN = ICONS + "_unknown.svg";
+  const ICON_REVISION = "gift-identity14";
+  const UNKNOWN = ICONS + "_unknown.svg?v=" + ICON_REVISION;
   const JAR_FILL = 500;
   const OVERLAY_CAP = 5000;
   const BOAT_WATER_CAPACITY = 1000;
@@ -44,6 +42,7 @@
   }
 
   let jarColor = parseHexColor(params.get("color") || params.get("jarColor"), "#e8f4ff");
+  let glassJarScale = Math.max(0.5, Math.min(1.5, (Number(params.get("jarScale")) || 100) / 100));
   const JAR_STYLE_IDS = ["classic", "round", "tall", "wide", "original", "duck-pirate", "duck-cruise", "monkey-pirate"];
   const JAR_STYLE_ALIASES = {
     crystal: "round",
@@ -64,8 +63,18 @@
     if (JAR_STYLE_ALIASES[s]) s = JAR_STYLE_ALIASES[s];
     return JAR_STYLE_IDS.includes(s) ? s : "classic";
   }
-  let jarStyle = parseJarStyle(params.get("style") || params.get("jarStyle"));
+  const widgetMode = params.get("widget") === "pirate" ? "pirate" : params.get("widget") === "glass" ? "glass" : "";
+  document.documentElement.classList.toggle("pirate-widget", widgetMode === "pirate");
+  let jarStyle = widgetMode === "pirate"
+    ? (["duck-pirate", "duck-cruise", "monkey-pirate"].includes(parseJarStyle(params.get("style"))) ? parseJarStyle(params.get("style")) : "duck-pirate")
+    : widgetMode === "glass"
+      ? (["classic", "original"].includes(parseJarStyle(params.get("style") || params.get("jarStyle"))) ? parseJarStyle(params.get("style") || params.get("jarStyle")) : "classic")
+      : parseJarStyle(params.get("style") || params.get("jarStyle"));
   const isDuckBoat = () => jarStyle === "duck-pirate" || jarStyle === "duck-cruise" || jarStyle === "monkey-pirate";
+  // Ships default to green-screen; glass jars keep their transparent background.
+  const chroma = params.has("chroma") ? params.get("chroma") === "1" : isDuckBoat();
+  document.documentElement.classList.toggle("chroma", chroma);
+  document.body.classList.toggle("chroma", chroma);
   const GLASS_BODY_URL = "/gifts/jar/art/glass-body.png?v=jar59";
   const GLASS_BASE_URL = "/gifts/jar/art/glass-base.png?v=jar59";
   const GLASS_RIM_URL = "/gifts/jar/art/glass-rim.png?v=jar59";
@@ -121,7 +130,8 @@
   const hudCount = document.getElementById("hudCount");
   const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(CHANNEL) : null;
   let showSultanBalloons = params.get("sultan") !== "0";
-  let boatScale = Math.max(0.1, Math.min(1.8, (Number(params.get("boatScale")) || 100) / 100));
+  let boatScale = Math.max(0.1, Math.min(1.8, (Number(params.get("boatScale")) || 20) / 100));
+  let seaLevel = Math.max(0.15, Math.min(0.5, (Number(params.get("seaLevel")) || 25) / 100));
   let sultanScale = Math.max(0.3, Math.min(1.8, (Number(params.get("sultanScale")) || 100) / 100));
   let sultanRows = [];
   const sultanAvatarCache = new Map();
@@ -155,8 +165,13 @@
   let fullSince = 0;
   let lastPileCheck = -Infinity;
   let totalLiveCoins = 0;
+  let pirateNetFx = null;
+  let pirateNetCooldownUntil = 0;
+  let pirateAutoBoatX = 0;
+  let pirateDeliveryMove = null;
   let displayedBoatLevel = 1;
   let boatUpgradeFx = null;
+  let pirateCannon = null;
   let repairAudioCtx = null;
 
   function playRepairSound(kind = "hammer") {
@@ -226,7 +241,7 @@
         const saved = savedSultanPosition[rank] || legacy;
         if (!saved || !Number.isFinite(saved.x) || !Number.isFinite(saved.y)) continue;
         sultanPositions[rank] = {
-          x: Math.max(-0.48, Math.min(0.48, saved.x)),
+          x: Math.max(-1.2, Math.min(1.2, saved.x)),
           y: Math.max(-0.44, Math.min(0.44, saved.y)),
         };
       }
@@ -277,7 +292,7 @@
   }
 
   function queuedCount() {
-    let n = 0;
+    let n = pirateCannon?.reserved || 0;
     for (const item of spawnQ) n += item.left;
     return n;
   }
@@ -354,22 +369,35 @@
     return baseR * giftSizeScale(giftName, suppliedCoins);
   }
 
-  function iconUrl(giftName) {
-    const rec = catalogByKey.get(normKey(giftName));
-    return rec?.file ? ICONS + rec.file : UNKNOWN;
+  function safeGiftPicture(picture) {
+    const value = String(picture || "").trim();
+    // Accept only image locations, never executable/data/file URLs.
+    if (/^https?:\/\//i.test(value) || /^\/gifts\/jar\/icons\/[a-z0-9_.%-]+(?:\?[^#]*)?$/i.test(value)) return value;
+    return "";
   }
 
-  function loadImage(giftName) {
-    const url = iconUrl(giftName);
-    const cached = imgCache.get(url);
+  function iconUrl(giftName, picture = "") {
+    const rec = catalogByKey.get(normKey(giftName));
+    // A known gift keeps its own artwork even if an upstream cached picture
+    // belongs to the preceding gift. Unknown names use their own event image.
+    return rec?.file
+      ? ICONS + encodeURIComponent(rec.file) + "?v=" + ICON_REVISION
+      : safeGiftPicture(picture) || UNKNOWN;
+  }
+
+  function loadImage(giftName, picture = "") {
+    const url = iconUrl(giftName, picture);
+    const key = normKey(giftName) + "|" + url;
+    const cached = imgCache.get(key);
     if (cached) return cached;
     const img = new Image();
     img.decoding = "async";
-    img.src = url;
     img.onerror = () => {
+      img.onerror = null;
       if (url !== UNKNOWN) img.src = UNKNOWN;
     };
-    imgCache.set(url, img);
+    img.src = url;
+    imgCache.set(key, img);
     return img;
   }
 
@@ -574,7 +602,8 @@
     const maxW = Math.max(160, w - margin * 2 - sideRoom * 2);
     const maxH = Math.max(200, h - margin * 2 - dropRoom - hudRoom);
     const aspect = shapeAspect();
-    let jarW = Math.min(maxW, maxH / aspect, jarStyle === "wide" ? 400 : jarStyle === "original" ? 420 : 360);
+    const sizeScale = widgetMode === "glass" ? glassJarScale : 1;
+    let jarW = Math.min(maxW, maxH / aspect, (jarStyle === "wide" ? 400 : jarStyle === "original" ? 420 : 360) * sizeScale);
     let jarH = jarW * aspect;
     if (jarH > maxH) {
       jarH = maxH;
@@ -670,8 +699,8 @@
 
   function layoutDuckBoat(w, h) {
     const margin = Math.max(8, Math.min(w, h) * .018);
-    const waterTop = h * .61;
-    const waterBottom = h * .91;
+    const waterTop = h * (1 - seaLevel);
+    const waterBottom = h * .98;
     const left = Math.max(margin, w * .08);
     const right = Math.min(w - margin, w * .92);
     const floor = waterBottom;
@@ -730,7 +759,7 @@
     }
   }
 
-  function enqueueDrop(giftName, count, suppliedCoins = 0, countCoins = true) {
+  function enqueueDrop(giftName, count, suppliedCoins = 0, countCoins = true, picture = "", sender = null) {
     const n = Math.max(0, Math.floor(Number(count) || 0));
     if (!n || !giftName) return;
     const take = Math.min(n, roomLeft());
@@ -739,6 +768,9 @@
     if (countCoins) totalLiveCoins += coins * take;
     spawnQ.push({
       giftName: String(giftName),
+      picture: safeGiftPicture(picture),
+      sender,
+      cannonEligible: !!sender,
       coins,
       left: take,
       img: null,
@@ -776,7 +808,7 @@
   const seenSourceIds = new Set();
   const seenJournalIds = new Set();
   let lastDirectDropAt = 0;
-  function acceptDrop(giftName, count, eventId = "", sourceEventId = "", suppliedCoins = 0) {
+  function acceptDrop(giftName, count, eventId = "", sourceEventId = "", suppliedCoins = 0, picture = "", sender = null) {
     const n = Math.max(0, Math.floor(Number(count) || 0));
     const name = String(giftName || "").trim();
     if (!name || !n) return;
@@ -805,10 +837,35 @@
     if (!stableId && recentDrops.some((d) => d.key === key && t - d.t < 120)) return;
     recentDrops.push({ key, t });
     if (recentDrops.length > 48) recentDrops.shift();
-    enqueueDrop(name, n, suppliedCoins, true);
+    enqueueDrop(name, n, suppliedCoins, true, picture, sender || { name: "ผู้ส่งของขวัญ", avatar: "" });
+  }
+
+  function cannonGift(item) {
+    return !!pirateCannon && isDuckBoat() && item.cannonEligible && item.coins >= 1000;
+  }
+
+  function pendingCannonGift() {
+    return spawnQ.some(cannonGift);
+  }
+
+  function updatePirateCannon(nowMs) {
+    if (!pirateCannon || !catalogReady || !geom) return;
+    pirateCannon.update(nowMs);
+    if (!isDuckBoat() || pirateCannon.busy || pirateNetFx || pirateDeliveryMove || boatUpgradeFx) return;
+    const index = spawnQ.findIndex(cannonGift);
+    if (index < 0) return;
+    if (pirateCannon.play(spawnQ[index], nowMs)) spawnQ.splice(index, 1);
+  }
+
+  function giftSender(data) {
+    return {
+      name: String(data.nick || data.nickname || (typeof data.sender === "string" ? data.sender : "") || data.user || data.userName || "ผู้ส่งของขวัญ"),
+      avatar: String(data.avatar || data.avatarUrl || ""),
+    };
   }
 
   function resetJar() {
+    pirateCannon?.reset();
     spawnQ.length = 0;
     pileFull = false;
     pileAreaRatio = 0;
@@ -818,6 +875,10 @@
     totalLiveCoins = 0;
     displayedBoatLevel = 1;
     boatUpgradeFx = null;
+    pirateNetFx = null;
+    pirateNetCooldownUntil = 0;
+    pirateAutoBoatX = 0;
+    pirateDeliveryMove = null;
     Composite.clear(engine.world, false, true);
     wallBodies = [];
     if (geom) rebuildWalls();
@@ -829,29 +890,33 @@
     spawnWait -= dt;
     if (spawnWait > 0) return;
     const queued = queuedCount();
-    let budget = queued > 400 ? 3 : queued > 120 ? 2 : 1;
+    let budget = isDuckBoat()
+      ? 5
+      : (queued > 400 ? 3 : queued > 120 ? 2 : 1);
     while (budget > 0 && spawnQ.length && giftBodies().length < OVERLAY_CAP) {
       // Premium gifts use a separate priority lane. A large/blocked water
       // queue must never delay gifts that should float above the boat.
-      let itemIndex = 0;
+      let itemIndex = spawnQ.findIndex(q => !cannonGift(q));
+      if (itemIndex < 0) break;
       if (isDuckBoat()) {
-        const premiumIndex = spawnQ.findIndex((q) => giftCoins(q.giftName, q.coins) >= 100);
+        const premiumIndex = spawnQ.findIndex((q) => !cannonGift(q) && giftCoins(q.giftName, q.coins) > 100);
         if (premiumIndex >= 0) itemIndex = premiumIndex;
       }
       const item = spawnQ[itemIndex];
-      if (!item.img) item.img = loadImage(item.giftName);
+      if (!item.img) item.img = loadImage(item.giftName, item.picture);
       // A little size variation prevents equal circles from settling into a
       // mechanical honeycomb while keeping every low-tier sticker small.
       const baseGiftR = giftRadius(item.giftName, item.coins);
-      const sizeJitter = isDuckBoat() && giftCoins(item.giftName, item.coins) < 10
-        ? 0.82 + Math.random() * 0.28
-        : 1;
+      // Keep all eleven price tiers deterministic across Glass Jar, Dragon,
+      // and Pirate Ship. Equal coin values must always render at one tier size.
+      const sizeJitter = 1;
       const r = baseGiftR * sizeJitter;
-      const premium = isDuckBoat() && giftCoins(item.giftName, item.coins) >= 100;
+      const premium = isDuckBoat() && giftCoins(item.giftName, item.coins) > 100;
+      if (isDuckBoat() && !premium && !item.fromBoat && !ensurePirateReleasePosition(performance.now())) return;
       const lipR = Math.max(5, geom.wallT * 0.62);
       const spread = Math.max(0, Math.min(geom.mouthW * 0.28, geom.mouthW / 2 - lipR - r - 4));
       const waterOverflow = isDuckBoat() && !premium && boatWaterIsFull();
-      const y = premium
+      let y = premium
         ? Math.max(r + 4, geom.top + r + Math.random() * Math.max(8, geom.h * .12))
         : Math.max(r + 2, isDuckBoat()
           ? geom.waterTop - r - Math.random() * Math.max(12, geom.h * .04)
@@ -866,6 +931,18 @@
           : geom.cx + (Math.random() * 2 - 1) * spread;
         free = !existing.some(b => Math.hypot(b.position.x - x, b.position.y - y) < r + b.circleRadius + 2);
         if (free) break;
+      }
+      if (isDuckBoat()) {
+        const bounds = duckBoatBounds();
+        const deckSpread = bounds ? Math.min(bounds.w * .18, Math.max(3, geom.jarW * .035)) : 3;
+        x = (bounds ? bounds.cx : geom.cx) + (Math.random() * 2 - 1) * deckSpread;
+        y = bounds ? bounds.boatY - Math.max(r * 1.35, bounds.h * .22) : geom.waterTop - r * 2;
+        free = true;
+      }
+      if (item.fromCannon && isDuckBoat()) {
+        x = geom.w * item.fromCannon.x;
+        y = geom.h * item.fromCannon.y;
+        free = true;
       }
       if (!free && !premium && !isDuckBoat()) break;
       const body = Bodies.circle(x, y, r, {
@@ -883,19 +960,38 @@
             ? { category: CAT_OVERFLOW, mask: CAT_OVERFLOW | CAT_GROUND }
             : { category: CAT_GIFT, mask: CAT_INNER | CAT_GIFT | CAT_GROUND },
       });
-      Body.setVelocity(body, { x: (Math.random() * 2 - 1) * 0.6, y: 1.2 });
+      Body.setVelocity(body, isDuckBoat() && !premium
+        ? { x: (Math.random() * 2 - 1) * 1.5, y: 2.1 }
+        : { x: (Math.random() * 2 - 1) * 0.6, y: premium ? 0 : 1.2 });
+      const launchAt = performance.now();
       body.plugin = {
         kind: "gift", img: item.img, giftName: item.giftName, r, spilled: false,
+        giftPicture: item.picture,
         premium, waterOverflow, sizeJitter, coins: item.coins,
         tetherSlot: premium ? giftBodies().filter((b) => b.plugin?.premium).length : -1,
         bobSeed: Math.random() * Math.PI * 2,
+        launchAt: premium ? launchAt : 0,
+        launchDuration: premium ? (item.fromCannon?.duration || 1700) : 0,
+        cannonReturn: !!item.fromCannon,
+        launchStartX: x,
+        launchStartY: y,
       };
       Composite.add(engine.world, body);
+      if (isDuckBoat() && !premium && pirateDeliveryMove?.phase === "hold") {
+        // Keep the boat at the selected free zone while the whole burst is
+        // released. Each new deck drop extends the short settle window; the
+        // boat returns only after the burst has stopped, not after every gift.
+        pirateDeliveryMove.returnAt = performance.now() + 320;
+      }
       item.left -= 1;
       budget -= 1;
       if (item.left <= 0) spawnQ.splice(itemIndex, 1);
     }
-    spawnWait = queued <= 16 ? 0.08 : queued <= 80 ? 0.04 : 0.02;
+    // Five deck drops every quarter second gives a stable 20 gifts/second:
+    // a 100-piece combo clears in about five seconds without one huge physics spike.
+    spawnWait = isDuckBoat()
+      ? 0.25
+      : (queued <= 16 ? 0.08 : queued <= 80 ? 0.04 : 0.02);
   }
 
   function markSpill(b, dir) {
@@ -1065,6 +1161,8 @@
   }
 
   function updateBoatUpgradeFx(nowMs) {
+    // Complete a repair already in progress; otherwise the new salute goes first.
+    if (!boatUpgradeFx && (pirateCannon?.busy || pendingCannonGift())) return;
     const target = targetBoatLevel();
     if (target < displayedBoatLevel) {
       displayedBoatLevel = target;
@@ -1111,11 +1209,309 @@
     let aw = maxW;
     let ah = aw / ratio;
     if (ah > maxH) { ah = maxH; aw = ah * ratio; }
-    const cx = geom.cx + boatPosition.x * geom.w;
+    const cx = geom.cx + (boatPosition.x + pirateAutoBoatX) * geom.w;
     const boatY = geom.boatY + boatPosition.y * geom.h;
     const ax = cx - aw / 2;
     const ay = boatY - ah * .76;
     return { art, x: ax, y: ay, w: aw, h: ah, cx, boatY };
+  }
+
+  function netEase(t) {
+    const x = Math.max(0, Math.min(1, t));
+    return x * x * (3 - 2 * x);
+  }
+
+  function seaReleaseTarget() {
+    if (!geom || !isDuckBoat()) return null;
+    const bins = 9;
+    const scores = Array(bins).fill(0);
+    const bodies = giftBodies().filter((b) => !b.plugin?.premium && !b.plugin?.netCaptured);
+    for (const body of bodies) {
+      const index = Math.max(0, Math.min(bins - 1, Math.floor((body.position.x - geom.jarLeft) / Math.max(1, geom.jarW) * bins)));
+      const r = body.circleRadius || body.plugin?.r || geom.pieceR;
+      scores[index] += Math.max(.5, (r / Math.max(1, geom.pieceR)) ** 2);
+    }
+    const bounds = duckBoatBounds();
+    if (!bounds) return null;
+    const current = Math.max(0, Math.min(bins - 1, Math.floor((bounds.cx - geom.jarLeft) / Math.max(1, geom.jarW) * bins)));
+    if (scores[current] < 8) return null;
+    let best = 0;
+    for (let i = 1; i < bins; i++) {
+      if (scores[i] < scores[best] - .01 || (Math.abs(scores[i] - scores[best]) < .01 && Math.abs(i - current) < Math.abs(best - current))) best = i;
+    }
+    if (best === current || scores[best] >= scores[current] - 2) return null;
+    return geom.jarLeft + (best + .5) / bins * geom.jarW;
+  }
+
+  function ensurePirateReleasePosition(nowMs) {
+    if (!isDuckBoat() || pirateNetFx) return !pirateNetFx;
+    if (pirateCannon?.busy) return true;
+    if (pirateDeliveryMove) return pirateDeliveryMove.phase === "hold";
+    const targetX = seaReleaseTarget();
+    if (!Number.isFinite(targetX)) return true;
+    const targetOffset = Math.max(-.3, Math.min(.3, (targetX - geom.cx) / geom.w - boatPosition.x));
+    if (Math.abs(targetOffset - pirateAutoBoatX) < .025) return true;
+    pirateDeliveryMove = {
+      phase: "out",
+      startedAt: nowMs,
+      duration: 850,
+      fromOffset: pirateAutoBoatX,
+      targetOffset,
+      direction: Math.sign(targetOffset - pirateAutoBoatX || 1),
+    };
+    return false;
+  }
+
+  function updatePirateDelivery(nowMs) {
+    const move = pirateDeliveryMove;
+    if (!move || pirateNetFx) return;
+    if (nowMs < move.startedAt) return;
+    const q = netEase(Math.max(0, Math.min(1, (nowMs - move.startedAt) / move.duration)));
+    if (move.phase === "out") {
+      pirateAutoBoatX = move.fromOffset + (move.targetOffset - move.fromOffset) * q;
+      if (q >= 1) {
+        move.phase = "hold";
+        move.returnAt = nowMs + 320;
+      }
+      return;
+    }
+    if (move.phase === "hold") {
+      if (nowMs < (move.returnAt || 0)) return;
+      move.phase = "return";
+      move.startedAt = nowMs;
+      move.fromOffset = pirateAutoBoatX;
+      return;
+    }
+    if (move.phase === "return") {
+      pirateAutoBoatX = move.fromOffset * (1 - q);
+      if (q >= 1) {
+        pirateAutoBoatX = 0;
+        pirateDeliveryMove = null;
+      }
+    }
+  }
+
+  function drawPirateDeliveryWake() {
+    const move = pirateDeliveryMove;
+    if (!move || move.phase === "hold" || !geom) return;
+    const bounds = duckBoatBounds();
+    if (!bounds) return;
+    const dir = move.phase === "out" ? move.direction : -move.direction;
+    ctx.save();
+    ctx.strokeStyle = "rgba(196,242,255,.68)";
+    ctx.lineWidth = Math.max(1.2, geom.w * .0025);
+    ctx.lineCap = "round";
+    for (let i = 0; i < 3; i++) {
+      const d = 12 + i * 11;
+      ctx.beginPath();
+      ctx.moveTo(bounds.cx - dir * d * .2, bounds.boatY + i * 3);
+      ctx.quadraticCurveTo(bounds.cx - dir * d, bounds.boatY + 8 + i * 4, bounds.cx - dir * d * 1.55, bounds.boatY + 3 + i * 7);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function pirateNetProfile(level = boatLevel()) {
+    if (level <= 1) {
+      return {
+        level: 1, name: "อวนเชือกแพไม้", radius: .12, depth: .38,
+        meshX: 2, meshY: 1, duration: 7000,
+        rope: "rgba(214,187,126,.92)", net: "rgba(223,199,145,.86)", fill: "rgba(174,143,82,.08)", line: .0022, floats: 0,
+      };
+    }
+    if (level === 2) {
+      return {
+        level: 2, name: "อวนลากเรือไม้", radius: .16, depth: .45,
+        meshX: 3, meshY: 2, duration: 6500,
+        rope: "rgba(229,207,151,.94)", net: "rgba(235,216,165,.90)", fill: "rgba(192,163,101,.10)", line: .0027, floats: 4,
+      };
+    }
+    return {
+      level: 3, name: "อวนเสริมขอบโจรสลัด", radius: .20, depth: .52,
+      meshX: 5, meshY: 3, duration: 6000,
+      rope: "rgba(255,220,129,.96)", net: "rgba(242,226,181,.94)", fill: "rgba(218,174,70,.12)", line: .0032, floats: 7,
+    };
+  }
+
+  function startPirateNet(nowMs) {
+    if (!isDuckBoat() || pirateNetFx || pirateDeliveryMove || pirateCannon?.busy || pendingCannonGift() || nowMs < pirateNetCooldownUntil || boatUpgradeFx) return;
+    const targets = giftBodies().filter((b) => !b.plugin?.premium && Number(b.plugin?.coins) === 1 && !b.plugin?.netCaptured).slice(0, 10);
+    if (targets.length < 10) return;
+    const bounds = duckBoatBounds();
+    if (!bounds) return;
+    const profile = pirateNetProfile(boatLevel());
+    const giftCenterX = targets.reduce((sum, body) => sum + body.position.x, 0) / targets.length;
+    const targetX = Math.max(geom.jarLeft + geom.jarW * .16, Math.min(geom.jarRight - geom.jarW * .16, giftCenterX));
+    const boatTargetOffset = Math.max(-.30, Math.min(.30, (targetX - geom.cx) / geom.w - boatPosition.x));
+    const targetY = geom.waterTop + Math.max(28, (geom.waterBottom - geom.waterTop) * profile.depth);
+    pirateNetFx = {
+      startedAt: nowMs,
+      duration: profile.duration,
+      profile,
+      anchorX: bounds.cx,
+      anchorY: bounds.boatY - bounds.h * .08,
+      targetX,
+      targetY,
+      boatStartOffset: pirateAutoBoatX,
+      boatTargetOffset,
+      x: bounds.cx,
+      y: bounds.boatY,
+      radius: 4,
+      targets: targets.map((body, i) => ({
+        body,
+        startX: body.position.x,
+        startY: body.position.y,
+        angle: -Math.PI * .85 + i / 9 * Math.PI * 1.7,
+        ring: .42 + (i % 3) * .18,
+      })),
+    };
+    for (const item of pirateNetFx.targets) {
+      item.body.plugin.netCaptured = true;
+      item.body.collisionFilter.mask = 0;
+      Body.setVelocity(item.body, { x: 0, y: 0 });
+      Body.setAngularVelocity(item.body, 0);
+      Sleeping.set(item.body, false);
+    }
+  }
+
+  function finishPirateNet(nowMs) {
+    if (!pirateNetFx) return;
+    const combinedName = pirateNetFx.targets[0]?.body?.plugin?.giftName || "Rose";
+    const combinedPicture = pirateNetFx.targets[0]?.body?.plugin?.giftPicture || "";
+    for (const item of pirateNetFx.targets) Composite.remove(engine.world, item.body);
+    spawnQ.push({
+      giftName: combinedName,
+      picture: combinedPicture,
+      coins: 10,
+      left: 1,
+      img: null,
+      fromBoat: true,
+    });
+    pirateNetFx = null;
+    pirateAutoBoatX = 0;
+    pirateNetCooldownUntil = nowMs + 1300;
+  }
+
+  function updatePirateNet(nowMs) {
+    if (!isDuckBoat()) { pirateNetFx = null; return; }
+    if (!pirateNetFx) startPirateNet(nowMs);
+    const fx = pirateNetFx;
+    if (!fx) return;
+    const p = Math.max(0, Math.min(1, (nowMs - fx.startedAt) / fx.duration));
+    if (p < .22) {
+      pirateAutoBoatX = fx.boatStartOffset + (fx.boatTargetOffset - fx.boatStartOffset) * netEase(p / .22);
+    } else if (p < .84) {
+      pirateAutoBoatX = fx.boatTargetOffset;
+    } else {
+      pirateAutoBoatX = fx.boatTargetOffset * (1 - netEase((p - .84) / .16));
+    }
+    const liveBounds = duckBoatBounds();
+    const anchorX = liveBounds?.cx ?? fx.anchorX;
+    const anchorY = liveBounds ? liveBounds.boatY - liveBounds.h * .08 : fx.anchorY;
+    const spread = fx.profile?.radius || .16;
+    let cx = fx.targetX, cy = fx.targetY, radius = geom.jarW * spread;
+    if (p < .22) {
+      cx = anchorX;
+      cy = anchorY;
+      radius = 3;
+    } else if (p < .43) {
+      const q = netEase((p - .22) / .21);
+      cx = anchorX + (fx.targetX - anchorX) * q;
+      cy = anchorY + (fx.targetY - anchorY) * q;
+      radius = Math.max(4, geom.jarW * spread * q);
+    } else if (p < .65) {
+      const q = netEase((p - .43) / .22);
+      radius = geom.jarW * (spread - spread * .2 * q);
+    } else if (p < .84) {
+      const q = netEase((p - .65) / .19);
+      cx = fx.targetX + (anchorX - fx.targetX) * q;
+      cy = fx.targetY + (anchorY - fx.targetY) * q;
+      radius = geom.jarW * (spread * .8 * (1 - q) + .025);
+    } else {
+      cx = anchorX;
+      cy = anchorY;
+      radius = 3;
+    }
+    fx.anchorX = anchorX; fx.anchorY = anchorY;
+    fx.x = cx; fx.y = cy; fx.radius = radius; fx.progress = p;
+    for (const item of fx.targets) {
+      const gather = netEase(Math.max(0, Math.min(1, (p - .38) / .27)));
+      const tx = cx + Math.cos(item.angle) * radius * item.ring;
+      const ty = cy + Math.sin(item.angle) * radius * item.ring * .62;
+      Body.setPosition(item.body, {
+        x: item.startX + (tx - item.startX) * gather,
+        y: item.startY + (ty - item.startY) * gather,
+      });
+      Body.setVelocity(item.body, { x: 0, y: 0 });
+      Body.setAngularVelocity(item.body, 0);
+      Body.setAngle(item.body, Math.sin(nowMs * .004 + item.angle) * .08);
+    }
+    if (p >= 1) finishPirateNet(nowMs);
+  }
+
+  function drawPirateNet() {
+    const fx = pirateNetFx;
+    if (!fx || !geom) return;
+    const profile = fx.profile || pirateNetProfile(1);
+    const r = Math.max(4, fx.radius);
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = profile.rope;
+    ctx.lineWidth = Math.max(1.3, geom.w * profile.line);
+    ctx.shadowColor = "rgba(0,0,0,.55)";
+    ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.moveTo(fx.anchorX, fx.anchorY);
+    ctx.quadraticCurveTo((fx.anchorX + fx.x) * .5 + Math.sin(fx.progress * Math.PI) * 16, (fx.anchorY + fx.y) * .5, fx.x, fx.y - r * .42);
+    ctx.stroke();
+    if (fx.progress < .22 || fx.progress > .84) {
+      const outward = fx.progress < .22 ? Math.sign(fx.boatTargetOffset - fx.boatStartOffset || 1) : -Math.sign(fx.boatTargetOffset || 1);
+      ctx.strokeStyle = "rgba(190,240,255,.72)";
+      ctx.lineWidth = Math.max(1.2, geom.w * .0025);
+      for (let i = 0; i < 3; i++) {
+        const wake = 10 + i * 11;
+        ctx.beginPath();
+        ctx.moveTo(fx.anchorX - outward * wake * .25, fx.anchorY + i * 3);
+        ctx.quadraticCurveTo(fx.anchorX - outward * wake, fx.anchorY + 8 + i * 5, fx.anchorX - outward * wake * 1.55, fx.anchorY + 2 + i * 8);
+        ctx.stroke();
+      }
+    }
+    ctx.translate(fx.x, fx.y);
+    ctx.strokeStyle = profile.net;
+    ctx.fillStyle = profile.fill;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r, r * .62, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.globalAlpha = .72;
+    for (let i = -profile.meshX; i <= profile.meshX; i++) {
+      const t = i / Math.max(1, profile.meshX);
+      ctx.beginPath();
+      ctx.moveTo(t * r, -Math.sqrt(Math.max(0, 1 - t * t)) * r * .62);
+      ctx.lineTo(t * r * .72, Math.sqrt(Math.max(0, 1 - t * t)) * r * .62);
+      ctx.stroke();
+    }
+    for (let i = -profile.meshY; i <= profile.meshY; i++) {
+      const y = i / Math.max(1, profile.meshY) * r * .45;
+      const half = Math.sqrt(Math.max(0, 1 - (y / (r * .62)) ** 2)) * r;
+      ctx.beginPath();
+      ctx.moveTo(-half, y);
+      ctx.lineTo(half, y);
+      ctx.stroke();
+    }
+    if (profile.floats) {
+      for (let i = 0; i < profile.floats; i++) {
+        const a = Math.PI + (i / Math.max(1, profile.floats - 1)) * Math.PI;
+        const px = Math.cos(a) * r;
+        const py = Math.sin(a) * r * .62;
+        ctx.fillStyle = profile.level >= 3 ? "#f6b83f" : "#d9b66b";
+        ctx.beginPath();
+        ctx.arc(px, py, Math.max(2.2, r * .035), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
   }
 
   function duckRopeAttachPoint() {
@@ -1167,11 +1563,19 @@
       const maxX = manual ? geom.stageR - bodyR : cloudRight;
       const minY = manual ? geom.top + bodyR : cloudTop;
       const maxY = manual ? geom.waterTop - bodyR : cloudBottom;
-      const x = Math.max(minX, Math.min(maxX,
+      let x = Math.max(minX, Math.min(maxX,
         (manual ? b.plugin.manualX : cloudLeft + u * cloudWidth) + driftX));
       const baseY = manual ? b.plugin.manualY : cloudTop + v * cloudHeight;
-      const y = Math.max(minY, Math.min(maxY,
+      let y = Math.max(minY, Math.min(maxY,
         baseY + Math.sin(now * 1.15 + seed) * Math.min(9, maxR * .18)));
+      const launchDuration = Math.max(1, Number(b.plugin.launchDuration) || 1);
+      const launchProgress = b.plugin.launchAt ? Math.max(0, Math.min(1, (performance.now() - b.plugin.launchAt) / launchDuration)) : 1;
+      if (!manual && launchProgress < 1) {
+        const q = 1 - Math.pow(1 - launchProgress, 3);
+        const sway = Math.sin(launchProgress * Math.PI * 2 + seed) * Math.min(10, bodyR * .2) * launchProgress;
+        x = b.plugin.launchStartX + (x - b.plugin.launchStartX) * q + sway;
+        y = b.plugin.launchStartY + (y - b.plugin.launchStartY) * q - Math.sin(launchProgress * Math.PI) * bodyR * .35;
+      }
       Body.setPosition(b, { x, y });
       Body.setVelocity(b, { x: 0, y: 0 });
       Body.setAngularVelocity(b, 0);
@@ -1443,6 +1847,8 @@
     const attachY = attach.y;
     for (let i = 0; i < premium.length; i++) {
       const b = premium[i];
+      ctx.globalAlpha = b.plugin?.cannonReturn
+        ? netEase((performance.now() - b.plugin.launchAt) / 550) : 1;
       ctx.beginPath();
       ctx.moveTo(attachX, attachY);
       ctx.quadraticCurveTo(
@@ -1453,6 +1859,7 @@
       );
       ctx.stroke();
     }
+    ctx.globalAlpha = 1;
     ctx.fillStyle = "rgba(255,255,255,.98)";
     ctx.strokeStyle = "rgba(210,248,255,1)";
     ctx.lineWidth = Math.max(1.5, geom.w * .002);
@@ -1709,6 +2116,8 @@
       ctx.shadowBlur = 0;
       sultanHitBounds.push({
         rank,
+        baseX,
+        radiusX: rx,
         x: x - rx * 1.08,
         y: y - ry * 1.12,
         w: rx * 2.16,
@@ -1967,7 +2376,9 @@
   }
 
   function snapChroma() {
-    if (!chroma) return;
+    // Keep ship artwork, sea effects and gift colors intact. Only the backdrop
+    // is green; do not recolor their pixels or scan the full canvas each frame.
+    if (!chroma || isDuckBoat()) return;
     const x0 = 0;
     const y0 = 0;
     const w = canvas.width;
@@ -2016,6 +2427,8 @@
     ctx.restore();
     drawJarFront();
     if (isDuckBoat()) {
+      drawPirateDeliveryWake();
+      drawPirateNet();
       // Keep the fan visible as it leaves the bow. Redraw the floating gifts
       // over their rope ends so each cord still looks tied behind its icon.
       drawDuckRopes(gifts);
@@ -2025,6 +2438,7 @@
     for (const b of gifts) {
       if (b.plugin && b.plugin.spilled) drawOne(b);
     }
+    pirateCannon?.draw(ctx);
     snapChroma();
     const visibleAndQueued = gifts.length + queuedCount();
     if (visibleAndQueued !== lastHud && hudCount) {
@@ -2037,7 +2451,10 @@
   function frame(ts) {
     const dt = Math.min(0.032, lastTs ? (ts - lastTs) / 1000 : 0.016);
     lastTs = ts;
+    updatePirateDelivery(ts);
+    updatePirateCannon(ts);
     spawnFromQueue(dt);
+    updatePirateNet(ts);
     draw();
     requestAnimationFrame(frame);
   }
@@ -2051,7 +2468,9 @@
         data.count,
         data.deliveryId || (data.at ? `cmd:${data.at}` : ""),
         data.sourceEventId || data.eventId || "",
-        data.coins
+        data.coins,
+        data.giftPicture || data.giftPictureUrl || "",
+        giftSender(data)
       );
       if (Number.isFinite(Number(data.totalCoins))) {
         totalLiveCoins = Math.max(totalLiveCoins, Math.max(0, Number(data.totalCoins)));
@@ -2068,19 +2487,35 @@
       if (giftBodies().length || spawnQ.length) return;
       const pieces = Array.isArray(data.pieces) ? data.pieces : [];
       totalLiveCoins = 0;
-      for (const p of pieces) enqueueDrop(p.giftName || p.name, p.count, p.coins, true);
+      for (const p of pieces) enqueueDrop(p.giftName || p.name, p.count, p.coins, true, p.giftPicture || p.giftPictureUrl || "");
       if (Number.isFinite(Number(data.totalCoins))) totalLiveCoins = Math.max(0, Number(data.totalCoins));
       return;
     }
     if (data.type === "jar-style") {
       if (data.color) setJarColor(data.color);
-      if (data.style) setJarStyle(data.style);
+      if (widgetMode === "glass" && Number.isFinite(Number(data.jarScale))) {
+        const nextScale = Math.max(0.5, Math.min(1.5, Number(data.jarScale) / 100));
+        if (nextScale !== glassJarScale) {
+          glassJarScale = nextScale;
+          resize();
+        }
+      }
+      if (widgetMode === "pirate") setJarStyle(["duck-pirate", "duck-cruise", "monkey-pirate"].includes(parseJarStyle(data.pirateStyle)) ? data.pirateStyle : "duck-pirate");
+      else if (widgetMode === "glass") setJarStyle(["classic", "original"].includes(parseJarStyle(data.style)) ? data.style : "classic");
+      else if (data.style) setJarStyle(data.style);
       if (typeof data.sultanBalloons === "boolean") {
         showSultanBalloons = data.sultanBalloons;
         if (!showSultanBalloons) sultanRows = [];
       }
       if (Number.isFinite(Number(data.boatScale))) {
         boatScale = Math.max(0.1, Math.min(1.8, Number(data.boatScale) / 100));
+      }
+      if (widgetMode === "pirate" && Number.isFinite(Number(data.seaLevel))) {
+        const nextSeaLevel = Math.max(0.15, Math.min(0.5, Number(data.seaLevel) / 100));
+        if (nextSeaLevel !== seaLevel) {
+          seaLevel = nextSeaLevel;
+          resize();
+        }
       }
       if (Number.isFinite(Number(data.sultanScale))) {
         sultanScale = Math.max(0.3, Math.min(1.8, Number(data.sultanScale) / 100));
@@ -2172,6 +2607,8 @@
         startY: e.clientY,
         originX: position.x,
         originY: position.y,
+        minX: (pickedSultan.radiusX - pickedSultan.baseX) / Math.max(1, geom.w),
+        maxX: ((canvas.clientWidth || geom.w) - pickedSultan.radiusX - pickedSultan.baseX) / Math.max(1, geom.w),
       };
       canvas.style.cursor = "grabbing";
       e.preventDefault();
@@ -2208,7 +2645,7 @@
     }
     if (sultanDrag && geom) {
       const position = sultanPositions[sultanDrag.rank];
-      position.x = Math.max(-0.48, Math.min(0.48,
+      position.x = Math.max(sultanDrag.minX, Math.min(sultanDrag.maxX,
         sultanDrag.originX + (e.clientX - sultanDrag.startX) / Math.max(1, geom.w)));
       position.y = Math.max(-0.44, Math.min(0.44,
         sultanDrag.originY + (e.clientY - sultanDrag.startY) / Math.max(1, geom.h)));
@@ -2275,13 +2712,32 @@
       submerged: gifts.filter((b) => !b.plugin?.premium).length,
       gifts: gifts.map((b) => ({
         name: b.plugin?.giftName,
+        image: b.plugin?.img?.src || "",
         coins: b.plugin?.coins || giftCoins(b.plugin?.giftName),
         premium: !!b.plugin?.premium,
         y: Math.round(b.position.y),
       })),
       engine: "matter",
+      cannon: pirateCannon?.snapshot() || null,
+      cannonQueued: spawnQ.filter(cannonGift).length,
+      boatLevel: displayedBoatLevel,
+      totalCoins: totalLiveCoins,
     };
   };
+
+  if (window.PirateCannon && isDuckBoat()) {
+    pirateCannon = window.PirateCannon.create({
+      getBounds: duckBoatBounds,
+      getViewport: () => ({ w: geom?.w || window.innerWidth, h: geom?.h || window.innerHeight }),
+      loadGiftImage: loadImage,
+      getGiftSize: item => giftRadius(item.giftName, item.coins) * 2,
+      onReturn: (item, fromCannon) => {
+        // Return the original gifts exactly once. Firework copies are decorative.
+        spawnQ.unshift({ ...item, cannonEligible: false, fromCannon });
+        spawnWait = 0;
+      },
+    });
+  }
 
   primeEventJournal();
   resize();
@@ -2315,7 +2771,12 @@
       for (const ev of evs) {
         if (!ev.id || jarSeen.has(ev.id)) continue;
         jarSeen.add(ev.id);
-        if (ev.kind === "gift" && ev.gift) acceptDrop(ev.gift, ev.count || 1, `poll:${ev.id}`, `gift:${ev.id}`);
+        if (ev.kind === "gift" && ev.gift) {
+          const count = Math.max(1, Math.floor(Number(ev.count) || 1));
+          // Live-stats coins is the whole combo value, not the unit price.
+          const perGiftCoins = Math.max(0, Number(ev.coins) || 0) / count;
+          acceptDrop(ev.gift, count, `poll:${ev.id}`, `gift:${ev.id}`, perGiftCoins, ev.giftPicture || ev.giftPictureUrl || "", giftSender(ev));
+        }
       }
       if (jarSeen.size > 240) jarSeen = new Set([...jarSeen].slice(-80));
     } catch {
