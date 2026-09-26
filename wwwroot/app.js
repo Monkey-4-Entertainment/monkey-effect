@@ -216,11 +216,6 @@ async function runInterruptBurstTest() {
 
 function unlockAudio() {
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (AudioCtx) {
-      if (!boatRepairAudioCtx) boatRepairAudioCtx = new AudioCtx();
-      if (boatRepairAudioCtx.state === "suspended") boatRepairAudioCtx.resume().catch(() => {});
-    }
     const a = new Audio(
       "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"
     );
@@ -260,7 +255,7 @@ const WORKSPACE_META = {
   video: { title: "วิดีโอใส", sub: "" },
   interrupt: { title: "ขัดขวางจอ", sub: "" },
   win: { title: "นับ Win", sub: "" },
-  jar: { title: "โหลแก้ว / เรือของขวัญ", sub: "" },
+  jar: { title: "โหลแก้วสะสมของขวัญ", sub: "" },
   live: { title: "Overlay Gallery", sub: "" },
   tts: { title: "อ่านเสียง AI", sub: "" },
   photoprint: { title: "ปริ้นรูป", sub: "" },
@@ -1723,95 +1718,6 @@ function waitForHostSong(song, token) {
   });
 }
 
-let boatRepairAudioCtx = null;
-let boatRepairSoundQueue = 0;
-let boatRepairSoundBusy = false;
-let boatRepairSoundAudio = null;
-
-function boatStageForCoins(coins) {
-  if (coins >= 5000) return 3;
-  if (coins >= 1000) return 2;
-  return 1;
-}
-
-function playBoatRepairHit(kind = "hammer") {
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    if (!boatRepairAudioCtx) boatRepairAudioCtx = new AudioCtx();
-    if (boatRepairAudioCtx.state === "suspended") boatRepairAudioCtx.resume().catch(() => {});
-    const ac = boatRepairAudioCtx;
-    const now = ac.currentTime;
-    const gain = ac.createGain();
-    gain.connect(ac.destination);
-    const osc = ac.createOscillator();
-    osc.connect(gain);
-    if (kind === "hammer") {
-      osc.type = "triangle";
-      osc.frequency.setValueAtTime(210, now);
-      osc.frequency.exponentialRampToValueAtTime(68, now + .11);
-      gain.gain.setValueAtTime(.0001, now);
-      gain.gain.exponentialRampToValueAtTime(.2, now + .008);
-      gain.gain.exponentialRampToValueAtTime(.0001, now + .16);
-      osc.start(now); osc.stop(now + .17);
-    } else if (kind === "saw") {
-      osc.type = "sawtooth";
-      osc.frequency.setValueAtTime(130, now);
-      osc.frequency.linearRampToValueAtTime(245, now + .22);
-      gain.gain.setValueAtTime(.0001, now);
-      gain.gain.linearRampToValueAtTime(.055, now + .025);
-      gain.gain.linearRampToValueAtTime(.0001, now + .25);
-      osc.start(now); osc.stop(now + .26);
-    } else {
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(620, now);
-      osc.frequency.exponentialRampToValueAtTime(1700, now + .3);
-      gain.gain.setValueAtTime(.0001, now);
-      gain.gain.exponentialRampToValueAtTime(.14, now + .015);
-      gain.gain.exponentialRampToValueAtTime(.0001, now + .4);
-      osc.start(now); osc.stop(now + .41);
-    }
-  } catch (_) {}
-}
-
-function queueBoatRepairSound(stages = 1) {
-  boatRepairSoundQueue += Math.max(0, Math.floor(stages));
-  if (boatRepairSoundBusy || !boatRepairSoundQueue) return;
-  const run = () => {
-    if (!boatRepairSoundQueue) { boatRepairSoundBusy = false; return; }
-    boatRepairSoundBusy = true;
-    boatRepairSoundQueue--;
-    const audio = new Audio("/gifts/jar/audio/boat-repair-10s-real.wav?v=repairaudio2");
-    boatRepairSoundAudio = audio;
-    audio.preload = "auto";
-    audio.volume = .62;
-    let finished = false;
-    let fallbackStarted = false;
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      if (boatRepairSoundAudio === audio) boatRepairSoundAudio = null;
-      setTimeout(run, 80);
-    };
-    const fallback = () => {
-      if (fallbackStarted || finished) return;
-      fallbackStarted = true;
-      let step = 0;
-      const timer = setInterval(() => {
-        if (step * .55 >= 10) { clearInterval(timer); finish(); return; }
-        if (step === 9) playBoatRepairHit("spark");
-        else playBoatRepairHit(step % 3 === 1 ? "saw" : "hammer");
-        step++;
-      }, 550);
-    };
-    audio.onended = finish;
-    audio.onerror = fallback;
-    const promise = audio.play();
-    if (promise && typeof promise.catch === "function") promise.catch(fallback);
-  };
-  run();
-}
-
 function clearMusicHookTimer() {
   if (musicHookTimer) {
     clearTimeout(musicHookTimer);
@@ -2040,7 +1946,6 @@ async function playMusicForGift(ruleIdOrGiftName, byId = false, times = 1) {
 
   if (byId) stopMusic({ silentUi: true, skipHostStop: true });
   musicQueue.push(...songs);
-  // เริ่มดึงไฟล์ล่วงหน้าทันที
   for (const s of songs) {
     if (s?.id) getAudioBlobCached(s.id).catch(() => {});
   }
@@ -2057,8 +1962,9 @@ async function playMusicForGift(ruleIdOrGiftName, byId = false, times = 1) {
 async function playMusicForGiftQueue() {
   if (musicDraining || !musicQueue.length) return;
   musicDraining = true;
-  try { await drainMusicQueue(musicPlayGen); }
-  finally {
+  try {
+    await drainMusicQueue(musicPlayGen);
+  } finally {
     musicDraining = false;
     if (musicQueue.length) playMusicForGiftQueue();
   }
@@ -4707,10 +4613,10 @@ async function seedDefaultWinIfNeeded() {
   }
 }
 
-function saveWinConfig(feedbackDelta = 0) {
+function saveWinConfig() {
   localStorage.setItem(WIN_KEY, JSON.stringify(winConfig));
   renderWinUiState();
-  syncWinScoreToOverlay(feedbackDelta);
+  syncWinScoreToOverlay();
   renderGiftActionOverview();
 }
 
@@ -4728,13 +4634,12 @@ function postWinOverlayCommand(cmd) {
   winChannel?.postMessage(payload);
 }
 
-function syncWinScoreToOverlay(delta = 0) {
+function syncWinScoreToOverlay() {
   postWinOverlayCommand({
     type: "win-score",
     score: winConfig.score,
     target: winConfig.target,
     visible: !!winConfig.showOverlay,
-    delta: Number(delta) || 0,
   });
 }
 
@@ -4751,7 +4656,7 @@ async function openWinOverlay() {
   }
 
   if (!openedNative) {
-    const url = "/chroma-overlay.html?mode=chroma&v=winfx2";
+    const url = "/chroma-overlay.html?mode=chroma&v=chroma2";
     if (!winOverlayWin || winOverlayWin.closed) {
       winOverlayWin = window.open(url, "monkeyeffect_chroma_overlay", "popup=yes,width=540,height=660");
     } else {
@@ -4857,16 +4762,7 @@ function adjustWinScore(delta, reason) {
   const d = Number(delta) || 0;
   if (!d) return;
   winConfig.score = (Number(winConfig.score) || 0) + d;
-  saveWinConfig(d);
-  const scoreDisplay = document.getElementById("winScoreDisplay");
-  scoreDisplay?.animate?.(
-    [
-      { transform: "scale(1)", filter: "none" },
-      { transform: "scale(1.55)", color: d > 0 ? "#7dff8f" : "#ff6262", filter: `drop-shadow(0 0 16px ${d > 0 ? "#4bff73" : "#ff3737"})`, offset: .34 },
-      { transform: "scale(1)", filter: "none" },
-    ],
-    { duration: 620, easing: "cubic-bezier(.18,.88,.28,1.25)" }
-  );
+  saveWinConfig();
   const el = document.getElementById("log");
   if (el && reason) {
     // light feedback via existing poll log is enough; optional console
@@ -4945,45 +4841,68 @@ function handleGiftForWin(parsed) {
   adjustWinScore(rule.delta, `gift ${parsed.giftName}`);
 }
 
-/* ========== Gift boat (เรือของขวัญ) ========== */
+/* ========== Gift jar (โหลแก้วสะสมของขวัญ) ========== */
 const JAR_KEY = "tgr_jar_config";
 const JAR_CHANNEL = "tgr-jar-overlay";
 const JAR_CMD_KEY = "tgr_jar_overlay_cmd";
 const JAR_STATUS_KEY = "tgr_jar_overlay_status";
-const JAR_EVENTS_KEY = "tgr_jar_overlay_events_v1";
 const JAR_OVERLAY_CAP = 5000;
 const jarChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(JAR_CHANNEL) : null;
 let jarOverlayWin = null;
 let jarConfig = loadJarConfig();
 let jarPieces = [];
 let jarTotalCount = 0;
-let jarTotalCoins = 0;
 let jarSessionLive = false;
 let jarLiveKnown = false;
 let jarCatalogNames = [];
-const jarCatalogCoins = new Map();
+const DRAGON_KEY = "meDragonWidgetConfigV2";
+let dragonConfig = loadDragonConfig();
+let dragonOverlayWin = null;
 
-function jarGiftKey(name) {
-  return String(name || "")
-    .normalize("NFKC")
-    .toLowerCase()
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+function loadDragonConfig() {
+  const fallback = { scale: 45, zone: 30, side: "right", safe: 62, fire: true, sound: false, ranks: true, quality: "auto", locked: true };
+  try {
+    const x = JSON.parse(localStorage.getItem(DRAGON_KEY) || "null") || {};
+    return { ...fallback, ...x, scale: Math.max(25, Math.min(100, Number(x.scale) || 45)), zone: Math.max(10, Math.min(60, Number(x.zone) || 30)), safe: Math.max(45, Math.min(75, Number(x.safe) || 62)) };
+  } catch { return fallback; }
 }
 
-function jarGiftCoins(name) {
-  const coins = Number(jarCatalogCoins.get(jarGiftKey(name)));
-  return Number.isFinite(coins) && coins > 0 ? coins : 0;
+function dragonOverlayObsUrl() {
+  const p = new URLSearchParams({ scale: dragonConfig.scale, zone: dragonConfig.zone, side: dragonConfig.side, safe: dragonConfig.safe, fire: dragonConfig.fire ? 1 : 0, sound: dragonConfig.sound ? 1 : 0, ranks: dragonConfig.ranks ? 1 : 0, quality: dragonConfig.quality, locked: dragonConfig.locked ? 1 : 0 });
+  return `http://127.0.0.1:3847/dragon-overlay.html?v=dragon3&${p}`;
+}
+
+function openDragonOverlay() {
+  const url = String(dragonOverlayObsUrl()).replace(/^https?:\/\/[^/]+/, "");
+  dragonOverlayWin = window.open(
+    url,
+    "monkeyeffect_dragon_overlay",
+    "popup=yes,width=432,height=768,toolbar=0,location=0,menubar=0,status=0,scrollbars=0"
+  );
+  if (!dragonOverlayWin) throw new Error("เปิด Overlay มังกรไม่สำเร็จ กรุณาอนุญาตหน้าต่างป๊อปอัป");
+  dragonOverlayWin.focus();
+}
+
+function closeDragonOverlay() {
+  try { dragonOverlayWin?.close(); } catch { /* ignore */ }
+  dragonOverlayWin = null;
+}
+
+function saveDragonConfig() {
+  localStorage.setItem(DRAGON_KEY, JSON.stringify(dragonConfig));
+  jarChannel?.postMessage({ type: "dragon-config", ...dragonConfig, at: Date.now() });
+  const url = dragonOverlayObsUrl();
+  document.querySelectorAll('.og-widget[data-id="dragon-hoard"] .og-url').forEach((el) => { el.value = url; });
+  document.querySelectorAll('.og-widget[data-id="dragon-hoard"] .og-copy').forEach((el) => { el.dataset.url = url; });
+  document.querySelectorAll('.og-widget[data-id="dragon-hoard"] .og-preview').forEach((el) => { el.dataset.url = String(url).replace(/^https?:\/\/[^/]+/, "") + "&gallery=1"; });
 }
 
 const JAR_STYLE_OPTIONS = [
   { id: "classic", label: "เมสัน", hint: "ทรงโหลเดิม คอเกลียว" },
+  { id: "round", label: "โหลกลม", hint: "ปากแคบ พุงกลม" },
+  { id: "tall", label: "ขวดสูง", hint: "คอเรียว ตัวสูง" },
+  { id: "wide", label: "โหลป้าน", hint: "ปากกว้าง ตัวเตี้ย" },
   { id: "original", label: "แก้วใส", hint: "แบบ Coin Jar" },
-  { id: "duck-pirate", label: "เรือเป็ดโจรสลัด", hint: "≥100 ลอยผูกเชือก · <100 อยู่ในน้ำ" },
-  { id: "duck-cruise", label: "เรือเป็ดสำราญ", hint: "≥100 ลอยผูกเชือก · <100 อยู่ในน้ำ" },
-  { id: "monkey-pirate", label: "เรือลิงโจรสลัด", hint: "ลิงกัปตัน · ≥100 เป็นช่อผูกเชือก · <100 อยู่ในน้ำ" },
 ];
 const JAR_STYLE_ALIASES = {
   crystal: "round",
@@ -5001,13 +4920,24 @@ const JAR_STYLE_ALIASES = {
 };
 
 function defaultJarConfig() {
-  return { enabled: true, color: "#e8f4ff", style: "duck-pirate", sultanBalloons: true, boatScale: 100, sultanScale: 100 };
+  return {
+    enabled: true,
+    color: "#e8f4ff",
+    style: "classic",
+    jarScale: 100,
+    sultanBalloons: true,
+    pirateStyle: "duck-pirate",
+    boatScale: 20,
+    seaLevel: 25,
+    sultanScale: 100,
+    pirateConfigVersion: 2,
+  };
 }
 
 function normalizeJarStyle(raw) {
   let s = String(raw || "").toLowerCase().trim();
   if (JAR_STYLE_ALIASES[s]) s = JAR_STYLE_ALIASES[s];
-  return JAR_STYLE_OPTIONS.some((x) => x.id === s) ? s : "duck-pirate";
+  return JAR_STYLE_OPTIONS.some((x) => x.id === s) ? s : "classic";
 }
 
 function loadJarConfig() {
@@ -5019,9 +4949,13 @@ function loadJarConfig() {
       enabled: parsed.enabled !== false,
       color,
       style: normalizeJarStyle(parsed.style),
+      jarScale: Math.max(50, Math.min(150, Number(parsed.jarScale) || 100)),
       sultanBalloons: parsed.sultanBalloons !== false,
-      boatScale: Math.max(10, Math.min(180, Number(parsed.boatScale) || 100)),
-      sultanScale: Math.max(30, Math.min(180, Number(parsed.sultanScale) || 100)),
+      pirateStyle: ["duck-pirate", "duck-cruise", "monkey-pirate"].includes(parsed.pirateStyle) ? parsed.pirateStyle : "duck-pirate",
+      boatScale: parsed.pirateConfigVersion === 2 ? Math.max(10, Math.min(150, Number(parsed.boatScale) || 20)) : 20,
+      seaLevel: Math.max(15, Math.min(50, Number(parsed.seaLevel) || 25)),
+      sultanScale: Math.max(50, Math.min(150, Number(parsed.sultanScale) || 100)),
+      pirateConfigVersion: 2,
     };
   } catch {
     return defaultJarConfig();
@@ -5035,68 +4969,67 @@ function saveJarConfig() {
   postJarOverlayCommand({
     type: "jar-style",
     color: jarConfig.color || "#e8f4ff",
-    style: jarConfig.style || "duck-pirate",
+    style: jarConfig.style || "classic",
+    jarScale: jarConfig.jarScale || 100,
+    pirateStyle: jarConfig.pirateStyle || "duck-pirate",
     sultanBalloons: jarConfig.sultanBalloons !== false,
-    boatScale: Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100)),
-    sultanScale: Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100)),
+    boatScale: jarConfig.boatScale || 20,
+    seaLevel: jarConfig.seaLevel || 25,
+    sultanScale: jarConfig.sultanScale || 100,
   });
 }
 
 function jarCountLabel() {
-  const pieces = jarTotalCount >= JAR_OVERLAY_CAP ? `${JAR_OVERLAY_CAP} ชิ้น · Overlay เต็ม` : `${jarTotalCount} ชิ้น`;
-  return `${pieces} · ◆${jarTotalCoins.toLocaleString()}`;
+  return jarTotalCount >= JAR_OVERLAY_CAP ? `${JAR_OVERLAY_CAP} ชิ้น · Overlay เต็ม` : `${jarTotalCount} ชิ้น`;
 }
 
 function renderJarUiState() {
   document.querySelectorAll(".og-jar-enabled").forEach((el) => {
     el.checked = !!jarConfig.enabled;
   });
-  document.querySelectorAll(".og-jar-sultan").forEach((el) => {
-    el.checked = jarConfig.sultanBalloons !== false;
-  });
-  document.querySelectorAll(".og-jar-boat-scale").forEach((el) => {
-    el.value = String(Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100)));
-  });
-  document.querySelectorAll(".og-jar-boat-scale-value").forEach((el) => {
-    el.textContent = `${Math.round(Number(jarConfig.boatScale) || 100)}%`;
-  });
-  document.querySelectorAll(".og-jar-sultan-scale").forEach((el) => {
-    el.value = String(Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100)));
-  });
-  document.querySelectorAll(".og-jar-sultan-scale-value").forEach((el) => {
-    el.textContent = `${Math.round(Number(jarConfig.sultanScale) || 100)}%`;
-  });
   document.querySelectorAll(".og-jar-count").forEach((el) => {
     el.textContent = jarCountLabel();
   });
   document.querySelectorAll(".og-jar-catalog").forEach((el) => {
-    el.textContent = `${jarCatalogNames.length} รูปในคลัง · โหมดเรือ: ≥100 ลอยเหนือเรือพร้อมเชือก · <100 อยู่ในน้ำ`;
+    el.textContent = `${jarCatalogNames.length} รูปในคลัง · ของขวัญจากไลฟ์จะตกโหลอัตโนมัติเมื่อเปิดใช้`;
   });
   document.querySelectorAll(".og-jar-color").forEach((el) => {
     if (document.activeElement === el) return;
     el.value = jarConfig.color || "#e8f4ff";
   });
   document.querySelectorAll(".og-jar-style").forEach((btn) => {
-    const on = btn.dataset.style === (jarConfig.style || "duck-pirate");
+    const on = btn.dataset.style === (jarConfig.style || "classic");
     btn.classList.toggle("is-on", on);
     btn.setAttribute("aria-pressed", on ? "true" : "false");
   });
+  document.querySelectorAll(".og-glass-jar-scale").forEach((el) => {
+    if (document.activeElement !== el) el.value = String(jarConfig.jarScale || 100);
+    el.previousElementSibling?.querySelector("output")?.replaceChildren(`${jarConfig.jarScale || 100}%`);
+  });
+  document.querySelectorAll(".og-pirate-sultans").forEach((el) => {
+    el.checked = jarConfig.sultanBalloons !== false;
+  });
+  document.querySelectorAll(".og-pirate-boat-scale").forEach((el) => {
+    if (document.activeElement !== el) el.value = String(jarConfig.boatScale || 20);
+  });
+  document.querySelectorAll(".og-pirate-style").forEach((btn) => {
+    const on = btn.dataset.style === (jarConfig.pirateStyle || "duck-pirate");
+    btn.classList.toggle("is-on", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  document.querySelectorAll(".og-pirate-sea-level").forEach((el) => {
+    if (document.activeElement !== el) el.value = String(jarConfig.seaLevel || 25);
+    el.previousElementSibling?.querySelector("output")?.replaceChildren(`${jarConfig.seaLevel || 25}/100`);
+  });
+  document.querySelectorAll(".og-pirate-sultan-scale").forEach((el) => {
+    if (document.activeElement !== el) el.value = String(jarConfig.sultanScale || 100);
+  });
 }
 
-let jarCommandSeq = 0;
 function postJarOverlayCommand(cmd) {
-  jarCommandSeq = Math.max(Date.now(), jarCommandSeq + 1);
-  const payload = { ...cmd, at: jarCommandSeq, deliveryId: `cmd:${jarCommandSeq}` };
+  const payload = { ...cmd, at: Date.now() };
   try {
     localStorage.setItem(JAR_CMD_KEY, JSON.stringify(payload));
-    if (payload.type === "jar-drop") {
-      let journal = [];
-      try { journal = JSON.parse(localStorage.getItem(JAR_EVENTS_KEY) || "[]"); } catch { journal = []; }
-      if (!Array.isArray(journal)) journal = [];
-      journal.push(payload);
-      if (journal.length > 2000) journal = journal.slice(-1200);
-      localStorage.setItem(JAR_EVENTS_KEY, JSON.stringify(journal));
-    }
   } catch {
     /* ignore */
   }
@@ -5109,13 +5042,27 @@ function syncJarToOverlay() {
   for (const p of jarPieces) {
     if (left <= 0) break;
     const c = Math.min(p.count, left);
-    pieces.push({ giftName: p.giftName, count: c, coins: p.coins || jarGiftCoins(p.giftName) });
+    pieces.push({ giftName: p.giftName, count: c });
     left -= c;
   }
-  postJarOverlayCommand({ type: "jar-sync", pieces, totalCoins: jarTotalCoins });
+  postJarOverlayCommand({ type: "jar-sync", pieces });
 }
 
-async function openJarOverlay() {
+async function openJarOverlay(widget = "") {
+  const widgetMode = widget === "pirate" ? "pirate" : widget === "glass" ? "glass" : "";
+  if (widgetMode) {
+    const fullUrl = jarOverlayObsUrl(widgetMode);
+    const url = String(fullUrl).replace(/^https?:\/\/[^/]+/, "");
+    const windowName = widgetMode === "pirate" ? "monkeyeffect_pirate_overlay" : "monkeyeffect_glass_overlay";
+    jarOverlayWin = window.open(
+      url,
+      windowName,
+      "popup=yes,width=432,height=768,toolbar=0,location=0,menubar=0,status=0,scrollbars=0"
+    );
+    if (!jarOverlayWin) throw new Error("เปิด Overlay ไม่สำเร็จ กรุณาอนุญาตหน้าต่างป๊อปอัป");
+    jarOverlayWin.focus();
+    return;
+  }
   let openedNative = false;
   try {
     const res = await fetch("/api/jar-overlay/open", { method: "POST" });
@@ -5128,11 +5075,8 @@ async function openJarOverlay() {
   }
   if (!openedNative) {
     const color = encodeURIComponent(jarConfig.color || "#e8f4ff");
-    const style = encodeURIComponent(jarConfig.style || "duck-pirate");
-    const sultan = jarConfig.sultanBalloons !== false ? "1" : "0";
-    const boatScale = Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100));
-    const sultanScale = Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100));
-    const url = `/jar-overlay.html?v=repairfx4&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
+    const style = encodeURIComponent(jarConfig.style || "classic");
+    const url = `/jar-overlay.html?v=jar63&color=${color}&style=${style}&jarScale=${encodeURIComponent(jarConfig.jarScale || 100)}`;
     if (!jarOverlayWin || jarOverlayWin.closed) {
       jarOverlayWin = window.open(
         url,
@@ -5144,20 +5088,26 @@ async function openJarOverlay() {
       postJarOverlayCommand({
         type: "jar-style",
         color: jarConfig.color || "#e8f4ff",
-        style: jarConfig.style || "duck-pirate",
+        style: jarConfig.style || "classic",
+        jarScale: jarConfig.jarScale || 100,
+        pirateStyle: jarConfig.pirateStyle || "duck-pirate",
         sultanBalloons: jarConfig.sultanBalloons !== false,
-        boatScale: Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100)),
-        sultanScale: Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100)),
+        boatScale: jarConfig.boatScale || 20,
+        seaLevel: jarConfig.seaLevel || 25,
+        sultanScale: jarConfig.sultanScale || 100,
       });
     }
   } else {
     postJarOverlayCommand({
       type: "jar-style",
       color: jarConfig.color || "#e8f4ff",
-      style: jarConfig.style || "duck-pirate",
+      style: jarConfig.style || "classic",
+      jarScale: jarConfig.jarScale || 100,
+      pirateStyle: jarConfig.pirateStyle || "duck-pirate",
       sultanBalloons: jarConfig.sultanBalloons !== false,
-      boatScale: Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100)),
-      sultanScale: Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100)),
+      boatScale: jarConfig.boatScale || 20,
+      seaLevel: jarConfig.seaLevel || 25,
+      sultanScale: jarConfig.sultanScale || 100,
     });
   }
 }
@@ -5181,7 +5131,6 @@ async function closeJarOverlay() {
 function resetJarForNewLive() {
   jarPieces = [];
   jarTotalCount = 0;
-  jarTotalCoins = 0;
   postJarOverlayCommand({ type: "jar-reset" });
   renderJarUiState();
   devLog("jar", "reset for new live");
@@ -5197,14 +5146,9 @@ function dropGiftsIntoJar(giftName, count, { test = false } = {}) {
     renderJarUiState();
     return;
   }
-  const coins = jarGiftCoins(name);
-  jarPieces.push({ giftName: name, count: n, coins });
+  jarPieces.push({ giftName: name, count: n });
   jarTotalCount += n;
-  const previousBoatStage = boatStageForCoins(jarTotalCoins);
-  jarTotalCoins += coins * n;
-  const nextBoatStage = boatStageForCoins(jarTotalCoins);
-  if (nextBoatStage > previousBoatStage) queueBoatRepairSound(nextBoatStage - previousBoatStage);
-  postJarOverlayCommand({ type: "jar-drop", giftName: name, count: n, coins, totalCoins: jarTotalCoins });
+  postJarOverlayCommand({ type: "jar-drop", giftName: name, count: n });
   renderJarUiState();
 }
 
@@ -5219,21 +5163,8 @@ function handleGiftForJar(parsed) {
     renderJarUiState();
     return;
   }
-  const coins = jarGiftCoins(name);
-  jarPieces.push({ giftName: name, count: n, coins });
+  jarPieces.push({ giftName: name, count: n });
   jarTotalCount += n;
-  const previousBoatStage = boatStageForCoins(jarTotalCoins);
-  jarTotalCoins += coins * n;
-  const nextBoatStage = boatStageForCoins(jarTotalCoins);
-  if (nextBoatStage > previousBoatStage) queueBoatRepairSound(nextBoatStage - previousBoatStage);
-  postJarOverlayCommand({
-    type: "jar-drop",
-    giftName: name,
-    count: n,
-    coins,
-    totalCoins: jarTotalCoins,
-    sourceEventId: parsed.seq != null ? `gift:${parsed.seq}` : (parsed.eventId || parsed.key || parsed.dedupeKey || ""),
-  });
   renderJarUiState();
 }
 
@@ -5254,16 +5185,6 @@ async function loadJarCatalogUi() {
     if (!res.ok) return;
     const pack = await res.json();
     jarCatalogNames = (pack.gifts || []).map((g) => g.name).filter(Boolean);
-    jarCatalogCoins.clear();
-    for (const g of pack.gifts || []) {
-      const coins = Math.max(1, Number(g.coins) || 1);
-      if (g.name) jarCatalogCoins.set(jarGiftKey(g.name), coins);
-      if (g.key) jarCatalogCoins.set(jarGiftKey(g.key), coins);
-    }
-    for (const [alias, target] of Object.entries(pack.aliases || {})) {
-      const coins = jarCatalogCoins.get(jarGiftKey(target));
-      if (coins && !jarCatalogCoins.has(jarGiftKey(alias))) jarCatalogCoins.set(jarGiftKey(alias), coins);
-    }
     const list = document.getElementById("jarGiftList");
     if (list) {
       list.innerHTML = jarCatalogNames
@@ -6138,7 +6059,7 @@ async function openRouletteOverlay() {
   if (!openedNative) {
     const url = "/chroma-overlay.html?mode=chroma&v=chroma2";
     if (!rouletteOverlayWin || rouletteOverlayWin.closed) {
-      rouletteOverlayWin = window.open(url, "monkeyeffect_chroma_overlay", "popup=yes,width=540,height=660");
+      rouletteOverlayWin = window.open(url, "monkeyeffect_chroma_overlay", "popup=yes,width=540,height=960");
     }
   }
   const ready = await waitForRouletteOverlayReady(alreadyOpen ? 2500 : 8000);
@@ -6888,9 +6809,9 @@ const UI_FEATURE_DEDUPE_MS = 2500;
 function claimUiFeature(feature, parsed) {
   // Per-event only — backend already emits one ui/roulette announce per combo.
   // Do NOT key by comboKey alone (would suppress a real second gift within 2.5s).
-  const eventId = parsed.eventId || (Number.isFinite(parsed.seq)
+  const eventId = Number.isFinite(parsed.seq)
     ? `seq:${parsed.seq}`
-    : (parsed.key || parsed.dedupeKey || parsed.comboKey || "anon"));
+    : (parsed.key || parsed.dedupeKey || parsed.comboKey || "anon");
   const key = `${feature}|${eventId}`;
   const now = Date.now();
   const last = uiFeatureDedupeAt.get(key) || 0;
@@ -6947,7 +6868,7 @@ function processNewGifts(items) {
   }
   const fresh = [];
   for (const row of keyed) {
-    if (!seenGiftKeys.has(row.key)) fresh.push(row);
+    if (!seenGiftKeys.has(row.key)) fresh.push(row.item);
     seenGiftKeys.add(row.key);
   }
   // เก็บคีย์สะสม — อย่าเหลือแค่หน้าต่างล็อกล่าสุด (เคยทำให้ของเก่าหลุดแล้วเข้าใหม่ซ้ำ)
@@ -6959,10 +6880,9 @@ function processNewGifts(items) {
     seenGiftKeys = next;
   }
   // ล็อก API เรียงใหม่→เก่า — ประมวลผลเก่า→ใหม่ให้คอมโบตามลำดับเวลา
-  for (const row of fresh.reverse()) {
-    const parsed = parseGiftFromLog(row.item);
+  for (const item of fresh.reverse()) {
+    const parsed = parseGiftFromLog(item);
     if (!parsed) continue;
-    parsed.eventId = row.key;
     fanOutUiFunctions(parsed);
   }
 }
@@ -8982,6 +8902,12 @@ let _liveLastCountTimer = 0;
 let _liveSettingsTimer = 0;
 
 const OVERLAY_GALLERY_SECTIONS = [
+  {
+    cat: "Widgets",
+    title: "Widgets",
+    theme: "widgets",
+    blurb: "เลือกใช้งานแต่ละวิดเจ็ตได้ทันที · แต่ละรายการมี URL และการตั้งค่าแยกจากกัน",
+  },
   { cat: "เล่น", title: "Games", theme: "games" },
   { cat: "เอฟเฟกต์", title: "Effects", theme: "fx" },
   { cat: "ข้อมูล", title: "Info", theme: "info" },
@@ -9037,7 +8963,9 @@ const OVERLAY_SETTINGS = {
   songs: { fields: ["song"], hint: "ชื่อเพลงที่โชว์บนจอ" },
   social: { fields: ["socials"], hint: "ข้อความโซเชียลหมุนทีละบรรทัด" },
   commands: { fields: ["commands"], hint: "รายการคำสั่งที่โชว์บนจอ" },
-  jar: { fields: ["jarControls"], hint: "เลือกทรงโหล 5 แบบ + สี แล้วคัดลอก URL · พื้นใส · คีย์เขียวต่อท้าย &chroma=1" },
+  "glass-jar": { fields: ["glassJarControls"], hint: "โหลแก้วฟิสิกส์พร้อม URL และสีของตัวเอง · พื้นหลังโปร่งใส" },
+  "pirate-ship": { fields: ["pirateShipControls"], hint: "เรือโจรสลัดพร้อม URL แยก · ปรับขนาดเรือและลูกโป่งสุลต่านได้" },
+  "dragon-hoard": { fields: ["dragonControls"], hint: "ของขวัญจริงตกกองตามมูลค่า · มังกรวิวัฒนาการและตอบสนองต่อของขวัญราคาแพงด้วยไฟสีสมจริง" },
   roulette: { hint: "รายการของรางวัลและกฎสุ่มตั้งที่หน้ากล่องสุ่ม", panel: "roulette", panelLabel: "เปิดหน้ากล่องสุ่ม" },
   points: { hint: "แต้มผู้ชมตั้งที่หน้าแต้ม", panel: "points", panelLabel: "เปิดหน้าแต้มผู้ชม" },
   topgifters: { fields: ["lbReset"], hint: "อันดับเพชรของไลฟ์นี้เท่านั้น — กดล้างได้" },
@@ -9131,32 +9059,37 @@ const OVERLAY_GALLERY = [
   { id: "songs", name: "Song Requests", desc: "เพลงที่กำลังเล่น / คิวขอเพลง", cat: "ยูทิลิตี้", w: 520, h: 240 },
   { id: "buddies", name: "Stream Buddies", desc: "ตัวละครผู้ชมลอยบนจอ", cat: "ตัวละคร", w: 1280, h: 720, fx: 1 },
   { id: "tiny", name: "Tiny Diny", desc: "ลิงน้อยกระโดดเมื่อมีของขวัญ", cat: "ตัวละคร", w: 360, h: 360 },
-  { id: "jar", name: "โหลแก้ว / เรือของขวัญ (ฟิสิกส์)", desc: "เลือกโหลแก้ว เรือเป็ด หรือเรือลิง · ของขวัญในโหมดเรือ ≥100 ลอยผูกเชือก · ต่ำกว่า 100 อยู่ในน้ำ", cat: "พิเศษ", w: 900, h: 900 },
+  { id: "glass-jar", name: "โหลแก้วฟิสิกส์", desc: "ของขวัญตกและกองตัวแบบฟิสิกส์ · ปรับสีโหลได้อิสระ", cat: "Widgets", w: 720, h: 1280, widget: "glass" },
+  { id: "pirate-ship", name: "เรือโจรสลัด", desc: "เรือเป็ดโจรสลัดพร้อมลูกโป่งสุลต่าน · จัดวางแนวตั้ง 9:16", cat: "Widgets", w: 720, h: 1280, widget: "pirate" },
+  { id: "dragon-hoard", name: "Dragon Hoard", desc: "มังกรเฝ้ากองของขวัญ · ขนาดตาม Coin · วิวัฒนาการและพ่นไฟสมจริง", cat: "Widgets", w: 720, h: 1280, play: 1, url: "http://127.0.0.1:3847/dragon-overlay.html" },
   { id: "roulette", name: "กล่องสุ่มเกม", desc: "หมุนสุ่มผลแล้วค่อยส่งเข้าเกม", cat: "พิเศษ", w: 720, h: 720, url: "http://127.0.0.1:3847/roulette-overlay.html" },
 ];
 
-function jarOverlayObsUrl() {
+function jarOverlayObsUrl(widget = "glass") {
   const color = encodeURIComponent(jarConfig.color || "#e8f4ff");
-  const style = encodeURIComponent(jarConfig.style || "duck-pirate");
-  const sultan = jarConfig.sultanBalloons !== false ? "1" : "0";
-  const boatScale = Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100));
-  const sultanScale = Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100));
-  return `http://127.0.0.1:3847/jar-overlay.html?v=repairfx4&color=${color}&style=${style}&sultan=${sultan}&boatScale=${boatScale}&sultanScale=${sultanScale}`;
+  const pirate = widget === "pirate";
+  const style = pirate ? (jarConfig.pirateStyle || "duck-pirate") : (["classic", "original"].includes(jarConfig.style) ? jarConfig.style : "classic");
+  const options = pirate
+    ? `&sultan=${jarConfig.sultanBalloons === false ? 0 : 1}&boatScale=${encodeURIComponent(jarConfig.boatScale || 20)}&sultanScale=${encodeURIComponent(jarConfig.sultanScale || 100)}&seaLevel=${encodeURIComponent(jarConfig.seaLevel || 25)}&width=720&height=1280`
+    : `&jarScale=${encodeURIComponent(jarConfig.jarScale || 100)}`;
+  return `http://127.0.0.1:3847/jar-overlay.html?v=jar64&widget=${widget}&color=${color}&style=${style}${options}`;
 }
 
 function refreshJarGalleryUrls() {
-  const url = jarOverlayObsUrl();
-  document.querySelectorAll('.og-widget[data-id="jar"] .og-url').forEach((el) => {
-    el.value = url;
-  });
-  document.querySelectorAll('.og-widget[data-id="jar"] .og-copy').forEach((el) => {
-    el.dataset.url = url;
+  ["glass-jar", "pirate-ship"].forEach((id) => {
+    const url = jarOverlayObsUrl(id === "pirate-ship" ? "pirate" : "glass");
+    document.querySelectorAll(`.og-widget[data-id="${id}"] .og-url`).forEach((el) => { el.value = url; });
+    document.querySelectorAll(`.og-widget[data-id="${id}"] .og-copy`).forEach((el) => { el.dataset.url = url; });
+    const previewPath = String(url).replace(/^https?:\/\/[^/]+/, "") + "&gallery=1";
+    document.querySelectorAll(`.og-widget[data-id="${id}"] .og-preview`).forEach((el) => { el.dataset.url = previewPath; });
   });
 }
 
 function liveOverlayUrl(id, fx) {
   if (id === "welcome") return welcomeObsLink();
-  if (id === "jar") return jarOverlayObsUrl();
+  if (id === "glass-jar") return jarOverlayObsUrl("glass");
+  if (id === "pirate-ship") return jarOverlayObsUrl("pirate");
+  if (id === "dragon-hoard") return dragonOverlayObsUrl();
   const item = galleryItemById(id);
   if (item?.url) return item.url;
   const panel = overlayPanelId(item || id);
@@ -9168,8 +9101,9 @@ function liveOverlayUrl(id, fx) {
 }
 
 function galleryPreviewUrl(item) {
-  if (item.id === "jar" || item.url) {
-    const full = item.id === "jar" ? jarOverlayObsUrl() : item.url;
+  if (item.id === "dragon-hoard") return String(dragonOverlayObsUrl()).replace(/^https?:\/\/[^/]+/, "") + "&gallery=1";
+  if (item.widget || item.url) {
+    const full = item.widget ? jarOverlayObsUrl(item.widget) : item.url;
     const path = String(full).replace(/^https?:\/\/[^/]+/, "");
     const join = path.includes("?") ? "&" : "?";
     return `${path}${join}gallery=1`;
@@ -9195,10 +9129,58 @@ function overlayPopFieldHtml(kind) {
       </div>
       <p class="og-pop-hint">ล้างเฉพาะอันดับประจำไลฟ์นี้ — ไม่ลบเป้าเพชรหรือกรอบต้อนรับ</p>`;
   }
+  if (kind === "glassJarControls") {
+    return `<div class="og-widget-control-head"><span class="og-widget-icon">◈</span><div><strong>โหลแก้ว</strong><small>ตั้งค่าเฉพาะวิดเจ็ตนี้</small></div></div>
+      <label class="toggle option-check"><input type="checkbox" class="og-jar-enabled"${jarConfig.enabled ? " checked" : ""} /><span>รับของขวัญจากไลฟ์</span></label>
+      <label>สีขอบและแสงสะท้อน</label>
+      <div class="og-pop-actions" style="align-items:center">
+        <input class="og-jar-color" type="color" value="${escapeHtml(jarConfig.color || "#e8f4ff")}" title="สีโหลแก้ว" />
+        <span class="og-pop-hint" style="margin:0">เลือกสีขอบและแสงสะท้อนของโหล</span>
+      </div>
+      <label>รูปแบบโหลแก้ว</label>
+      <div class="og-jar-styles og-glass-style-options">
+        <button type="button" class="og-jar-style${jarConfig.style === "classic" ? " is-on" : ""}" data-style="classic" aria-pressed="${jarConfig.style === "classic" ? "true" : "false"}"><strong>โหลเมสัน</strong><span>คอเกลียว · ทรงสูงแบบเดิม</span></button>
+        <button type="button" class="og-jar-style${jarConfig.style === "original" ? " is-on" : ""}" data-style="original" aria-pressed="${jarConfig.style === "original" ? "true" : "false"}"><strong>โหลแก้วใส</strong><span>Coin Jar · ปากกว้างและตัวโหลโปร่ง</span></button>
+      </div>
+      <label>ขนาดโหลแก้ว <output class="og-range-value">${escapeHtml(String(jarConfig.jarScale || 100))}%</output></label>
+      <input class="og-glass-jar-scale" type="range" min="50" max="150" step="5" value="${escapeHtml(String(jarConfig.jarScale || 100))}" />
+      ${jarWidgetTestControls("glass")}`;
+  }
+  if (kind === "pirateShipControls") {
+    return `<div class="og-widget-control-head pirate"><span class="og-widget-icon">⚓</span><div><strong>เรือโจรสลัด</strong><small>แนวตั้ง 9:16 · ตั้งค่าแยก</small></div></div>
+      <label class="toggle option-check"><input type="checkbox" class="og-jar-enabled"${jarConfig.enabled ? " checked" : ""} /><span>รับของขวัญจากไลฟ์</span></label>
+      <label>รูปแบบเรือ</label>
+      <div class="og-jar-styles og-pirate-style-options">
+        <button type="button" class="og-jar-style og-pirate-style${(jarConfig.pirateStyle || "duck-pirate") === "duck-pirate" ? " is-on" : ""}" data-style="duck-pirate"><strong>เรือเป็ดโจรสลัด</strong><span>เรือโจรสลัดแบบหลัก</span></button>
+        <button type="button" class="og-jar-style og-pirate-style${jarConfig.pirateStyle === "duck-cruise" ? " is-on" : ""}" data-style="duck-cruise"><strong>เรือเป็ดครูซ</strong><span>เรือท่องเที่ยวสีสดใส</span></button>
+        <button type="button" class="og-jar-style og-pirate-style${jarConfig.pirateStyle === "monkey-pirate" ? " is-on" : ""}" data-style="monkey-pirate"><strong>เรือลิงโจรสลัด</strong><span>กองเรือลิงผจญภัย</span></button>
+      </div>
+      <label class="toggle option-check"><input type="checkbox" class="og-pirate-sultans"${jarConfig.sultanBalloons !== false ? " checked" : ""} /><span>แสดงลูกโป่งสุลต่านอันดับ 1–3</span></label>
+      <label>ขนาดเรือ <output class="og-range-value">${escapeHtml(String(jarConfig.boatScale || 20))}%</output></label>
+      <input class="og-pirate-boat-scale" type="range" min="10" max="150" step="5" value="${escapeHtml(String(jarConfig.boatScale || 20))}" />
+      <label>พื้นที่ทะเลจากด้านล่าง <output class="og-range-value">${escapeHtml(String(jarConfig.seaLevel || 25))}/100</output></label>
+      <input class="og-pirate-sea-level" type="range" min="15" max="50" step="1" value="${escapeHtml(String(jarConfig.seaLevel || 25))}" />
+      <label>ขนาดลูกโป่งสุลต่าน <output class="og-range-value">${escapeHtml(String(jarConfig.sultanScale || 100))}%</output></label>
+      <input class="og-pirate-sultan-scale" type="range" min="50" max="150" step="5" value="${escapeHtml(String(jarConfig.sultanScale || 100))}" />
+      ${jarWidgetTestControls("pirate")}`;
+  }
+  if (kind === "dragonControls") {
+    return `<div class="og-widget-control-head"><span class="og-widget-icon">🐉</span><div><strong>Dragon Hoard</strong><small>ตั้งค่าตำแหน่ง เอฟเฟกต์ และประสิทธิภาพ</small></div></div>
+      <label>ขนาดมังกร <output class="og-range-value">${dragonConfig.scale}%</output></label><input class="og-dragon-scale" type="range" min="25" max="100" step="5" value="${dragonConfig.scale}" />
+      <label>พื้นที่ของขวัญด้านล่าง <output class="og-range-value">${dragonConfig.zone}%</output></label><input class="og-dragon-zone" type="range" min="10" max="60" step="1" value="${dragonConfig.zone}" />
+      <label>ด้านที่วางมังกร</label><select class="field og-dragon-side"><option value="right"${dragonConfig.side === "right" ? " selected" : ""}>ขวา</option><option value="left"${dragonConfig.side === "left" ? " selected" : ""}>ซ้าย</option></select>
+      <label>พื้นที่กลางห้ามบัง <output class="og-range-value">${dragonConfig.safe}%</output></label><input class="og-dragon-safe" type="range" min="45" max="75" step="5" value="${dragonConfig.safe}" />
+      <label class="toggle option-check"><input type="checkbox" class="og-dragon-fire"${dragonConfig.fire ? " checked" : ""} /><span>ไฟสีสมจริงและแสงสะท้อน</span></label>
+      <label class="toggle option-check"><input type="checkbox" class="og-dragon-ranks"${dragonConfig.ranks ? " checked" : ""} /><span>แสดงผู้สนับสนุนอันดับ 1–3</span></label>
+      <label class="toggle option-check"><input type="checkbox" class="og-dragon-sound"${dragonConfig.sound ? " checked" : ""} /><span>เสียงฝีเท้า ลมหายใจ และเปลวไฟ</span></label>
+      <label class="toggle option-check"><input type="checkbox" class="og-dragon-locked"${dragonConfig.locked ? " checked" : ""} /><span>ล็อกตำแหน่ง ป้องกันลากพลาด</span></label>
+      <label>คุณภาพ</label><select class="field og-dragon-quality"><option value="auto"${dragonConfig.quality === "auto" ? " selected" : ""}>อัตโนมัติ</option><option value="high"${dragonConfig.quality === "high" ? " selected" : ""}>สูง</option><option value="eco"${dragonConfig.quality === "eco" ? " selected" : ""}>ประหยัดเครื่อง</option></select>
+      <div class="og-pop-actions"><button type="button" class="btn primary small og-dragon-open">เปิด Overlay</button><button type="button" class="btn ghost small og-dragon-close">ปิด Overlay</button><button type="button" class="btn secondary small og-dragon-reset">เริ่มมังกรใหม่</button></div>`;
+  }
   if (kind === "jarControls") {
     const countLabel = jarCountLabel();
     const color = jarConfig.color || "#e8f4ff";
-    const style = jarConfig.style || "duck-pirate";
+    const style = jarConfig.style || "classic";
     const styleBtns = JAR_STYLE_OPTIONS.map(
       (opt) =>
         `<button type="button" class="og-jar-style${opt.id === style ? " is-on" : ""}" data-style="${escapeHtml(opt.id)}" aria-pressed="${opt.id === style ? "true" : "false"}" title="${escapeHtml(opt.hint)}">
@@ -9208,35 +9190,27 @@ function overlayPopFieldHtml(kind) {
     ).join("");
     return `<label class="toggle option-check">
         <input type="checkbox" class="og-jar-enabled"${jarConfig.enabled ? " checked" : ""} />
-        <span>เปิดใช้โหลแก้ว / เรือของขวัญ</span>
+        <span>เปิดใช้โหลแก้ว</span>
       </label>
-      <label class="toggle option-check">
-        <input type="checkbox" class="og-jar-sultan"${jarConfig.sultanBalloons !== false ? " checked" : ""} />
-        <span>แสดงอันดับสุลต่านเป็นลูกโป่งเหนือของขวัญ</span>
-      </label>
-      <label>ขนาดเรือ <strong class="og-jar-boat-scale-value">${Math.round(Number(jarConfig.boatScale) || 100)}%</strong></label>
-      <input class="field og-jar-boat-scale" type="range" min="10" max="180" step="5" value="${Math.max(10, Math.min(180, Number(jarConfig.boatScale) || 100))}" />
-      <label>ขนาดลูกโป่งสุลต่าน <strong class="og-jar-sultan-scale-value">${Math.round(Number(jarConfig.sultanScale) || 100)}%</strong></label>
-      <input class="field og-jar-sultan-scale" type="range" min="30" max="180" step="5" value="${Math.max(30, Math.min(180, Number(jarConfig.sultanScale) || 100))}" />
-      <label>รูปแบบเอฟเฟกต์</label>
+      <label>ทรงโหล</label>
       <div class="og-jar-styles">${styleBtns}</div>
-      <label>สีโหลแก้ว</label>
+      <label>สีโหล</label>
       <div class="og-pop-actions" style="align-items:center">
         <input class="og-jar-color" type="color" value="${escapeHtml(color)}" title="สีโหลแก้ว" style="width:48px;height:36px;padding:0;border:0;background:transparent;cursor:pointer" />
-        <span class="og-pop-hint" style="margin:0">ใช้กับเมสันและแก้วใส · โหมดเรือแบ่งของขวัญตามราคา 100 เหรียญ</span>
+        <span class="og-pop-hint" style="margin:0">ปรับสีขอบได้ทุกทรง</span>
       </div>
       <div class="og-jar-count win-score-display" style="margin:8px 0">${escapeHtml(countLabel)}</div>
       <div class="og-pop-actions">
         <button type="button" class="btn primary small og-jar-open">เปิด Overlay</button>
         <button type="button" class="btn ghost small og-jar-close">ปิด Overlay</button>
-        <button type="button" class="btn secondary small og-jar-reset">รีเซ็ตเอฟเฟกต์</button>
+        <button type="button" class="btn secondary small og-jar-reset">รีเซ็ตโหล</button>
       </div>
-      <label>ทดสอบของขวัญ — ชื่อของขวัญ</label>
+      <label>ทดสอบตกโหล — ชื่อของขวัญ</label>
       <input class="field og-jar-test-gift" type="text" list="jarGiftList" value="Rose" placeholder="Rose" autocomplete="off" />
       <label>จำนวน (1:1)</label>
       <input class="field og-jar-test-count" type="number" min="1" max="9999" value="10" />
       <div class="og-pop-actions">
-        <button type="button" class="btn secondary small og-jar-test">ทดสอบเอฟเฟกต์</button>
+        <button type="button" class="btn secondary small og-jar-test">ทดสอบตกโหล</button>
       </div>
       <p class="og-pop-hint og-jar-catalog">${jarCatalogNames.length} รูปในคลัง · ของขวัญจากไลฟ์จะตกโหลอัตโนมัติเมื่อเปิดใช้</p>`;
   }
@@ -9279,11 +9253,27 @@ function overlayPopFieldHtml(kind) {
   return "";
 }
 
+function jarWidgetTestControls(widget) {
+  return `<div class="og-jar-count win-score-display" style="margin:10px 0">${escapeHtml(jarCountLabel())}</div>
+    <div class="og-pop-actions">
+      <button type="button" class="btn primary small og-jar-open" data-widget="${widget}">เปิด Overlay</button>
+      <button type="button" class="btn ghost small og-jar-close">ปิด Overlay</button>
+      <button type="button" class="btn secondary small og-jar-reset">รีเซ็ต</button>
+    </div>
+    <label>ทดสอบด้วยของขวัญ</label>
+    <div class="og-widget-test-row">
+      <input class="field og-jar-test-gift" type="text" list="jarGiftList" value="Rose" placeholder="Rose" autocomplete="off" />
+      <input class="field og-jar-test-count" type="number" min="1" max="9999" value="10" aria-label="จำนวน" />
+      <button type="button" class="btn secondary small og-jar-test">ทดสอบ</button>
+    </div>
+    <p class="og-pop-hint og-jar-catalog">${jarCatalogNames.length} รูปในคลัง · ของขวัญจากไลฟ์จะทำงานอัตโนมัติ</p>`;
+}
+
 function overlaySettingsPop(item) {
   const spec = OVERLAY_SETTINGS[item.id] || { hint: "วิดเจ็ตนี้ดึงข้อมูลจากไลฟ์โดยตรง ไม่มีค่าเฉพาะ" };
   const fieldKinds = spec.fields || [];
   const fields = fieldKinds.map(overlayPopFieldHtml).join("");
-  const hasSaveFields = fieldKinds.some((k) => k !== "lbReset" && k !== "jarControls");
+  const hasSaveFields = fieldKinds.some((k) => !["lbReset", "jarControls", "glassJarControls", "pirateShipControls", "dragonControls"].includes(k));
   const themeField = usesOverlayTheme(item)
     ? `<label>ธีมชิ้นนี้</label>
       <select class="field og-theme-select" data-widget-theme="${escapeHtml(item.id)}">${overlayThemeOptions(overlayThemeFor(item))}</select>
@@ -9325,7 +9315,7 @@ function overlayWidgetCard(item, featured) {
   const extras = item.id === "welcome" ? welcomeGalleryExtras() : "";
   const dimLabel = item.id === "welcome"
     ? `${item.w}×${item.h} · 9:12`
-    : `${item.w}×${item.h}${item.fx ? " · chroma" : ""}`;
+    : `${item.w}×${item.h}${item.w * 16 === item.h * 9 ? " · 9:16" : ""}${item.fx ? " · chroma" : ""}`;
   const preview = featured
     ? `<div class="og-stage og-stage-${escapeHtml(item.id)}"><iframe${frameId} class="og-stage-frame" title="${escapeHtml(item.name)}" src="${escapeHtml(previewUrl)}" loading="lazy"></iframe></div>`
     : "";
@@ -9335,12 +9325,13 @@ function overlayWidgetCard(item, featured) {
   const resetBtn = item.scope === "live"
     ? `<button type="button" class="btn ghost small og-lb-reset" title="รีเซ็ตอันดับประจำไลฟ์">รีเซ็ต</button>`
     : "";
-  const testBtn = item.id === "welcome"
+  const testBtn = item.id === "welcome" || item.play
     ? `<button type="button" class="btn ghost small og-test" data-id="${item.id}">ทดสอบ</button>`
     : "";
   return `<article class="og-widget${featured ? " is-feature" : ""}" data-id="${item.id}" data-scope="${escapeHtml(item.scope || "")}">
     <div class="og-widget-head">
       <div>
+        ${item.widget ? `<span class="og-widget-kind">${item.widget === "pirate" ? "PIRATE WIDGET" : "GLASS WIDGET"}</span>` : ""}
         <h4>${escapeHtml(item.name)}</h4>
         <p>${escapeHtml(item.desc || "")}</p>
       </div>
@@ -9814,7 +9805,10 @@ document.getElementById("overlayGallery")?.addEventListener("click", async (e) =
   }
   const jarOpen = e.target.closest(".og-jar-open");
   if (jarOpen) {
-    openJarOverlay().catch((err) => alert(err.message || String(err)));
+    if (jarOpen.dataset.widget === "pirate") jarConfig.pirateStyle ||= "duck-pirate";
+    else if (!["classic", "original"].includes(jarConfig.style)) jarConfig.style = "classic";
+    saveJarConfig();
+    openJarOverlay(jarOpen.dataset.widget || "").catch((err) => alert(err.message || String(err)));
     return;
   }
   const jarClose = e.target.closest(".og-jar-close");
@@ -9837,9 +9831,36 @@ document.getElementById("overlayGallery")?.addEventListener("click", async (e) =
   }
   const jarStyleBtn = e.target.closest(".og-jar-style");
   if (jarStyleBtn) {
+    if (jarStyleBtn.classList.contains("og-pirate-style")) {
+      jarConfig.pirateStyle = ["duck-pirate", "duck-cruise", "monkey-pirate"].includes(jarStyleBtn.dataset.style) ? jarStyleBtn.dataset.style : "duck-pirate";
+      saveJarConfig();
+      return;
+    }
     const next = normalizeJarStyle(jarStyleBtn.dataset.style);
     jarConfig.style = next;
     saveJarConfig();
+    return;
+  }
+  const dragonOpen = e.target.closest(".og-dragon-open");
+  if (dragonOpen) {
+    saveDragonConfig();
+    try { openDragonOverlay(); } catch (err) { alert(err.message || String(err)); }
+    return;
+  }
+  const dragonClose = e.target.closest(".og-dragon-close");
+  if (dragonClose) {
+    closeDragonOverlay();
+    return;
+  }
+  const dragonReset = e.target.closest(".og-dragon-reset");
+  if (dragonReset) {
+    if (!confirm("เริ่มมังกรใหม่และล้างความคืบหน้าการวิวัฒนาการ?")) return;
+    localStorage.setItem("me_dragon_hoard_v2", "0");
+    localStorage.setItem("me_dragon_stage_v2", "0");
+    localStorage.setItem("me_dragon_cleanup_v1", "0");
+    postJarOverlayCommand({ type: "dragon-reset" });
+    dragonReset.textContent = "เริ่มใหม่แล้ว";
+    setTimeout(() => { dragonReset.textContent = "เริ่มมังกรใหม่"; }, 1000);
     return;
   }
   const timerBtn = e.target.closest(".og-timer");
@@ -9871,27 +9892,56 @@ document.getElementById("overlayGallery")?.addEventListener("change", (e) => {
     saveJarConfig();
     return;
   }
-  if (e.target.classList?.contains("og-jar-sultan")) {
-    jarConfig.sultanBalloons = !!e.target.checked;
-    saveJarConfig();
-    return;
-  }
-  if (e.target.classList?.contains("og-jar-boat-scale")) {
-    jarConfig.boatScale = Math.max(10, Math.min(180, Number(e.target.value) || 100));
-    saveJarConfig();
-    return;
-  }
-  if (e.target.classList?.contains("og-jar-sultan-scale")) {
-    jarConfig.sultanScale = Math.max(30, Math.min(180, Number(e.target.value) || 100));
-    saveJarConfig();
-    return;
-  }
   if (e.target.classList?.contains("og-jar-color")) {
     const hex = String(e.target.value || "").trim();
     if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
       jarConfig.color = hex.toLowerCase();
       saveJarConfig();
     }
+    return;
+  }
+  if (e.target.classList?.contains("og-glass-jar-scale")) {
+    jarConfig.jarScale = Math.max(50, Math.min(150, Number(e.target.value) || 100));
+    e.target.previousElementSibling?.querySelector("output")?.replaceChildren(`${jarConfig.jarScale}%`);
+    saveJarConfig();
+    return;
+  }
+  if (e.target.classList?.contains("og-pirate-sultans")) {
+    jarConfig.sultanBalloons = !!e.target.checked;
+    saveJarConfig();
+    return;
+  }
+  if (e.target.classList?.contains("og-pirate-boat-scale")) {
+    jarConfig.boatScale = Math.max(10, Math.min(150, Number(e.target.value) || 20));
+    e.target.previousElementSibling?.querySelector("output")?.replaceChildren(`${jarConfig.boatScale}%`);
+    saveJarConfig();
+    return;
+  }
+  if (e.target.classList?.contains("og-pirate-sea-level")) {
+    jarConfig.seaLevel = Math.max(15, Math.min(50, Number(e.target.value) || 25));
+    e.target.previousElementSibling?.querySelector("output")?.replaceChildren(`${jarConfig.seaLevel}/100`);
+    saveJarConfig();
+    return;
+  }
+  if (e.target.classList?.contains("og-pirate-sultan-scale")) {
+    jarConfig.sultanScale = Math.max(50, Math.min(150, Number(e.target.value) || 100));
+    e.target.previousElementSibling?.querySelector("output")?.replaceChildren(`${jarConfig.sultanScale}%`);
+    saveJarConfig();
+    return;
+  }
+  const dragonSetting = e.target.classList && [...e.target.classList].some((x) => x.startsWith("og-dragon-"));
+  if (dragonSetting) {
+    if (e.target.classList.contains("og-dragon-scale")) dragonConfig.scale = Number(e.target.value) || 45;
+    else if (e.target.classList.contains("og-dragon-zone")) dragonConfig.zone = Math.max(10, Math.min(60, Number(e.target.value) || 30));
+    else if (e.target.classList.contains("og-dragon-safe")) dragonConfig.safe = Number(e.target.value) || 38;
+    else if (e.target.classList.contains("og-dragon-side")) dragonConfig.side = e.target.value === "left" ? "left" : "right";
+    else if (e.target.classList.contains("og-dragon-fire")) dragonConfig.fire = !!e.target.checked;
+    else if (e.target.classList.contains("og-dragon-ranks")) dragonConfig.ranks = !!e.target.checked;
+    else if (e.target.classList.contains("og-dragon-sound")) dragonConfig.sound = !!e.target.checked;
+    else if (e.target.classList.contains("og-dragon-locked")) dragonConfig.locked = !!e.target.checked;
+    else if (e.target.classList.contains("og-dragon-quality")) dragonConfig.quality = ["auto", "high", "eco"].includes(e.target.value) ? e.target.value : "auto";
+    if (e.target.matches("input[type=range]")) e.target.previousElementSibling?.querySelector("output")?.replaceChildren(`${e.target.value}%`);
+    saveDragonConfig();
     return;
   }
   const sectionSel = e.target.closest("[data-section-theme]");
@@ -9922,24 +9972,6 @@ document.getElementById("overlayGallery")?.addEventListener("change", (e) => {
   _liveSettingsTimer = setTimeout(() => saveLiveSettings().catch(() => {}), 200);
 });
 document.getElementById("overlayGallery")?.addEventListener("input", (e) => {
-  if (e.target.classList?.contains("og-jar-boat-scale")) {
-    jarConfig.boatScale = Math.max(10, Math.min(180, Number(e.target.value) || 100));
-    document.querySelectorAll(".og-jar-boat-scale-value").forEach((el) => {
-      el.textContent = `${Math.round(jarConfig.boatScale)}%`;
-    });
-    clearTimeout(_liveSettingsTimer);
-    _liveSettingsTimer = setTimeout(saveJarConfig, 80);
-    return;
-  }
-  if (e.target.classList?.contains("og-jar-sultan-scale")) {
-    jarConfig.sultanScale = Math.max(30, Math.min(180, Number(e.target.value) || 100));
-    document.querySelectorAll(".og-jar-sultan-scale-value").forEach((el) => {
-      el.textContent = `${Math.round(jarConfig.sultanScale)}%`;
-    });
-    clearTimeout(_liveSettingsTimer);
-    _liveSettingsTimer = setTimeout(saveJarConfig, 80);
-    return;
-  }
   const input = e.target.closest(".og-pop-input");
   if (!input || input.type === "number") return;
   syncPopInputToStore(input);
@@ -10163,11 +10195,11 @@ async function refreshTempleDefaultsStatus() {
       return;
     }
     if (data.applied) {
-      setTempleDefaultsStatusText(data.gameRunning ? "ตรงแพ็ก · เกมเปิดอยู่" : "ตรงกับแพ็กในแอพ");
+      setTempleDefaultsStatusText(data.gameRunning ? "ตรงกับต้นฉบับ · เกมเปิดอยู่" : "ตรงกับพรีเซ็ตต้นฉบับ");
       return;
     }
     if (data.installedAny) {
-      setTempleDefaultsStatusText(data.gameRunning ? "ต่างจากแพ็ก · เกมเปิดอยู่" : "ต่างจากแพ็ก — กดทับได้");
+      setTempleDefaultsStatusText(data.gameRunning ? "ต่างจากต้นฉบับ · เกมเปิดอยู่" : "ต่างจากต้นฉบับ — กดตั้งค่าได้");
       return;
     }
     setTempleDefaultsStatusText("ยังไม่ใส่ในเกม");
@@ -10189,7 +10221,7 @@ async function applyTempleEscapeDefaultsFromButton() {
     : "";
   if (
     !confirm(
-      "ทับค่า gift ในเกม Temple Escape ด้วยแพ็กที่มากับ Monkeyeffect?\n" +
+      "ตั้งค่าพรีเซ็ต Temple Escape ตามต้นฉบับ?\n" +
         "(จะเขียนทับ CusFucSetting / PHBSave / MuztoMod)\n" +
         "แนะนำให้ปิดเกมก่อน แล้วเปิดเกมใหม่หลังใส่ค่า" +
         warnRun
@@ -10210,14 +10242,14 @@ async function applyTempleEscapeDefaultsFromButton() {
     const runNote = data.gameRunning
       ? "\n\nเกมยังเปิดอยู่ — ปิดแล้วเปิดใหม่เพื่อให้โหลดค่า"
       : "\nเปิดเกมใหม่แล้วตรวจเมนู 礼物事件配置";
-    alert(`ทับค่า gift ตามแพ็กในแอพแล้ว (${data.copied} ไฟล์)${runNote}`);
+    alert(`ตั้งค่าพรีเซ็ตตามต้นฉบับแล้ว (${data.copied} ไฟล์)${runNote}`);
     refreshTempleDefaultsStatus();
   } catch (err) {
     alert("ทับค่าไม่สำเร็จ: " + (err?.message || err));
   } finally {
     btns.forEach((b, i) => {
       b.disabled = false;
-      b.textContent = prev[i] || "ทับค่า gift ตามแพ็กในแอพ";
+      b.textContent = prev[i] || "ตั้งค่าพรีเซ็ตตามต้นฉบับ";
     });
   }
 }

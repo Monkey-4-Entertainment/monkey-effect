@@ -13,6 +13,7 @@
   const JAR_FILL = 500;
   const OVERLAY_CAP = 5000;
   const BOAT_WATER_CAPACITY = 1000;
+  const SPECIAL_GIFT_MIN_COINS = 500; // Per gift, not the combined value of a combo.
   // Per-gift coin value controls one of eleven gradually increasing sizes.
   const MAX_GIFT_SCALE = 2.12;
 
@@ -71,8 +72,9 @@
       ? (["classic", "original"].includes(parseJarStyle(params.get("style") || params.get("jarStyle"))) ? parseJarStyle(params.get("style") || params.get("jarStyle")) : "classic")
       : parseJarStyle(params.get("style") || params.get("jarStyle"));
   const isDuckBoat = () => jarStyle === "duck-pirate" || jarStyle === "duck-cruise" || jarStyle === "monkey-pirate";
-  // Ships default to green-screen; glass jars keep their transparent background.
-  const chroma = params.has("chroma") ? params.get("chroma") === "1" : isDuckBoat();
+  // Ships always use true alpha, including saved links with the old chroma flag.
+  // Preserve the glass jar's optional legacy chroma mode.
+  const chroma = !isDuckBoat() && params.get("chroma") === "1";
   document.documentElement.classList.toggle("chroma", chroma);
   document.body.classList.toggle("chroma", chroma);
   const GLASS_BODY_URL = "/gifts/jar/art/glass-body.png?v=jar59";
@@ -841,7 +843,7 @@
   }
 
   function cannonGift(item) {
-    return !!pirateCannon && isDuckBoat() && item.cannonEligible && item.coins >= 1000;
+    return !!pirateCannon && isDuckBoat() && item.cannonEligible && item.coins >= SPECIAL_GIFT_MIN_COINS;
   }
 
   function pendingCannonGift() {

@@ -27,7 +27,7 @@ public sealed class MainForm : Form
 
 	public MainForm()
 	{
-		Text = "Monkeyeffect 1.0.8.5";
+		Text = "Monkeyeffect " + AppVersion.ReadInstalledVersion();
 		base.StartPosition = FormStartPosition.CenterScreen;
 		MinimumSize = new Size(960, 640);
 		base.Size = new Size(1280, 800);
@@ -43,6 +43,7 @@ public sealed class MainForm : Form
 		base.FormClosed += delegate
 		{
 			try { _keepAliveTimer.Stop(); } catch { }
+			TransparentWidgetWindow.CloseAll();
 			SetThreadExecutionState(EsContinuous);
 			Application.Exit();
 		};
@@ -113,6 +114,7 @@ public sealed class MainForm : Form
 		try
 		{
 			await _webView.EnsureCoreWebView2Async(await WebViewEnv.GetAsync());
+			_webView.CoreWebView2.NewWindowRequested += TransparentWidgetWindow.OnNewWindowRequested;
 			await NavigateWhenReadyAsync();
 		}
 		catch (Exception ex)

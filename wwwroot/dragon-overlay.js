@@ -1,5 +1,6 @@
 (()=>{"use strict";
-const q=new URLSearchParams(location.search),gallery=q.get("gallery")==="1",chroma=q.get("chroma")!=="0",cfg={scale:Math.max(.25,Math.min(1,(Number(q.get("scale"))||45)/100)),zone:Math.max(.1,Math.min(.6,(Number(q.get("zone"))||30)/100)),side:q.get("side")==="left"?"left":"right",safe:Math.max(.45,Math.min(.75,(Number(q.get("safe"))||62)/100)),fire:q.get("fire")!=="0",sound:q.get("sound")==="1",ranks:q.get("ranks")!=="0",quality:["auto","high","eco"].includes(q.get("quality"))?q.get("quality"):"auto",locked:q.get("locked")!=="0"};if(gallery)document.getElementById("world").classList.add("gallery");if(chroma)document.body.style.background="#00ff00";
+const SPECIAL_GIFT_MIN_COINS=500; // Per gift, not the combined value of a combo.
+const q=new URLSearchParams(location.search),gallery=q.get("gallery")==="1",cfg={scale:Math.max(.25,Math.min(1,(Number(q.get("scale"))||45)/100)),zone:Math.max(.1,Math.min(.6,(Number(q.get("zone"))||30)/100)),side:q.get("side")==="left"?"left":"right",safe:Math.max(.45,Math.min(.75,(Number(q.get("safe"))||62)/100)),fire:q.get("fire")!=="0",sound:q.get("sound")==="1",ranks:q.get("ranks")!=="0",quality:["auto","high","eco"].includes(q.get("quality"))?q.get("quality"):"auto",locked:q.get("locked")!=="0"};if(gallery)document.getElementById("world").classList.add("gallery");
 const giftCanvas=document.getElementById("gifts"),g=giftCanvas.getContext("2d"),fireCanvas=document.getElementById("fire"),f=fireCanvas.getContext("2d"),dragon=document.getElementById("dragon"),dragonSprite=document.getElementById("dragonSprite"),premium=document.getElementById("premiumGift");
 const EVENTS_KEY="tgr_jar_overlay_events_v1",CHANNEL="tgr-jar-overlay",SAVE_KEY="me_dragon_hoard_v2",STAGE_KEY="me_dragon_stage_v2",CLEAN_KEY="me_dragon_cleanup_v1",stages=[{n:"ไข่มังกร",at:0,img:"dragon-egg-v1.png",slug:""},{n:"ลูกมังกรน้ำแข็ง",at:10,img:"dragon-baby-v2.png",slug:"baby"},{n:"มังกรมรกตวัยรุ่น",at:100,img:"dragon-juvenile-v1.png",slug:"juvenile"},{n:"ราชามังกรเพลิง",at:1000,img:"dragon-king-v2.png",slug:"king"},{n:"มังกรตำนานแห่งจักรวาล",at:5000,img:"dragon-legendary-v2.png",slug:"legendary"}];
 let W=0,H=0,dpr=1,total=Math.max(0,Number(localStorage.getItem(SAVE_KEY))||0),stage=Math.max(0,Math.min(4,Number(localStorage.getItem(STAGE_KEY))||0)),cleanupCount=Math.max(0,Math.min(9,Number(localStorage.getItem(CLEAN_KEY))||0)),evolving=false,evolutionRun=0,cleanupRunning=false,cleanupRun=0,busy=false,gifts=[],flames=[],seen=new Set(),catalog=new Map(),premiumQueue=[],suctionFx=null,giftDrag=null,dragonDrag=null;const delay=ms=>new Promise(r=>setTimeout(r,ms));
@@ -9,7 +10,7 @@ function giftSizeScale(c){if(c>=10001)return 2.12;if(c>=4501)return 1.86;if(c>=2
 function pirateGiftBaseRadius(){const margin=Math.max(8,Math.min(W,H)*.018),left=Math.max(margin,W*.08),right=Math.min(W-margin,W*.92),waterW=right-left;return Math.max(12,Math.min(24,waterW/28))}
 function info(name,coins){const it=catalog.get(key(name))||{},c=Math.max(1,Number(coins)||Number(it.coins)||1),url=it.url||it.image||it.imageUrl||(it.file?`/gifts/jar/icons/${it.file}`:""),baseR=pirateGiftBaseRadius();return{coins:c,url,r:baseR*giftSizeScale(c)}}
 function makeGift(data,inf,i){const o={x:W*(.12+Math.random()*.58),y:H*(1-cfg.zone)-20-i*5,vx:(Math.random()-.5)*55,vy:30+Math.random()*35,r:inf.r,name:data.giftName||data.name||"Gift",coins:inf.coins,nickname:data.nickname||data.uniqueId||"ผู้ชม",img:null,frozen:false,carried:false,sleeping:false,settleFrames:0};if(inf.url){o.img=new Image();o.img.src=inf.url}return o}
-function addGift(data){const count=Math.max(1,Math.floor(Number(data.count||data.repeatCount)||1)),inf=info(data.giftName||data.name,data.coins),added=[];total+=inf.coins*count;localStorage.setItem(SAVE_KEY,String(total));for(let i=0;i<count;i++){const o=makeGift(data,inf,i);o.x=W*(.04+Math.random()*.92);o.y=H*(1-cfg.zone)-20-Math.random()*Math.max(45,H*.18);o.vx=(Math.random()-.5)*150;o.vy=45+Math.random()*145;gifts.push(o);added.push(o)}const cap=5000;if(gifts.length>cap)gifts.splice(0,gifts.length-cap);toast(`${data.nickname||data.uniqueId||"ผู้ชม"} • ${data.giftName||"Gift"} ×${count}`);if(inf.coins>=1000&&added[0]){added[0].frozen=true;premiumQueue.push({gift:added[0],nickname:added[0].nickname,name:added[0].name,coins:inf.coins,count});interruptCleanup()}if(targetStage()>stage)interruptCleanup();updateStage();if(targetStage()===stage&&inf.coins<1000&&!busy)react(inf.coins*count)}
+function addGift(data){const count=Math.max(1,Math.floor(Number(data.count||data.repeatCount)||1)),inf=info(data.giftName||data.name,data.coins),added=[];total+=inf.coins*count;localStorage.setItem(SAVE_KEY,String(total));for(let i=0;i<count;i++){const o=makeGift(data,inf,i);o.x=W*(.04+Math.random()*.92);o.y=H*(1-cfg.zone)-20-Math.random()*Math.max(45,H*.18);o.vx=(Math.random()-.5)*150;o.vy=45+Math.random()*145;gifts.push(o);added.push(o)}const cap=5000;if(gifts.length>cap)gifts.splice(0,gifts.length-cap);toast(`${data.nickname||data.uniqueId||"ผู้ชม"} • ${data.giftName||"Gift"} ×${count}`);if(inf.coins>=SPECIAL_GIFT_MIN_COINS&&added[0]){added[0].frozen=true;premiumQueue.push({gift:added[0],nickname:added[0].nickname,name:added[0].name,coins:inf.coins,count});interruptCleanup()}if(targetStage()>stage)interruptCleanup();updateStage();if(targetStage()===stage&&inf.coins<SPECIAL_GIFT_MIN_COINS&&!busy)react(inf.coins*count)}
 function toast(){}
 let audioCtx=null;function soundFx(type){if(!cfg.sound||type!=="premium-fire")return;try{audioCtx??=new(window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),gain=audioCtx.createGain(),now=audioCtx.currentTime,dur=.82;o.type="sawtooth";o.frequency.setValueAtTime(90,now);o.frequency.exponentialRampToValueAtTime(38,now+dur*.85);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.16,now+.02);gain.gain.exponentialRampToValueAtTime(.0001,now+dur);o.connect(gain).connect(audioCtx.destination);o.start(now);o.stop(now+dur+.02)}catch{}}
 function dragonClass(action){return `dragon ${action} stage-${stage+1}${cfg.side==="left"?" side-left":""} can-drag`}
@@ -40,11 +41,91 @@ for(const o of gifts){if(o.frozen||o.carried||o.sleeping)continue;const stable=s
 function draw(){g.clearRect(0,0,W,H);for(const o of gifts){g.save();g.translate(o.x,o.y);g.shadowBlur=o.coins>=100?18:5;g.shadowColor=o.coins>=100?"#ffd85c":"#fff5";if(o.img?.complete)g.drawImage(o.img,-o.r,-o.r,o.r*2,o.r*2);else{g.fillStyle=o.coins>=100?"#ffe06b":"#84e8ff";g.beginPath();g.arc(0,0,o.r,0,Math.PI*2);g.fill()}g.restore()}f.clearRect(0,0,W,H);f.globalCompositeOperation="lighter";for(const p of flames){const a=Math.max(0,p.life/p.max),gr=f.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);gr.addColorStop(0,`rgba(255,255,235,${a})`);gr.addColorStop(.22,`rgba(255,224,80,${a*.95})`);gr.addColorStop(.58,`rgba(255,92,10,${a*.75})`);gr.addColorStop(1,"rgba(100,0,0,0)");f.fillStyle=gr;f.beginPath();f.arc(p.x,p.y,p.r,0,Math.PI*2);f.fill()}f.globalCompositeOperation="source-over"}
 function drawSuction(){if(!suctionFx?.mouth)return;const mouth=suctionFx.mouth,p=suctionFx.p||0,alpha=Math.sin(Math.PI*Math.min(1,p));f.save();f.globalCompositeOperation="lighter";f.lineCap="round";f.setLineDash([10,14]);f.lineDashOffset=-performance.now()*.08;for(let i=0;i<suctionFx.targets.length;i++){const o=suctionFx.targets[i],bend=(i%2?1:-1)*(18+Math.abs(o.y-mouth.y)*.04);f.beginPath();f.moveTo(o.x,o.y);f.quadraticCurveTo((o.x+mouth.x)*.5,(o.y+mouth.y)*.5+bend,mouth.x,mouth.y);f.strokeStyle=`rgba(185,239,255,${.12+.42*alpha})`;f.lineWidth=1.2+(i%3)*.45;f.stroke()}for(let i=0;i<18;i++){const t=((performance.now()*.00055+i/18)%1),spread=(1-t)*(22+(i%4)*7),x=mouth.x+(cfg.side==="left"?-1:1)*(20+110*(1-t)),y=mouth.y+Math.sin(t*18+i)*spread*.45;f.fillStyle=`rgba(225,249,255,${(.18+.58*t)*alpha})`;f.beginPath();f.arc(x,y,1.2+2.1*t,0,Math.PI*2);f.fill()}f.restore()}
 giftCanvas.addEventListener("pointerdown",e=>{for(let i=gifts.length-1;i>=0;i--){const o=gifts[i];if(Math.hypot(e.clientX-o.x,e.clientY-o.y)>o.r)continue;if(o.coins>=100&&!o.carried){giftDrag={gift:o,pointerId:e.pointerId,dx:e.clientX-o.x,dy:e.clientY-o.y};o.frozen=true;o.sleeping=false;o.vx=0;o.vy=0;giftCanvas.setPointerCapture(e.pointerId);giftCanvas.style.cursor="grabbing";e.preventDefault()}break}});giftCanvas.addEventListener("pointermove",e=>{if(!giftDrag||giftDrag.pointerId!==e.pointerId)return;const o=giftDrag.gift,zoneTop=H*(1-cfg.zone),ground=H*.97;o.x=Math.max(o.r,Math.min(W-o.r,e.clientX-giftDrag.dx));o.y=Math.max(zoneTop+o.r,Math.min(ground-o.r,e.clientY-giftDrag.dy));e.preventDefault()});function finishGiftDrag(e){if(!giftDrag||e.pointerId!==giftDrag.pointerId)return;const o=giftDrag.gift,pending=premiumQueue.some(job=>job.gift===o);o.frozen=pending;o.sleeping=!pending;o.settleFrames=pending?0:99;o.vx=0;o.vy=0;try{giftCanvas.releasePointerCapture(e.pointerId)}catch{}giftDrag=null;giftCanvas.style.cursor="default"}giftCanvas.addEventListener("pointerup",finishGiftDrag);giftCanvas.addEventListener("pointercancel",finishGiftDrag);let prev=performance.now();function frame(t){const dt=Math.min(.033,(t-prev)/1000);prev=t;update(dt);draw();drawSuction();requestAnimationFrame(frame)}requestAnimationFrame(frame);
-function escapeText(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}function guardianPosition(rank){try{const p=JSON.parse(localStorage.getItem(`me_dragon_guardian_${rank}`)||"null");if(p?.left&&p?.top)return p}catch{}return{left:`${3+(rank-1)*19}%`,top:`${(1-cfg.zone)*100+1}%`}}
+function escapeText(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+const guardianHost=document.getElementById("guardians"),guardianPositions=new Map();
+let guardianDrag=null,guardianRows=[],ranksPolling=false;
+function guardianPosition(rank){
+  if(guardianPositions.has(rank))return guardianPositions.get(rank);
+  try{
+    const p=JSON.parse(localStorage.getItem(`me_dragon_guardian_${rank}`)||"null");
+    const valid=v=>typeof v==="string"&&/^-?\d+(?:\.\d+)?%$/.test(v)&&Number.isFinite(parseFloat(v));
+    if(valid(p?.left)&&valid(p?.top))return p;
+  }catch{}
+  return{left:`${3+(rank-1)*19}%`,top:`${(1-cfg.zone)*100+1}%`};
+}
+function placeGuardian(el,left,top){
+  const bounds=guardianHost.getBoundingClientRect(),card=el.getBoundingClientRect();
+  const width=bounds.width||W||1,height=bounds.height||H||1;
+  left=Math.max(0,Math.min(Math.max(0,width-card.width),left));
+  top=Math.max(0,Math.min(Math.max(0,height-card.height),top));
+  el.style.left=`${left/width*100}%`;el.style.top=`${top/height*100}%`;
+}
+function renderGuardians(){
+  if(!cfg.ranks){guardianHost.hidden=true;return}
+  guardianHost.hidden=false;
+  guardianRows.forEach((x,i)=>{
+    const rank=i+1;
+    let el=guardianHost.querySelector(`[data-rank="${rank}"]`);
+    if(!el){
+      el=document.createElement("article");el.className=`guardian rank-${rank} can-drag`;
+      el.dataset.rank=String(rank);el.title=`ลากเพื่อย้ายอันดับที่ ${rank}`;
+      guardianHost.appendChild(el);
+    }
+    const content=`${x.avatar?`<img src="${escapeText(x.avatar)}" alt="" draggable="false">`:`<span class="avatar"></span>`}<strong>${escapeText(x.nickname||x.uniqueId||"ผู้สนับสนุน")}</strong><small>#${rank} · ${(Number(x.coins)||0).toLocaleString()} Coins</small>`;
+    // Reuse each rank's card so live refreshes cannot break pointer capture.
+    if(el._guardianContent!==content){el.innerHTML=content;el._guardianContent=content}
+    if(guardianDrag?.el!==el){
+      const p=guardianPosition(rank),bounds=guardianHost.getBoundingClientRect();
+      placeGuardian(el,parseFloat(p.left)*bounds.width/100,parseFloat(p.top)*bounds.height/100);
+    }
+  });
+  for(const el of guardianHost.querySelectorAll(".guardian")){
+    if(Number(el.dataset.rank)>guardianRows.length&&guardianDrag?.el!==el)el.remove();
+  }
+}
 let livePrimed=false,livePolling=false;const liveSeen=new Set();
 async function pollLive(){if(livePolling)return;livePolling=true;try{const r=await fetch("/api/live-stats?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const d=await r.json(),events=Array.isArray(d.events)?d.events:[];for(const x of events){if(x?.kind!=="gift")continue;const id=`live:${x.id||0}:${x.at||0}`;if(liveSeen.has(id))continue;liveSeen.add(id);if(!livePrimed)continue;const count=Math.max(1,Number(x.count)||1),totalCoins=Math.max(1,Number(x.coins)||count);addGift({deliveryId:id,giftName:x.gift||"Gift",count,nickname:x.nick||x.user||"ผู้ชม",coins:Math.max(1,totalCoins/count)});}livePrimed=true;if(liveSeen.size>500){const keep=[...liveSeen].slice(-250);liveSeen.clear();for(const id of keep)liveSeen.add(id)}}catch{}finally{livePolling=false}}
-async function pollRanks(){const host=document.getElementById("guardians");if(!cfg.ranks){host.hidden=true;return}try{const r=await fetch("/api/live-stats?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const d=await r.json(),rows=(Array.isArray(d.topGifters)?d.topGifters:[]).slice().sort((a,b)=>(Number(b.coins)||0)-(Number(a.coins)||0)).slice(0,3);host.innerHTML=rows.map((x,i)=>{const rank=i+1,p=guardianPosition(rank);return `<article class="guardian rank-${rank}${cfg.locked?"":" can-drag"}" data-rank="${rank}" style="left:${p.left};top:${p.top}">${x.avatar?`<img src="${escapeText(x.avatar)}" alt="">`:`<span class="avatar"></span>`}<strong>${escapeText(x.nickname||x.uniqueId||"ผู้สนับสนุน")}</strong><small>#${rank} · ${(Number(x.coins)||0).toLocaleString()} Coins</small></article>`}).join("")}catch{}}pollLive();setInterval(pollLive,400);if(cfg.ranks){pollRanks();setInterval(pollRanks,1800)}
-if(!cfg.locked){let gd=null;const gh=document.getElementById("guardians");gh.addEventListener("pointerdown",e=>{const el=e.target.closest(".guardian");if(!el)return;const r=el.getBoundingClientRect();gd={el,dx:e.clientX-r.left,dy:e.clientY-r.top};el.setPointerCapture(e.pointerId)});gh.addEventListener("pointermove",e=>{if(!gd)return;const left=Math.max(0,Math.min(W-gd.el.offsetWidth,e.clientX-gd.dx)),top=Math.max(0,Math.min(H-gd.el.offsetHeight,e.clientY-gd.dy));gd.el.style.left=`${left/W*100}%`;gd.el.style.top=`${top/H*100}%`});gh.addEventListener("pointerup",()=>{if(!gd)return;localStorage.setItem(`me_dragon_guardian_${gd.el.dataset.rank}`,JSON.stringify({left:gd.el.style.left,top:gd.el.style.top}));gd=null})}
+async function pollRanks(){
+  if(!cfg.ranks){guardianHost.hidden=true;return}
+  if(ranksPolling)return;ranksPolling=true;
+  try{
+    const r=await fetch("/api/live-stats?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
+    const d=await r.json();
+    guardianRows=(Array.isArray(d.topGifters)?d.topGifters:[]).filter(x=>x&&typeof x==="object").sort((a,b)=>(Number(b.coins)||0)-(Number(a.coins)||0)).slice(0,3);
+    renderGuardians();
+  }catch{}finally{ranksPolling=false}
+}
+pollLive();setInterval(pollLive,400);pollRanks();if(cfg.ranks)setInterval(pollRanks,1800);
+// Rank cards remain draggable even when the old overlay URL says locked=1.
+guardianHost.addEventListener("pointerdown",e=>{
+  if(guardianDrag||e.button!==0)return;
+  const el=e.target.closest(".guardian");if(!el||!guardianHost.contains(el))return;
+  const r=el.getBoundingClientRect();
+  guardianDrag={el,pointerId:e.pointerId,dx:e.clientX-r.left,dy:e.clientY-r.top};
+  el.classList.add("dragging");el.setPointerCapture(e.pointerId);e.preventDefault();
+});
+guardianHost.addEventListener("pointermove",e=>{
+  if(!guardianDrag||guardianDrag.pointerId!==e.pointerId)return;
+  const bounds=guardianHost.getBoundingClientRect();
+  placeGuardian(guardianDrag.el,e.clientX-bounds.left-guardianDrag.dx,e.clientY-bounds.top-guardianDrag.dy);
+  e.preventDefault();
+});
+function finishGuardianDrag(e){
+  if(!guardianDrag||(e&&e.pointerId!==guardianDrag.pointerId))return;
+  const drag=guardianDrag;guardianDrag=null;
+  const el=drag.el,bounds=guardianHost.getBoundingClientRect();
+  placeGuardian(el,parseFloat(el.style.left)*bounds.width/100,parseFloat(el.style.top)*bounds.height/100);
+  const position={left:el.style.left,top:el.style.top},rank=Number(el.dataset.rank);
+  guardianPositions.set(rank,position);
+  try{localStorage.setItem(`me_dragon_guardian_${rank}`,JSON.stringify(position))}catch{}
+  el.classList.remove("dragging");
+  try{if(el.hasPointerCapture(drag.pointerId))el.releasePointerCapture(drag.pointerId)}catch{}
+  renderGuardians();
+}
+for(const type of["pointerup","pointercancel","lostpointercapture"])guardianHost.addEventListener(type,finishGuardianDrag);
+guardianHost.addEventListener("dragstart",e=>e.preventDefault());
+addEventListener("blur",()=>finishGuardianDrag());
+addEventListener("resize",()=>{if(guardianDrag)finishGuardianDrag();else renderGuardians()});
 dragon.addEventListener("pointerdown",e=>{if(busy)return;const r=dragon.getBoundingClientRect();dragonDrag={pointerId:e.pointerId,dx:e.clientX-r.left,dy:e.clientY-r.top};dragon.setPointerCapture(e.pointerId);dragon.classList.add("dragging");e.preventDefault()});dragon.addEventListener("pointermove",e=>{if(!dragonDrag||dragonDrag.pointerId!==e.pointerId)return;const left=Math.max(0,Math.min(W-dragon.offsetWidth,e.clientX-dragonDrag.dx)),top=Math.max(0,Math.min(H-dragon.offsetHeight,e.clientY-dragonDrag.dy));dragon.style.left=`${left/W*100}%`;dragon.style.right="auto";dragon.style.top=`${top/H*100}%`;dragon.style.bottom="auto";e.preventDefault()});function finishDragonDrag(e){if(!dragonDrag||dragonDrag.pointerId!==e.pointerId)return;try{dragon.releasePointerCapture(e.pointerId)}catch{}dragonDrag=null;dragon.classList.remove("dragging");localStorage.setItem("me_dragon_position",JSON.stringify({left:dragon.style.left,top:dragon.style.top}))}dragon.addEventListener("pointerup",finishDragonDrag);dragon.addEventListener("pointercancel",finishDragonDrag);try{const p=JSON.parse(localStorage.getItem("me_dragon_position")||"null");if(p?.left&&p?.top){dragon.style.left=p.left;dragon.style.right="auto";dragon.style.top=p.top;dragon.style.bottom="auto"}}catch{}
 function resetDragon(){evolutionRun++;cleanupRun++;total=0;stage=0;evolving=false;busy=false;cleanupRunning=false;cleanupCount=0;gifts=[];premiumQueue=[];document.getElementById("evolve").hidden=true;premium.hidden=true;localStorage.setItem(SAVE_KEY,"0");localStorage.setItem(STAGE_KEY,"0");localStorage.setItem(CLEAN_KEY,"0");renderStage()}
 function applyDragonConfig(r){if(Number.isFinite(Number(r?.zone)))cfg.zone=Math.max(.1,Math.min(.6,Number(r.zone)/100));if(Number.isFinite(Number(r?.scale)))cfg.scale=Math.max(.25,Math.min(1,Number(r.scale)/100));}
