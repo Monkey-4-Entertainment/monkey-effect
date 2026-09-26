@@ -1,8 +1,8 @@
 {
-    "version":  "1.2.0",
-    "notes":  "Monkeyeffect 1.2.0 - Widgets, pirate ship, dragon overlay, Temple Escape source preset, and premium gift card.",
-    "zipUrl":  "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.2.0/Monkeyeffect-1.2.0-update.zip",
-    "sha256":  "7a58063e76d5a5bb36c078eec50926f483cefa5cbc70c931147ecf9ea57634ac",
-    "mandatory":  true,
-    "repo":  "https://github.com/Monkey-4-Entertainment/monkey-effect"
+  "version": "1.2.1",
+  "notes": "Monkeyeffect 1.2.1 - Correct pirate gift identity and combos; 1000+ Coin cannon fireworks with sender card and continuous return to a tethered balloon; green-screen Dragon and Pirate overlays.",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.2.1/Monkeyeffect-1.2.1-update.zip",
+  "sha256": "521f230fecda9e94e9b490db84920e80df4a8e65a190eb8f5e12c8455cd4db7b",
+  "mandatory": true,
+  "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
