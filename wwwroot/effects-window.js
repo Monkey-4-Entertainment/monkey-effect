@@ -8,11 +8,7 @@ const winSub = document.getElementById("winSub");
 const winGameChip = document.getElementById("winGameChip");
 const winTestHint = document.getElementById("winTestHint");
 const winMsg = document.getElementById("winMsg");
-const defaultsCard = document.getElementById("defaultsCard");
 const noDefaultsCard = document.getElementById("noDefaultsCard");
-const defaultsTitle = document.getElementById("defaultsTitle");
-const defaultsHint = document.getElementById("defaultsHint");
-const defaultsStatus = document.getElementById("defaultsStatus");
 const noDefaultsHint = document.getElementById("noDefaultsHint");
 const testGift = document.getElementById("testGift");
 const testCount = document.getElementById("testCount");
@@ -60,20 +56,12 @@ function applyGame(game) {
   const isTemple = currentGame.id === TEMPLE_ID;
   const keymapCard = document.getElementById("keymapCard");
   const hasKeymap = isRiderKeymapGame(currentGame);
-  syncGiftChipsForGame(hasKeymap);
+  syncGiftChipsForGame(hasKeymap || isTemple);
 
-  defaultsCard?.classList.toggle("hidden", !isTemple);
   noDefaultsCard?.classList.toggle("hidden", isTemple || hasKeymap);
-  keymapCard?.classList.toggle("hidden", !hasKeymap);
+  keymapCard?.classList.toggle("hidden", !(hasKeymap || isTemple));
 
-  if (isTemple) {
-    if (defaultsTitle) defaultsTitle.textContent = `ค่าตั้งต้น gift ใน ${name}`;
-    if (defaultsHint) {
-      defaultsHint.innerHTML =
-        `กดปุ่มด้านล่างเพื่อ<b>ทับ</b>ไฟล์เซฟเกมด้วยแพ็กที่มากับ Monkeyeffect · ปิดเกม <b>${name}</b> ก่อนกด · แล้วเปิดเกมใหม่`;
-    }
-    refreshDefaultsStatus();
-  } else if (hasKeymap) {
+  if (isTemple || hasKeymap) {
     loadKeymapUI();
   } else if (noDefaultsHint) {
     noDefaultsHint.textContent = `${name} ยังไม่มีแพ็กค่าตั้งต้นในแอพ — ใช้ Send Test เพื่อยิงของเข้าเกมผ่าน /livemsg ได้ตามปกติ`;
@@ -82,7 +70,7 @@ function applyGame(game) {
 
 function isRiderKeymapGame(game) {
   const id = (game?.id || "").toLowerCase();
-  if (id === "the-rider" || id === "zero-hour" || id === "roblox" || id === "minecraft") return true;
+  if (id === "the-rider" || id === "zero-hour" || id === "roblox" || id === "minecraft" || id === TEMPLE_ID) return true;
   if (id !== "custom" && id !== "auto") return false;
   const blob = `${game?.displayName || ""} ${game?.customProcess || ""} ${game?.customTitle || ""}`.toUpperCase();
   return blob.includes("RIDER") || blob.includes("ZERO-HOUR") || blob.includes("ZERO HOUR") ||
@@ -129,41 +117,89 @@ function syncGiftChipsForGame(hasKeymap) {
   if (testType) testType.value = chips[0].type;
 }
 
-async function loadKeymapUI() {
+let keymapSnapshot = { enabled: true, rules: [], events: [] };
+
+function readPopupRows() {
+  return [...document.querySelectorAll("#keymapTable [data-keymap-row]")].map((row) => ({
+    giftName: row.querySelector("[data-f=gift]")?.value?.trim() || "",
+    key: (row.querySelector("[data-f=key]")?.value || "").trim(),
+    vk: 0,
+    label: row.querySelector("[data-f=label]")?.value?.trim() || "",
+    holdMs: Number(row.querySelector("[data-f=hold]")?.value) || 80,
+    times: Number(row.querySelector("[data-f=times]")?.value) || 1,
+    webhookUrl: row.querySelector("[data-f=webhook]")?.value || "",
+    enabled: !!row.querySelector("[data-f=on]")?.checked,
+  }));
+}
+
+function renderKeymapRows() {
   const tableEl = document.getElementById("keymapTable");
   const statusEl = document.getElementById("keymapStatus");
+  const rules = keymapSnapshot.rules || [];
+  if (statusEl) statusEl.textContent = keymapSnapshot.enabled === false ? "OFF" : `${rules.length} รายการ`;
+  if (!rules.length) {
+    tableEl.innerHTML = `<p class="preset-empty">ยังไม่มีพรีเซ็ต — เพิ่มจากหน้าหลัก หรือนำเข้าไฟล์</p>`;
+    return;
+  }
+  tableEl.innerHTML = `<div class="preset-list">${rules.map((r, i) => `
+    <article class="preset-row${r.enabled === false ? " is-off" : ""}" data-keymap-row="${i}">
+      <div class="preset-row-fields">
+        <label>แอคชัน<input data-f="label" value="${esc(r.label)}" placeholder="ชื่อแอคชัน" /></label>
+        <label>ของขวัญ<input data-f="gift" value="${esc(r.giftName)}" placeholder="Rose" /></label>
+        <label>คีย์<input data-f="key" value="${esc(r.key)}" placeholder="ว่าง" maxlength="12" style="text-align:center;font-weight:700" /></label>
+        <label>ครั้ง<input data-f="times" type="number" min="1" max="20" value="${Number(r.times) > 0 ? Number(r.times) : 1}" /></label>
+        <label>ms<input data-f="hold" type="number" min="20" max="2000" value="${r.holdMs || 80}" /></label>
+        <label class="preset-on">เปิด<input data-f="on" type="checkbox" ${r.enabled !== false ? "checked" : ""} /></label>
+        <input data-f="webhook" type="hidden" value="${esc(r.webhookUrl || "")}" />
+      </div>
+      <div class="preset-row-actions">
+        <button type="button" class="btn ghost small danger" data-popup-del="${i}">ลบ</button>
+      </div>
+    </article>`).join("")}</div>`;
+  tableEl.querySelectorAll("[data-popup-del]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const next = readPopupRows();
+      next.splice(Number(btn.getAttribute("data-popup-del")), 1);
+      keymapSnapshot.rules = next;
+      renderKeymapRows();
+      await savePopupKeymap();
+    });
+  });
+}
+
+async function savePopupKeymap() {
+  const rows = document.querySelectorAll("#keymapTable [data-keymap-row]");
+  if (rows.length || (keymapSnapshot.rules || []).length === 0) keymapSnapshot.rules = readPopupRows();
+  const res = await fetch("/api/keymap", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      enabled: keymapSnapshot.enabled !== false,
+      rules: keymapSnapshot.rules,
+      events: keymapSnapshot.events || [],
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok || data.ok === false) throw new Error(data.error || "บันทึกไม่สำเร็จ");
+  setMsg(`บันทึกแล้ว ${keymapSnapshot.rules.length} รายการ`);
+}
+
+async function loadKeymapUI() {
+  const tableEl = document.getElementById("keymapTable");
   if (!tableEl) return;
   try {
     const res = await fetch("/api/keymap");
     const cfg = await res.json();
-    const rules = cfg.rules || [];
-    if (statusEl) statusEl.textContent = cfg.enabled ? `${rules.length} rules · ON` : "OFF";
-    if (rules.length === 0) {
-      tableEl.innerHTML = `<p style="opacity:.5">ยังไม่มี mapping — แก้ไขไฟล์ userdata/rider-keymap.json</p>`;
-      return;
-    }
-    let html = `<table style="width:100%;border-collapse:collapse;font-size:.85rem">
-      <thead><tr style="text-align:left;opacity:.6">
-        <th style="padding:4px 8px">Gift</th>
-        <th style="padding:4px 8px">Key</th>
-        <th style="padding:4px 8px">เอฟเฟกต์</th>
-        <th style="padding:4px 8px">Hold</th>
-      </tr></thead><tbody>`;
-    for (const r of rules) {
-      html += `<tr style="border-top:1px solid rgba(255,255,255,.08)">
-        <td style="padding:4px 8px;font-weight:600">${esc(r.giftName)}</td>
-        <td style="padding:4px 8px"><kbd style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px">${esc(r.key)}</kbd></td>
-        <td style="padding:4px 8px">${esc(r.label)}</td>
-        <td style="padding:4px 8px">${r.holdMs}ms</td>
-      </tr>`;
-    }
-    html += `</tbody></table>`;
-    tableEl.innerHTML = html;
+    keymapSnapshot = {
+      enabled: cfg.enabled !== false,
+      rules: cfg.rules || [],
+      events: cfg.events || [],
+    };
+    renderKeymapRows();
   } catch (e) {
     tableEl.innerHTML = `<p style="color:#f87171">โหลด keymap ไม่สำเร็จ: ${e.message}</p>`;
   }
 }
-
 function esc(s) {
   const d = document.createElement("div");
   d.textContent = s || "";
@@ -188,18 +224,6 @@ async function loadGameFromApi() {
   applyGame(readStoredGame() || currentGame);
 }
 
-async function refreshDefaultsStatus() {
-  if (!defaultsStatus || currentGame.id !== TEMPLE_ID) return;
-  try {
-    const res = await fetch(`/api/temple-escape/defaults/status?t=${Date.now()}`);
-    const data = await res.json();
-    if (data.matchesPack) defaultsStatus.textContent = "ตรงกับแพ็ก";
-    else if (data.hasGameSaves) defaultsStatus.textContent = "ต่างจากแพ็ก — กดทับได้";
-    else defaultsStatus.textContent = "ยังไม่มีเซฟเกม";
-  } catch {
-    defaultsStatus.textContent = "ตรวจสถานะไม่ได้";
-  }
-}
 
 async function sendTest() {
   const giftName = testGift.value.trim() || "Rose";
@@ -229,33 +253,7 @@ async function sendTest() {
   }
 }
 
-async function applyDefaults() {
-  if (currentGame.id !== TEMPLE_ID) return;
-  if (!confirm(`ทับค่า gift ของ ${currentGame.displayName} ตามแพ็กในแอพ?\nปิดเกมก่อนกด`)) return;
-  try {
-    const res = await fetch("/api/temple-escape/defaults/apply", { method: "POST" });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "apply failed");
-    setMsg("ทับค่า gift แล้ว — เปิดเกมใหม่");
-    refreshDefaultsStatus();
-  } catch (err) {
-    setMsg(err.message || String(err), true);
-  }
-}
 
-async function exportDefaults() {
-  if (currentGame.id !== TEMPLE_ID) return;
-  if (!confirm("บันทึกเซฟเกมปัจจุบันเป็นแพ็กในแอพ?")) return;
-  try {
-    const res = await fetch("/api/temple-escape/defaults/export", { method: "POST" });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "export failed");
-    setMsg("บันทึกเป็นแพ็กแอพแล้ว");
-    refreshDefaultsStatus();
-  } catch (err) {
-    setMsg(err.message || String(err), true);
-  }
-}
 
 document.getElementById("giftChips")?.addEventListener("click", (e) => {
   const btn = e.target.closest(".chip-btn");
@@ -266,8 +264,9 @@ document.getElementById("giftChips")?.addEventListener("click", (e) => {
   testType.value = btn.dataset.type || "SendGift";
 });
 testBtn?.addEventListener("click", sendTest);
-document.getElementById("applyDefaultsBtn")?.addEventListener("click", applyDefaults);
-document.getElementById("exportDefaultsBtn")?.addEventListener("click", exportDefaults);
+document.getElementById("keymapSaveBtn")?.addEventListener("click", async () => {
+  try { await savePopupKeymap(); } catch (e) { setMsg(e.message || "บันทึกไม่สำเร็จ", true); }
+});
 document.getElementById("keymapReloadBtn")?.addEventListener("click", async () => {
   try {
     await fetch("/api/keymap/reload", { method: "POST" });

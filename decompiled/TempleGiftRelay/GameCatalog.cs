@@ -50,7 +50,8 @@ public static class GameCatalog
 			Id = "temple-escape",
 			Name = "Temple Escape (神庙跑跑跑)",
 			ProcessNames = new[] { "Temple_Escape-Win64-Shipping", "Temple_Escape" },
-			TitleContains = new[] { "Temple_Escape", "Temple Escape", "神庙" }
+			TitleContains = new[] { "Temple_Escape", "Temple Escape", "神庙" },
+			KeyMapFile = "temple-escape-keymap.json"
 		},
 		new GameProfile
 		{

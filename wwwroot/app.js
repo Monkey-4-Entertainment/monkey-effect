@@ -7273,10 +7273,7 @@ function syncEffectsPanelForGame(game) {
   const name = currentSelectedGame.displayName;
   const chip = document.getElementById("effectsGameChip");
   const testHint = document.getElementById("effectsTestHint");
-  const defaultsCard = document.getElementById("effectsDefaultsCard");
   const noDefaultsCard = document.getElementById("effectsNoDefaultsCard");
-  const defaultsTitle = document.getElementById("effectsDefaultsTitle");
-  const defaultsHint = document.getElementById("effectsDefaultsHint");
   const noDefaultsHint = document.getElementById("effectsNoDefaultsHint");
 
   if (chip) chip.textContent = name;
@@ -7302,20 +7299,25 @@ function syncEffectsPanelForGame(game) {
     effectsKeymapUiForced = false;
   }
   effectsPanelGameId = currentSelectedGame.id;
-  const showKeymap = hasKeymap || effectsKeymapUiForced;
-  defaultsCard?.classList.toggle("hidden", !isTemple);
-  noDefaultsCard?.classList.toggle("hidden", isTemple || showKeymap);
+  const showKeymap = hasKeymap || effectsKeymapUiForced || isTemple;
+  noDefaultsCard?.classList.toggle("hidden", showKeymap);
   keymapCard?.classList.add("hidden");
   eventsCard?.classList.add("hidden");
   importCard?.classList.remove("hidden");
-  syncGiftChipsForGame(hasKeymap || effectsKeymapUiForced);
+  syncGiftChipsForGame(hasKeymap || effectsKeymapUiForced || isTemple);
   if (keymapTitle) keymapTitle.textContent = `Actions — ${name}`;
   if (isTemple) {
-    if (defaultsTitle) defaultsTitle.textContent = `ค่าตั้งต้น gift ใน ${name}`;
-    if (defaultsHint) {
-      defaultsHint.innerHTML =
-        `กดปุ่มด้านล่างเพื่อ<b>ทับ</b>ไฟล์เซฟเกมด้วยแพ็กที่มากับ Monkeyeffect · ปิดเกม <b>${name}</b> ก่อนกด · แล้วเปิดเกมใหม่`;
+    if (testHint) {
+      testHint.textContent = `ส่งของทดสอบเข้า ${name} — กดคีย์ตาม Actions / Events ที่ตั้งไว้`;
     }
+    loadEffectsKeymapUI().then(() => {
+      keymapCard?.classList.remove("hidden");
+      eventsCard?.classList.remove("hidden");
+      const hasRows = (keymapDraftRules || []).length > 0;
+      if (!hasRows) {
+        setImportMsg("พรีเซ็ตเกมนี้แก้ในรายการได้เลย หรือนำเข้าไฟล์ — ไม่ได้ล็อกไว้ในโปรแกรม");
+      }
+    });
   } else if (hasKeymap) {
     if (testHint) {
       testHint.textContent = `ส่งของทดสอบเข้า ${name} — กดคีย์ตาม Keyboard Mapping เข้าหน้าต่างเกม`;
@@ -7344,7 +7346,7 @@ function isRiderKeymapGame(game) {
   const listed = (gameCatalog || []).find((g) => (g.id || "").toLowerCase() === id);
   if (listed?.keyMapFile) return true;
   if (id === "the-rider" || id === "zero-hour" || id === "roblox" || id === "minecraft") return true;
-  if (id && id !== "custom" && id !== "auto" && id !== TEMPLE_GAME_ID && listed) return !!listed.keyMapFile;
+  if (id && id !== "custom" && id !== "auto" && listed) return !!listed.keyMapFile;
   return false;
 }
 
@@ -7402,11 +7404,17 @@ function keymapGiftChips() {
     : RIDER_GIFT_CHIPS;
 }
 
+function keymapGiftChipsOr(fallback) {
+  const hasGift = (keymapDraftEvents || []).some((e) => (e.trigger || "gift") === "gift" && String(e.giftName || "").trim());
+  if (!hasGift) return fallback;
+  return keymapGiftChips();
+}
+
 function syncGiftChipsForGame(hasKeymap) {
   const host = document.getElementById("giftChips");
   if (!host) return;
   const chips = !hasKeymap ? TEMPLE_GIFT_CHIPS
-    : currentSelectedGame?.id === "roblox" ? keymapGiftChips()
+    : currentSelectedGame?.id === "roblox" || currentSelectedGame?.id === TEMPLE_GAME_ID ? keymapGiftChipsOr(TEMPLE_GIFT_CHIPS)
     : RIDER_GIFT_CHIPS;
   const signature = chips.map((c) => c.gift).join("|");
   if (host.dataset.chipSet === signature) return;
@@ -7484,7 +7492,7 @@ function keyToVk(key) {
 
 function readKeymapRowsFromDom() {
   const tableEl = document.getElementById("effectsKeymapTable");
-  const rows = [...(tableEl?.querySelectorAll("tr[data-keymap-row]") || [])];
+  const rows = [...(tableEl?.querySelectorAll("[data-keymap-row]") || [])];
   return rows.map((tr) => {
     const giftName = tr.querySelector("[data-f=gift]")?.value?.trim() || "";
     const key = (tr.querySelector("[data-f=key]")?.value || "").trim().replace(/[{}]/g, "");
@@ -7546,39 +7554,32 @@ function renderEffectsKeymapTable(rules, enabled) {
   if (!tableEl) return;
   const rows = keymapDraftRules.map((r, i) => {
     const icon = giftIconUrl(r.giftName);
-    const via = r.webhookUrl ? "webhook" : (r.key ? r.key : "ว่าง");
-    return `<tr data-keymap-row="${i}" style="border-top:1px solid rgba(255,255,255,.08);opacity:${r.enabled ? 1 : .45}">
-      <td style="padding:6px 4px;white-space:nowrap">
-        <button type="button" class="btn ghost" data-keymap-play="${i}" title="ทดสอบส่งเข้าเกม ตามจำนวนคอมโบด้านบน" style="padding:2px 8px">▶</button>
-        <button type="button" class="btn ghost" data-keymap-del="${i}" title="ลบ" style="padding:2px 8px;color:#fda4af">✕</button>
-      </td>
-      <td style="padding:4px"><input data-f="label" value="${escapeHtml(r.label)}" placeholder="ชื่อแอคชัน" style="width:7.5rem" /></td>
-      <td style="padding:4px">
-        <div style="display:flex;align-items:center;gap:6px">
-          ${icon ? `<img src="${escapeHtml(icon)}" alt="" width="28" height="28" style="width:28px;height:28px;object-fit:contain;border-radius:6px;background:#111" />` : `<span style="width:28px;height:28px;display:inline-block;border-radius:6px;background:#222"></span>`}
-          <input data-f="gift" class="gift-pick-input" value="${escapeHtml(r.giftName)}" placeholder="Rose / Like / Follow" style="width:9rem" />
-        </div>
-      </td>
-      <td style="padding:4px">
-        <input data-f="key" value="${escapeHtml(r.key)}" placeholder="${r.webhookUrl ? "HTTP" : "ว่าง"}" maxlength="12" style="width:3.6rem;text-align:center;font-weight:700;opacity:${r.key || r.webhookUrl ? 1 : .45}" title="${r.webhookUrl ? escapeHtml(r.webhookUrl) : "คลิกแล้วกดปุ่มเพื่อจับคีย์"}" />
-        <input data-f="webhook" type="hidden" value="${escapeHtml(r.webhookUrl || "")}" />
-        ${r.webhookUrl ? `<div style="font-size:.68rem;opacity:.55;max-width:11rem;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(r.webhookUrl)}">${escapeHtml(via)}</div>` : ""}
-      </td>
-      <td style="padding:4px"><input data-f="times" type="number" min="1" max="20" value="${r.times > 0 ? r.times : 1}" title="จำนวนครั้งที่กดเข้าเกมต่อ 1 ของขวัญ" style="width:3.4rem" /></td>
-      <td style="padding:4px"><input data-f="hold" type="number" min="20" max="2000" value="${r.holdMs || 80}" style="width:4.2rem" /></td>
-      <td style="padding:4px;text-align:center"><input data-f="on" type="checkbox" ${r.enabled ? "checked" : ""} /></td>
-    </tr>`;
+    return `<article class="preset-row${r.enabled ? "" : " is-off"}" data-keymap-row="${i}">
+      <div class="preset-row-fields">
+        <label>แอคชัน<input data-f="label" value="${escapeHtml(r.label)}" placeholder="ชื่อแอคชัน" /></label>
+        <label>ของขวัญ
+          <span class="preset-gift">
+            ${icon ? `<img src="${escapeHtml(icon)}" alt="" />` : `<span class="preset-gift-ph"></span>`}
+            <input data-f="gift" class="gift-pick-input" value="${escapeHtml(r.giftName)}" placeholder="Rose / Like / Follow" />
+          </span>
+        </label>
+        <label>คีย์
+          <input data-f="key" value="${escapeHtml(r.key)}" placeholder="${r.webhookUrl ? "HTTP" : "ว่าง"}" maxlength="12" title="${r.webhookUrl ? escapeHtml(r.webhookUrl) : "คลิกแล้วกดปุ่มเพื่อจับคีย์"}" style="text-align:center;font-weight:700" />
+          <input data-f="webhook" type="hidden" value="${escapeHtml(r.webhookUrl || "")}" />
+        </label>
+        <label>ครั้ง<input data-f="times" type="number" min="1" max="20" value="${r.times > 0 ? r.times : 1}" title="จำนวนครั้งที่กดเข้าเกมต่อ 1 ของขวัญ" /></label>
+        <label>ms<input data-f="hold" type="number" min="20" max="2000" value="${r.holdMs || 80}" /></label>
+        <label class="preset-on">เปิด<input data-f="on" type="checkbox" ${r.enabled ? "checked" : ""} /></label>
+      </div>
+      <div class="preset-row-actions">
+        <button type="button" class="btn ghost small" data-keymap-play="${i}">ทดสอบ</button>
+        <button type="button" class="btn ghost small danger" data-keymap-del="${i}">ลบ</button>
+      </div>
+    </article>`;
   }).join("");
-  tableEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.85rem">
-    <thead><tr style="text-align:left;opacity:.6">
-      <th style="padding:4px 8px"></th>
-      <th style="padding:4px 8px">แอคชัน</th>
-      <th style="padding:4px 8px">ของขวัญ</th>
-      <th style="padding:4px 8px">คีย์ / webhook</th>
-      <th style="padding:4px 8px">ครั้ง</th>
-      <th style="padding:4px 8px">ms</th>
-      <th style="padding:4px 8px">ไลฟ์</th>
-    </tr></thead><tbody>${rows || `<tr><td colspan="7" style="padding:10px;opacity:.5">ยังไม่มี Action — กดเพิ่ม Action หรือนำเข้าพรีเซ็ต</td></tr>`}</tbody></table>`;
+  tableEl.innerHTML = rows
+    ? `<div class="preset-list">${rows}</div>`
+    : `<p class="preset-empty">ยังไม่มี Action — กดเพิ่ม Action หรือนำเข้าพรีเซ็ต</p>`;
   if (!giftIconByName.size && !renderEffectsKeymapTable._loadingIcons) {
     renderEffectsKeymapTable._loadingIcons = true;
     ensureGiftIconMap().finally(() => {
@@ -7607,6 +7608,7 @@ function renderEffectsKeymapTable(rules, enabled) {
       const next = readKeymapRowsFromDom();
       next.splice(Number(btn.getAttribute("data-keymap-del")), 1);
       renderEffectsKeymapTable(next, true);
+      saveEffectsKeymap();
     });
   });
   tableEl.querySelectorAll(".gift-pick-input").forEach(bindGiftPicker);
@@ -7646,10 +7648,10 @@ function bindStackedLabelKeys(tableEl) {
     const unit = rules.find((r) => String(r.label || "").trim() === parsed.unit && (r.key || r.vk));
     if (unit?.key) keyInp.value = unit.key;
   };
-  tableEl.querySelectorAll("tr[data-keymap-row]").forEach((tr) => fillFromUnit(tr, false));
+  tableEl.querySelectorAll("[data-keymap-row]").forEach((tr) => fillFromUnit(tr, false));
   tableEl.querySelectorAll("[data-f=label]").forEach((inp) => {
     inp.addEventListener("change", () => {
-      const tr = inp.closest("tr");
+      const tr = inp.closest("[data-keymap-row]");
       if (tr) fillFromUnit(tr, true);
     });
   });
@@ -7751,7 +7753,7 @@ async function playKeymapRow(index) {
 
 function applyKeymapSearchFilter() {
   const q = (document.getElementById("keymapSearch")?.value || "").trim().toLowerCase();
-  const rows = [...document.querySelectorAll("#effectsKeymapTable tr[data-keymap-row]")];
+  const rows = [...document.querySelectorAll("#effectsKeymapTable [data-keymap-row]")];
   let shown = 0;
   for (const tr of rows) {
     const blob = tr.innerText.toLowerCase();
@@ -7845,7 +7847,7 @@ function bindGiftPicker(input) {
 
 function readEventsFromDom() {
   const tableEl = document.getElementById("effectsEventsTable");
-  const rows = [...(tableEl?.querySelectorAll("tr[data-event-row]") || [])];
+  const rows = [...(tableEl?.querySelectorAll("[data-event-row]") || [])];
   return rows.map((tr) => ({
     trigger: tr.querySelector("[data-f=trigger]")?.value || "gift",
     giftName: tr.querySelector("[data-f=gift]")?.value?.trim() || "",
@@ -7890,40 +7892,33 @@ function renderEffectsEventsTable(events) {
     const giftDisabled = (e.trigger !== "gift" && e.trigger !== "chat") ? "disabled" : "";
     const giftPh = e.trigger === "chat" ? "1 = แดง · 2 = น้ำเงิน" : "Rose / Perfume";
     const minCount = e.minCount > 0 ? e.minCount : 1;
-    return `<tr data-event-row="${i}" style="border-top:1px solid rgba(255,255,255,.08);opacity:${e.enabled ? 1 : .45}">
-      <td style="padding:6px 4px;white-space:nowrap">
-        <button type="button" class="btn ghost" data-event-play="${i}" title="ทดสอบทริกเกอร์นี้ ตามจำนวนคอมโบด้านบน" style="padding:2px 8px">▶</button>
-        <button type="button" class="btn ghost" data-event-del="${i}" title="ลบ" style="padding:2px 8px;color:#fda4af">✕</button>
-      </td>
-      <td style="padding:4px;text-align:center"><input data-f="on" type="checkbox" ${e.enabled ? "checked" : ""} /></td>
-      <td style="padding:4px">
-        <select data-f="trigger" style="min-width:7.5rem">
-          <option value="gift" ${e.trigger === "gift" ? "selected" : ""}>ของขวัญ</option>
-          <option value="chat" ${e.trigger === "chat" ? "selected" : ""}>แชท</option>
-          <option value="like" ${e.trigger === "like" ? "selected" : ""}>ไลค์</option>
-          <option value="follow" ${e.trigger === "follow" ? "selected" : ""}>ฟอลโลว์</option>
-        </select>
-      </td>
-      <td style="padding:4px"><input data-f="gift" class="gift-pick-input" value="${escapeHtml(e.giftName)}" placeholder="${giftPh}" ${giftDisabled} style="width:11rem" /></td>
-      <td style="padding:4px;white-space:nowrap">
-        <input data-f="min" type="number" min="1" max="99999" value="${minCount}" title="ต้องครบกี่ครั้งถึงส่งเข้าเกม — เช่น ไลค์ 100 ครั้ง" style="width:4.6rem" />
-        <span style="opacity:.55;font-size:.75rem;margin-left:2px">ครั้ง</span>
-      </td>
-      <td style="padding:4px"><select data-f="action" style="min-width:8rem">${actionOptionsHtml(e.action)}</select></td>
-    </tr>`;
+    return `<article class="preset-row${e.enabled ? "" : " is-off"}" data-event-row="${i}">
+      <div class="preset-row-fields events">
+        <label class="preset-on">เปิด<input data-f="on" type="checkbox" ${e.enabled ? "checked" : ""} /></label>
+        <label>ทริกเกอร์
+          <select data-f="trigger">
+            <option value="gift" ${e.trigger === "gift" ? "selected" : ""}>ของขวัญ</option>
+            <option value="chat" ${e.trigger === "chat" ? "selected" : ""}>แชท</option>
+            <option value="like" ${e.trigger === "like" ? "selected" : ""}>ไลค์</option>
+            <option value="follow" ${e.trigger === "follow" ? "selected" : ""}>ฟอลโลว์</option>
+          </select>
+        </label>
+        <label>ของขวัญ<input data-f="gift" class="gift-pick-input" value="${escapeHtml(e.giftName)}" placeholder="${giftPh}" ${giftDisabled} /></label>
+        <label>ครบกี่ครั้ง<input data-f="min" type="number" min="1" max="99999" value="${minCount}" title="ต้องครบกี่ครั้งถึงส่งเข้าเกม" /></label>
+        <label>แอคชัน<select data-f="action">${actionOptionsHtml(e.action)}</select></label>
+      </div>
+      <div class="preset-row-actions">
+        <button type="button" class="btn ghost small" data-event-play="${i}">ทดสอบ</button>
+        <button type="button" class="btn ghost small danger" data-event-del="${i}">ลบ</button>
+      </div>
+    </article>`;
   }).join("");
-  tableEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.85rem">
-    <thead><tr style="text-align:left;opacity:.6">
-      <th style="padding:4px 8px"></th>
-      <th style="padding:4px 8px">เปิด</th>
-      <th style="padding:4px 8px">ทริกเกอร์</th>
-      <th style="padding:4px 8px">ของขวัญ</th>
-      <th style="padding:4px 8px">ครบกี่ครั้ง</th>
-      <th style="padding:4px 8px">แอคชัน</th>
-    </tr></thead><tbody>${rows || `<tr><td colspan="6" style="padding:10px;opacity:.5">ยังไม่มี Event — กด + สร้าง Event</td></tr>`}</tbody></table>`;
+  tableEl.innerHTML = rows
+    ? `<div class="preset-list">${rows}</div>`
+    : `<p class="preset-empty">ยังไม่มี Event — กด + สร้าง Event</p>`;
   tableEl.querySelectorAll("[data-f=trigger]").forEach((sel) => {
     sel.addEventListener("change", () => {
-      const tr = sel.closest("tr");
+      const tr = sel.closest("[data-event-row]");
       const gift = tr?.querySelector("[data-f=gift]");
       if (gift) {
         gift.disabled = sel.value !== "gift" && sel.value !== "chat";
@@ -7939,6 +7934,7 @@ function renderEffectsEventsTable(events) {
       const next = readEventsFromDom();
       next.splice(Number(btn.getAttribute("data-event-del")), 1);
       renderEffectsEventsTable(next);
+      saveEffectsKeymap();
     });
   });
   tableEl.querySelectorAll(".gift-pick-input").forEach(bindGiftPicker);
@@ -10179,132 +10175,6 @@ document.getElementById("winRulesList")?.addEventListener("click", (e) => {
     document.getElementById("winRuleMode").textContent = "แก้ไข";
   }
 });
-
-function setTempleDefaultsStatusText(text) {
-  const el = document.getElementById("templeDefaultsStatus");
-  if (el) el.textContent = text;
-}
-
-async function refreshTempleDefaultsStatus() {
-  try {
-    const res = await fetch(`/api/temple-escape/defaults/status?t=${Date.now()}`);
-    if (!res.ok) throw new Error("status failed");
-    const data = await res.json();
-    if (!data.ready) {
-      setTempleDefaultsStatusText("ไม่มีแพ็กในโปรแกรม");
-      return;
-    }
-    if (data.applied) {
-      setTempleDefaultsStatusText(data.gameRunning ? "ตรงกับต้นฉบับ · เกมเปิดอยู่" : "ตรงกับพรีเซ็ตต้นฉบับ");
-      return;
-    }
-    if (data.installedAny) {
-      setTempleDefaultsStatusText(data.gameRunning ? "ต่างจากต้นฉบับ · เกมเปิดอยู่" : "ต่างจากต้นฉบับ — กดตั้งค่าได้");
-      return;
-    }
-    setTempleDefaultsStatusText("ยังไม่ใส่ในเกม");
-  } catch {
-    setTempleDefaultsStatusText("ตรวจไม่ได้");
-  }
-}
-
-async function applyTempleEscapeDefaultsFromButton() {
-  let status = null;
-  try {
-    const st = await fetch(`/api/temple-escape/defaults/status?t=${Date.now()}`);
-    status = await st.json();
-  } catch {
-    /* ignore */
-  }
-  const warnRun = status?.gameRunning
-    ? "\n\n⚠ เกม Temple Escape ยังเปิดอยู่ — ควรปิดก่อน ไม่งั้นเกมอาจเขียนทับกลับ"
-    : "";
-  if (
-    !confirm(
-      "ตั้งค่าพรีเซ็ต Temple Escape ตามต้นฉบับ?\n" +
-        "(จะเขียนทับ CusFucSetting / PHBSave / MuztoMod)\n" +
-        "แนะนำให้ปิดเกมก่อน แล้วเปิดเกมใหม่หลังใส่ค่า" +
-        warnRun
-    )
-  ) {
-    return;
-  }
-  const btns = [...document.querySelectorAll("[data-temple-apply]")];
-  const prev = btns.map((b) => b.textContent);
-  btns.forEach((b) => {
-    b.disabled = true;
-    b.textContent = "กำลังทับ…";
-  });
-  try {
-    const res = await fetch("/api/temple-escape/defaults/apply", { method: "POST" });
-    const data = await res.json();
-    if (!res.ok || !data.ok) throw new Error(data.error || "apply failed");
-    const runNote = data.gameRunning
-      ? "\n\nเกมยังเปิดอยู่ — ปิดแล้วเปิดใหม่เพื่อให้โหลดค่า"
-      : "\nเปิดเกมใหม่แล้วตรวจเมนู 礼物事件配置";
-    alert(`ตั้งค่าพรีเซ็ตตามต้นฉบับแล้ว (${data.copied} ไฟล์)${runNote}`);
-    refreshTempleDefaultsStatus();
-  } catch (err) {
-    alert("ทับค่าไม่สำเร็จ: " + (err?.message || err));
-  } finally {
-    btns.forEach((b, i) => {
-      b.disabled = false;
-      b.textContent = prev[i] || "ตั้งค่าพรีเซ็ตตามต้นฉบับ";
-    });
-  }
-}
-
-async function exportTempleEscapeDefaultsFromButton() {
-  if (!confirm("คัดลอกเซฟจากเกมเครื่องนี้ เข้าแพ็กในโปรแกรม?\n(ใช้ตอนจะอัปเดตค่าตั้งต้นในแอพ/Setup)")) return;
-  const btns = [...document.querySelectorAll("[data-temple-export]")];
-  const prev = btns.map((b) => b.textContent);
-  btns.forEach((b) => {
-    b.disabled = true;
-    b.textContent = "กำลังคัดลอก…";
-  });
-  try {
-    const res = await fetch("/api/temple-escape/defaults/export", { method: "POST" });
-    const data = await res.json();
-    if (!res.ok || !data.ok) throw new Error(data.error || "export failed");
-    alert(
-      `อัปเดตแพ็กแล้ว (${data.copied} ไฟล์)` +
-        (data.missing?.length ? `\nขาด: ${data.missing.join(", ")}` : "")
-    );
-    refreshTempleDefaultsStatus();
-  } catch (err) {
-    alert("อัปเดตแพ็กไม่สำเร็จ: " + (err?.message || err));
-  } finally {
-    btns.forEach((b, i) => {
-      b.disabled = false;
-      b.textContent = prev[i] || "บันทึกเซฟเกมนี้เป็นแพ็กแอพ";
-    });
-  }
-}
-
-async function seedTempleEscapeDefaultsIfNeeded() {
-  try {
-    const res = await fetch(`/api/temple-escape/defaults/status?t=${Date.now()}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data.ready || data.applied) return;
-    // Only auto-apply when CusFucSetting is missing (fresh machine) — never auto-overwrite.
-    const gift = (data.files || []).find((f) => f.file === "CusFucSetting.sav");
-    if (gift?.installed) return;
-    await fetch("/api/temple-escape/defaults/apply", { method: "POST" });
-    console.info("[temple-escape] seeded gift-event defaults");
-  } catch (err) {
-    console.warn("[temple-escape] seed failed", err);
-  }
-}
-
-document.querySelectorAll("[data-temple-apply]").forEach((btn) => {
-  btn.addEventListener("click", () => applyTempleEscapeDefaultsFromButton());
-});
-document.querySelectorAll("[data-temple-export]").forEach((btn) => {
-  btn.addEventListener("click", () => exportTempleEscapeDefaultsFromButton());
-});
-refreshTempleDefaultsStatus();
-seedTempleEscapeDefaultsIfNeeded().then(() => refreshTempleDefaultsStatus());
 
 /* ========== Online update ========== */
 let updateLatest = null;

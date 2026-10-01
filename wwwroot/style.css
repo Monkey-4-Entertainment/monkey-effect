@@ -1208,6 +1208,96 @@ input[type="number"] { max-width: 100%; }
   font-size: 0.82rem;
 }
 
+.preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preset-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.preset-row.is-off { opacity: 0.5; }
+
+.preset-row-fields {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1.1fr) minmax(8rem, 1.3fr) minmax(4.2rem, 0.6fr) minmax(3.4rem, 0.45fr) minmax(3.6rem, 0.5fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.preset-row-fields.events {
+  grid-template-columns: auto minmax(7rem, 0.8fr) minmax(8rem, 1.2fr) minmax(4.2rem, 0.5fr) minmax(8rem, 1fr);
+}
+
+.preset-row-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.preset-row-fields input,
+.preset-row-fields select {
+  width: 100%;
+  min-width: 0;
+}
+
+.preset-gift {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.preset-gift img,
+.preset-gift .preset-gift-ph {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: #111;
+  flex: 0 0 auto;
+}
+
+.preset-gift .preset-gift-ph {
+  display: inline-block;
+  background: #222;
+}
+
+.preset-on {
+  align-items: center !important;
+  justify-content: flex-end;
+  min-height: 36px;
+}
+
+.preset-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.preset-empty {
+  margin: 0;
+  padding: 10px 4px;
+  opacity: 0.55;
+}
+
+@media (max-width: 900px) {
+  .preset-row-fields,
+  .preset-row-fields.events {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .gift-chips {
   display: flex;
   flex-wrap: wrap;

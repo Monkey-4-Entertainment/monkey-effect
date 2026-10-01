@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v1042" />
+    <link rel="stylesheet" href="/style.css?v=v123-preset-rows" />
     <style>
       body { min-height: 100vh; }
       .effects-shell {
@@ -76,18 +76,6 @@
         <p class="effects-msg" id="winMsg"></p>
       </section>
 
-      <section class="card" id="defaultsCard">
-        <div class="card-head">
-          <h2 id="defaultsTitle">ค่าตั้งต้น gift ในเกม</h2>
-          <span class="chip" id="defaultsStatus">—</span>
-        </div>
-        <p class="hint" id="defaultsHint">ทับไฟล์เซฟเกมด้วยแพ็กในแอพ · ปิดเกมก่อนกด · แล้วเปิดเกมใหม่</p>
-        <div class="actions tight">
-          <button id="applyDefaultsBtn" class="btn primary" type="button">ทับค่า gift ตามแพ็กในแอพ</button>
-          <button id="exportDefaultsBtn" class="btn ghost" type="button">บันทึกเซฟเกมนี้เป็นแพ็กแอพ</button>
-        </div>
-      </section>
-
       <section class="card hidden" id="noDefaultsCard">
         <div class="card-head">
           <h2>ค่าตั้งต้น gift</h2>
@@ -104,10 +92,11 @@
         <p class="hint">ของขวัญ → กดคีย์ไปที่หน้าต่างเกมโดยตรง (SendInput)</p>
         <div id="keymapTable" style="margin-top:.5rem"></div>
         <div class="actions tight" style="margin-top:.75rem">
+          <button id="keymapSaveBtn" class="btn secondary" type="button">บันทึก</button>
           <button id="keymapReloadBtn" class="btn ghost" type="button">โหลด Mapping ใหม่</button>
         </div>
       </section>
     </main>
-    <script src="/effects-window.js?v=v1108-zh-join"></script>
+    <script src="/effects-window.js?v=v123-preset-rows"></script>
   </body>
 </html>
