@@ -1,8 +1,8 @@
 {
-  "version": "1.2.2",
-  "notes": "Monkeyeffect 1.2.2 - Special gift effects from 500 coins per gift for Pirate and Dragon; true transparent overlays with framed native windows; independently draggable Dragon top-three ranks; version labels synchronized.",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.2.2/Monkeyeffect-1.2.2-update.zip",
-  "sha256": "6d843b8f4fcc565f2be0e0f2fb7dc927f87444d33ba27209116201f71859cb4d",
+  "version": "1.2.3",
+  "notes": "Monkeyeffect 1.2.3 - Temple Escape presets can be edited and deleted in the app. The baked original-preset button and automatic save overwrite are removed. Keeps the 1.2.2 pirate and dragon effects.",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.2.3/Monkeyeffect-1.2.3-update.zip",
+  "sha256": "35fcdd75fc31e38881c81dbd3c1cee862a58fcf6a7d6bb0386ae9037a3948c44",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
