@@ -11,6 +11,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -2036,9 +2037,22 @@ public sealed class BrowserGiftReaderService
 	}
 
 	/// <summary>
-	/// Resolve room id via TikTok web API (avoids brittle HTML scrape / wrong-case uniqueId).
+	/// Resolve room id for the normal webcast client. The /live HTML page is a WAF
+	/// challenge with no room id, so a webpage scrape reports "IP or country might be blocked".
+	/// The room API, then the profile page, still return the id used by machines that connect normally.
 	/// </summary>
 	private static async Task<(string? RoomId, bool? IsLive)> TryResolveRoomViaApiAsync(string uniqueId, CancellationToken token)
+	{
+		(string? roomId, bool? isLive) = await TryRoomApiOnceAsync(uniqueId, token);
+		if (!string.IsNullOrWhiteSpace(roomId) || isLive == false)
+		{
+			return (roomId, isLive);
+		}
+		AppPaths.Log("room-api miss — try profile @" + uniqueId);
+		return await TryResolveRoomFromProfileAsync(uniqueId, token);
+	}
+
+	private static async Task<(string? RoomId, bool? IsLive)> TryRoomApiOnceAsync(string uniqueId, CancellationToken token)
 	{
 		string url =
 			"https://www.tiktok.com/api-live/user/room/?aid=1988&sourceType=54&uniqueId="
@@ -2103,6 +2117,57 @@ public sealed class BrowserGiftReaderService
 		}
 	}
 
+	private static async Task<(string? RoomId, bool? IsLive)> TryResolveRoomFromProfileAsync(string uniqueId, CancellationToken token)
+	{
+		string url = "https://www.tiktok.com/@" + Uri.EscapeDataString(uniqueId);
+		try
+		{
+			using HttpResponseMessage resp = await WebcastHttp.GetAsync(url, token);
+			string body = await resp.Content.ReadAsStringAsync(token);
+			if (string.IsNullOrWhiteSpace(body) || body.Contains("Please wait", StringComparison.Ordinal))
+			{
+				AppPaths.Log("room-profile blocked uniqueId=" + uniqueId + " len=" + (body?.Length ?? 0));
+				return (null, null);
+			}
+			string? roomId = FindRoomIdNearUniqueId(body, uniqueId);
+			if (string.IsNullOrWhiteSpace(roomId) || roomId == "0")
+			{
+				AppPaths.Log("room-profile no room uniqueId=" + uniqueId);
+				return (null, null);
+			}
+			AppPaths.Log($"room-profile ok uniqueId={uniqueId} room={roomId}");
+			return (roomId, null);
+		}
+		catch (Exception ex)
+		{
+			AppPaths.Log("room-profile fail: " + ex.Message);
+			return (null, null);
+		}
+	}
+
+	private static string? FindRoomIdNearUniqueId(string html, string uniqueId)
+	{
+		string marker = "\"uniqueId\":\"" + uniqueId + "\"";
+		int at = html.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+		string window;
+		if (at >= 0)
+		{
+			int start = Math.Max(0, at - 2500);
+			int len = Math.Min(html.Length - start, 5000);
+			window = html.Substring(start, len);
+		}
+		else
+		{
+			window = html;
+		}
+		Match match = Regex.Match(window, "\"roomId\"\\s*:\\s*\"?(\\d{8,})\"?");
+		if (!match.Success)
+		{
+			match = Regex.Match(window, "room_id=(\\d{8,})");
+		}
+		return match.Success ? match.Groups[1].Value : null;
+	}
+
 	private static string? ReadJsonStringOrNumber(JsonElement obj, string name)
 	{
 		if (!obj.TryGetProperty(name, out JsonElement el))
@@ -2132,6 +2197,13 @@ public sealed class BrowserGiftReaderService
 		{
 			throw new InvalidOperationException(
 				"@" + cleanUsername + " ยังไม่กำลังไลฟ์อยู่ — เปิดไลฟ์ก่อน แล้วกด Connect อีกครั้ง");
+		}
+		if (string.IsNullOrWhiteSpace(resolvedRoomId))
+		{
+			AppPaths.Log("room-api no room / unknown live for @" + cleanUsername);
+			throw new InvalidOperationException(
+				"เชื่อมต่อ LIVE ไม่สำเร็จ @" + cleanUsername
+				+ " — หา RoomId ไม่ได้ ตรวจว่ากำลังไลฟ์อยู่ และ username ถูกต้อง (ตัวเล็ก)");
 		}
 		if (isLive == false)
 		{
