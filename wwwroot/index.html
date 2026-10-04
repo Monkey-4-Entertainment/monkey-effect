@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v123-preset-rows" />
+    <link rel="stylesheet" href="/style.css?v=v125-subtranslate" />
   </head>
   <body>
     <div class="bg"></div>
@@ -22,7 +22,7 @@
           <div class="sidebar-brand-text">
             <div class="title-row">
               <h1>Monkeyeffect</h1>
-              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.2.4</span>
+              <span class="app-version" id="appVersionLabel" title="เวอร์ชันโปรแกรม" role="button" tabindex="0">v1.2.5</span>
             </div>
             <p>Gift relay → เกม</p>
           </div>
@@ -79,6 +79,10 @@
             <button type="button" class="nav-btn" data-panel="tts">
               <span class="nav-ico" aria-hidden="true">🎙</span>
               <span class="nav-label">อ่านเสียง AI</span>
+            </button>
+            <button type="button" class="nav-btn" data-panel="subtranslate">
+              <span class="nav-ico" aria-hidden="true">文</span>
+              <span class="nav-label">ซับแปลภาษา</span>
             </button>
             <button type="button" class="nav-btn" data-panel="photoprint">
               <span class="nav-ico" aria-hidden="true">▣</span>
@@ -1043,12 +1047,12 @@ Facebook Fanpage</textarea>
             <b>อ่านอิโมจิ</b> = อิโมจิที่ส่งมา ·
             <b>ตัดข้อความสแปม</b> = ตัดตัวซ้ำ / ลิงก์ / ข้อความยาวเกินก่อนอ่าน<br />
             ระหว่างอ่านเสียง เพลงจะถูกลดเสียงอัตโนมัติ แล้วกลับมาดังเมื่ออ่านจบ<br />
-            <b>แนะนำ:</b> เลือกเสียง Neural (Premwadee/Niwat) เร็วและชัดกว่า · ยังไม่รองรับแรป/ร้องเพลง
+            <b>แนะนำ:</b> เลือกสุ่มเสียง หรือเสียง Neural — อ่านจนจบประโยค · ยังไม่รองรับแรป/ร้องเพลง
           </p>
 
           <div class="form-grid">
             <div>
-              <label for="ttsVoice">เสียงไทยในโปรแกรม</label>
+              <label for="ttsVoice">เสียง</label>
               <select id="ttsVoice" class="field select"></select>
             </div>
             <div>
@@ -1091,6 +1095,48 @@ Facebook Fanpage</textarea>
           </div>
           <p id="dailyTtsActivity" class="hint">ยังไม่ได้อ่านวันนี้</p>
           <div id="dailyTtsList" class="rules-list"></div>
+        </section>
+      </div>
+
+      <div id="panel-subtranslate" class="panel">
+        <section class="card" id="subTranslateCard">
+          <div class="card-head">
+            <h2>ซับแปลภาษา</h2>
+            <label class="toggle">
+              <input id="subTrEnabled" type="checkbox" />
+              <span>เปิดใช้</span>
+            </label>
+          </div>
+          <p class="hint">เปิดใช้แล้วฟังไมโครโฟน พูดให้จบประโยค ระบบแปลทั้งก้อนออกมาเป็นซับ — ไม่แปลทีละคำ เพื่อให้ความหมายตรง เลือกได้หลายภาษา</p>
+          <div class="form-grid">
+            <div>
+              <label for="subTrSource">ภาษาที่พูด</label>
+              <select id="subTrSource" class="field select"></select>
+            </div>
+            <div>
+              <label for="subTrTestText">ทดสอบคำแปล</label>
+              <input id="subTrTestText" class="field" type="text" placeholder="พิมพ์ประโยคแล้วกดทดสอบแปล" />
+            </div>
+          </div>
+          <label>ภาษาที่ต้องการแปล (เลือกได้หลายภาษา)</label>
+          <div id="subTrLangs" class="sub-lang-grid"></div>
+          <label class="toggle option-check">
+            <input id="subTrShowOriginal" type="checkbox" checked />
+            <span>โชว์ประโยคต้นฉบับ</span>
+          </label>
+          <label class="toggle option-check">
+            <input id="subTrSpeak" type="checkbox" />
+            <span>อ่านคำแปลออกเสียง</span>
+          </label>
+          <div class="actions tight">
+            <button id="subTrTestBtn" class="btn secondary" type="button">ทดสอบแปล</button>
+          </div>
+          <p id="subTrStatus" class="hint">ยังไม่ฟังไมค์</p>
+          <div id="subTrCaption" class="sub-caption">
+            <div class="hint">คำแปลจะขึ้นตรงนี้ และบนซับโอเวอร์เลย์</div>
+          </div>
+          <label for="subTrObsUrl">ลิงก์ซับสำหรับ OBS (Browser Source)</label>
+          <input id="subTrObsUrl" class="field" type="text" readonly value="http://127.0.0.1:3847/sub-translate-overlay.html" />
         </section>
       </div>
 
@@ -1639,7 +1685,7 @@ Facebook Fanpage</textarea>
     </main>
 
     <div id="giftPicker" class="gift-picker hidden" hidden></div>
-    <script src="/app.js?v=v123-preset-rows"></script>
+    <script src="/app.js?v=v125-subtranslate"></script>
     <script src="/studio.js?v=studio18"></script>
     <script src="/members.js?v=m13-login"></script>
     <script src="/farm-preset-editor.js?v=10"></script>

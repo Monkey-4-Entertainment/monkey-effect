@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
 namespace TempleGiftRelay;
@@ -114,6 +115,14 @@ public sealed class MainForm : Form
 		try
 		{
 			await _webView.EnsureCoreWebView2Async(await WebViewEnv.GetAsync());
+			_webView.CoreWebView2.PermissionRequested += (_, args) =>
+			{
+				if (args.PermissionKind == CoreWebView2PermissionKind.Microphone)
+				{
+					args.State = CoreWebView2PermissionState.Allow;
+					args.Handled = true;
+				}
+			};
 			_webView.CoreWebView2.NewWindowRequested += TransparentWidgetWindow.OnNewWindowRequested;
 			await NavigateWhenReadyAsync();
 		}

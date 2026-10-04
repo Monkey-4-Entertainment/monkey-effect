@@ -216,6 +216,14 @@ async function runInterruptBurstTest() {
 
 function unlockAudio() {
   try {
+    if (typeof getTtsAudioContext === "function") {
+      const ctx = getTtsAudioContext();
+      if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
     const a = new Audio(
       "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"
     );
@@ -258,6 +266,7 @@ const WORKSPACE_META = {
   jar: { title: "โหลแก้วสะสมของขวัญ", sub: "" },
   live: { title: "Overlay Gallery", sub: "" },
   tts: { title: "อ่านเสียง AI", sub: "" },
+  subtranslate: { title: "ซับแปลภาษา", sub: "ฟังไมค์แล้วแปลทั้งประโยคขึ้นเป็นซับ" },
   photoprint: { title: "ปริ้นรูป", sub: "" },
   alerts: { title: "เสียงเตือน", sub: "" },
   chatbot: { title: "คำสั่งแชท + บอท", sub: "" },
@@ -5218,13 +5227,22 @@ const TTS_KEY = "tgr_tts_config";
 const TTS_API = "/api/tts";
 const TTS_API_FALLBACK = "http://127.0.0.1:3848";
 const BUILTIN_TTS_VOICES = [
-  { id: "th-google", name: "ไทย AI (ในโปรแกรม)" },
-  { id: "th-TH-PremwadeeNeural", name: "Premwadee (หญิง · Neural)" },
-  { id: "th-TH-NiwatNeural", name: "Niwat (ชาย · Neural)" },
-  { id: "th-TH-AcharaNeural", name: "Achara (หญิง · Neural)" },
+  { id: "random", name: "สุ่มเสียง" },
+  { id: "th-TH-PremwadeeNeural", name: "Premwadee (หญิง)" },
+  { id: "th-TH-NiwatNeural", name: "Niwat (ชาย)" },
+  { id: "th-TH-AcharaNeural", name: "Achara (หญิง)" },
+  { id: "en-US-AvaMultilingualNeural", name: "Ava (หญิง · หลายภาษา)" },
+  { id: "en-US-AndrewMultilingualNeural", name: "Andrew (ชาย · หลายภาษา)" },
+  { id: "en-US-EmmaMultilingualNeural", name: "Emma (หญิง · หลายภาษา)" },
+  { id: "en-US-BrianMultilingualNeural", name: "Brian (ชาย · หลายภาษา)" },
+  { id: "zh-CN-XiaoxiaoMultilingualNeural", name: "Xiaoxiao (หญิง · จีน)" },
+  { id: "th-google", name: "ไทย AI สำรอง" },
 ];
+
 let ttsConfig = loadTtsConfig();
 let ttsAudio = null;
+let ttsAudioCtx = null;
+let ttsStopSource = null;
 let ttsReady = false;
 let ttsSpeakQueue = [];
 let ttsSpeaking = false;
@@ -5341,9 +5359,36 @@ function renderTtsUiState() {
   refreshTtsStatus();
 }
 
+function getTtsAudioContext() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!ttsAudioCtx || ttsAudioCtx.state === "closed") ttsAudioCtx = new AC();
+  return ttsAudioCtx;
+}
+
+function resolveTtsVoiceId() {
+  const id = ttsConfig.voiceURI || "th-TH-PremwadeeNeural";
+  if (id !== "random") return id;
+  const pool = BUILTIN_TTS_VOICES.map((v) => v.id).filter((v) => v !== "random" && v !== "th-google");
+  return pool[Math.floor(Math.random() * pool.length)] || "th-TH-PremwadeeNeural";
+}
+
+function ttsVoiceLabel(id) {
+  return BUILTIN_TTS_VOICES.find((v) => v.id === id)?.name || id;
+}
+
 function stopTtsAudio() {
   ttsSpeakQueue = [];
   ttsSpeaking = false;
+  if (typeof ttsStopSource === "function") {
+    const stop = ttsStopSource;
+    ttsStopSource = null;
+    try {
+      stop();
+    } catch {
+      /* ignore */
+    }
+  }
   if (ttsAudio) {
     try {
       ttsAudio.pause();
@@ -5367,7 +5412,7 @@ async function duckHostMusic(factor) {
   }
 }
 
-async function speakThaiNow(text) {
+async function speakThaiNow(text, voiceOverride, langOverride) {
   const cleaned = String(text || "").trim();
   if (!cleaned) return;
 
@@ -5383,20 +5428,23 @@ async function speakThaiNow(text) {
     return;
   }
 
-  setTtsActivity(`กำลังอ่าน: ${cleaned}`);
+  const voice = voiceOverride || resolveTtsVoiceId();
+  const lang = langOverride || "th-TH";
+  setTtsActivity(`กำลังอ่าน (${ttsVoiceLabel(voice)}): ${cleaned}`);
   await duckHostMusic(0.16);
 
   const body = JSON.stringify({
     text: cleaned,
-    voice: ttsConfig.voiceURI || "th-TH-PremwadeeNeural",
+    voice,
     rate: ttsConfig.rate || 1,
+    lang,
   });
 
   const useServerPlay = document.hidden || document.visibilityState === "hidden";
 
   try {
   if (useServerPlay) {
-    // Minimized / hidden → server plays via PowerShell (slower but works in background).
+    // Minimized / hidden → server plays via MCI (plays the whole file).
     try {
       const playRes = await ttsFetch("/speak-play", {
         method: "POST",
@@ -5433,11 +5481,50 @@ async function speakThaiNow(text) {
   if (!blob || blob.size < 64) {
     throw new Error("ได้ไฟล์เสียงว่าง");
   }
+  const ctx = getTtsAudioContext();
+  if (ctx) {
+    try {
+      if (ctx.state === "suspended") await ctx.resume();
+      const raw = await blob.arrayBuffer();
+      const audioBuf = await ctx.decodeAudioData(raw.slice(0));
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuf;
+      source.connect(ctx.destination);
+      await new Promise((resolve, reject) => {
+        let settled = false;
+        const done = () => {
+          if (settled) return;
+          settled = true;
+          if (ttsStopSource === stop) ttsStopSource = null;
+          resolve();
+        };
+        const stop = () => {
+          try {
+            source.stop();
+          } catch {
+            done();
+          }
+        };
+        ttsStopSource = stop;
+        source.onended = done;
+        try {
+          source.start(0);
+        } catch (err) {
+          ttsStopSource = null;
+          reject(err);
+        }
+      });
+      return;
+    } catch (err) {
+      console.warn("tts decode failed, fallback to audio element", err);
+      ttsStopSource = null;
+    }
+  }
+
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
   ttsAudio = audio;
   audio.volume = 1;
-  audio.playbackRate = Math.min(2, Math.max(0.5, ttsConfig.rate || 1));
 
   await new Promise((resolve, reject) => {
     audio.onended = () => {
@@ -5466,9 +5553,12 @@ async function drainTtsQueue() {
   if (ttsSpeaking) return;
   ttsSpeaking = true;
   while (ttsSpeakQueue.length) {
-    const text = ttsSpeakQueue.shift();
+    const item = ttsSpeakQueue.shift();
+    const text = typeof item === "string" ? item : item?.text;
+    const voice = typeof item === "string" ? null : item?.voice;
+    const lang = typeof item === "string" ? null : item?.lang;
     try {
-      await speakThaiNow(text);
+      await speakThaiNow(text, voice, lang);
     } catch (err) {
       console.warn(err);
       setTtsActivity(`ผิดพลาด: ${err.message || err}`);
@@ -5478,10 +5568,14 @@ async function drainTtsQueue() {
   if (ttsConfig.enabled) setTtsActivity("รออีเวนต์จากไลฟ์...");
 }
 
-function speakThai(text) {
+function speakThai(text, opts) {
   const cleaned = String(text || "").trim();
   if (!cleaned) return Promise.resolve();
-  ttsSpeakQueue.push(cleaned);
+  ttsSpeakQueue.push({
+    text: cleaned,
+    voice: opts?.voice || null,
+    lang: opts?.lang || null,
+  });
   // จำกัดคิว — เก็บล่าสุด 16 บรรทัด
   if (ttsSpeakQueue.length > 16) ttsSpeakQueue = ttsSpeakQueue.slice(-16);
   return drainTtsQueue();
@@ -5551,6 +5645,340 @@ function handleGiftForTts(parsed) {
     rawText: parsed.rawText || "",
     kind: parsed.kind,
     count: parsed.count,
+  });
+}
+
+/* ========== ซับแปลภาษา (ไมค์ → แปลทั้งประโยค) ========== */
+const SUB_KEY = "tgr_sub_translate";
+const TTS_DIRECT = "http://127.0.0.1:3848";
+const SUB_SOURCE_LANGS = [
+  { id: "th-TH", name: "ไทย", translate: "th" },
+  { id: "en-US", name: "อังกฤษ", translate: "en" },
+  { id: "zh-CN", name: "จีน", translate: "zh-CN" },
+  { id: "ja-JP", name: "ญี่ปุ่น", translate: "ja" },
+  { id: "ko-KR", name: "เกาหลี", translate: "ko" },
+  { id: "vi-VN", name: "เวียดนาม", translate: "vi" },
+  { id: "id-ID", name: "อินโดนีเซีย", translate: "id" },
+  { id: "ms-MY", name: "มาเลย์", translate: "ms" },
+  { id: "lo-LA", name: "ลาว", translate: "lo" },
+  { id: "km-KH", name: "เขมร", translate: "km" },
+  { id: "my-MM", name: "พม่า", translate: "my" },
+  { id: "es-ES", name: "สเปน", translate: "es" },
+  { id: "fr-FR", name: "ฝรั่งเศส", translate: "fr" },
+  { id: "de-DE", name: "เยอรมัน", translate: "de" },
+  { id: "ru-RU", name: "รัสเซีย", translate: "ru" },
+  { id: "pt-BR", name: "โปรตุเกส", translate: "pt" },
+  { id: "ar-SA", name: "อาหรับ", translate: "ar" },
+  { id: "hi-IN", name: "ฮินดี", translate: "hi" },
+];
+const SUB_TARGET_LANGS = [
+  { id: "en", name: "อังกฤษ" },
+  { id: "zh-CN", name: "จีน" },
+  { id: "ja", name: "ญี่ปุ่น" },
+  { id: "ko", name: "เกาหลี" },
+  { id: "vi", name: "เวียดนาม" },
+  { id: "id", name: "อินโดนีเซีย" },
+  { id: "ms", name: "มาเลย์" },
+  { id: "lo", name: "ลาว" },
+  { id: "km", name: "เขมร" },
+  { id: "my", name: "พม่า" },
+  { id: "es", name: "สเปน" },
+  { id: "fr", name: "ฝรั่งเศส" },
+  { id: "de", name: "เยอรมัน" },
+  { id: "ru", name: "รัสเซีย" },
+  { id: "pt", name: "โปรตุเกส" },
+  { id: "ar", name: "อาหรับ" },
+  { id: "hi", name: "ฮินดี" },
+  { id: "th", name: "ไทย" },
+];
+const SUB_SPEAK_VOICE = {
+  en: { voice: "en-US-AvaMultilingualNeural", lang: "en-US" },
+  "zh-CN": { voice: "zh-CN-XiaoxiaoMultilingualNeural", lang: "zh-CN" },
+  ja: { voice: "ja-JP-NanamiNeural", lang: "ja-JP" },
+  ko: { voice: "ko-KR-SunHiNeural", lang: "ko-KR" },
+  vi: { voice: "vi-VN-HoaiMyNeural", lang: "vi-VN" },
+  id: { voice: "id-ID-GadisNeural", lang: "id-ID" },
+  th: { voice: "th-TH-PremwadeeNeural", lang: "th-TH" },
+  es: { voice: "es-ES-ElviraNeural", lang: "es-ES" },
+  fr: { voice: "fr-FR-DeniseNeural", lang: "fr-FR" },
+  de: { voice: "de-DE-KatjaNeural", lang: "de-DE" },
+  ru: { voice: "ru-RU-SvetlanaNeural", lang: "ru-RU" },
+  pt: { voice: "pt-BR-FranciscaNeural", lang: "pt-BR" },
+  ar: { voice: "ar-SA-ZariyahNeural", lang: "ar-SA" },
+  hi: { voice: "hi-IN-SwaraNeural", lang: "hi-IN" },
+};
+
+let subConfig = loadSubConfig();
+let subRec = null;
+let subWanted = false;
+let subPhrase = "";
+let subPhraseTimer = null;
+let lastSubText = "";
+let lastSubAt = 0;
+
+function defaultSubConfig() {
+  return { enabled: false, source: "th-TH", targets: ["en"], showOriginal: true, speak: false };
+}
+
+function loadSubConfig() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SUB_KEY) || "null");
+    if (!parsed || typeof parsed !== "object") return defaultSubConfig();
+    const source = SUB_SOURCE_LANGS.some((l) => l.id === parsed.source) ? parsed.source : "th-TH";
+    let targets = Array.isArray(parsed.targets)
+      ? parsed.targets.filter((id) => SUB_TARGET_LANGS.some((l) => l.id === id)).slice(0, 6)
+      : ["en"];
+    if (!targets.length) targets = ["en"];
+    return {
+      enabled: !!parsed.enabled,
+      source,
+      targets,
+      showOriginal: parsed.showOriginal !== false,
+      speak: !!parsed.speak,
+    };
+  } catch {
+    return defaultSubConfig();
+  }
+}
+
+function saveSubConfig() {
+  localStorage.setItem(SUB_KEY, JSON.stringify(subConfig));
+}
+
+function subSourceCode() {
+  return SUB_SOURCE_LANGS.find((l) => l.id === subConfig.source)?.translate || "th";
+}
+
+function setSubStatus(msg) {
+  const el = document.getElementById("subTrStatus");
+  if (el) el.textContent = msg || "";
+}
+
+function paintSubCaption(original, lines) {
+  const host = document.getElementById("subTrCaption");
+  if (!host) return;
+  const orig = subConfig.showOriginal
+    ? `<div class="sub-caption-orig">${escapeHtml(original)}</div>`
+    : "";
+  const body = (lines || [])
+    .map((line) => {
+      const name = SUB_TARGET_LANGS.find((l) => l.id === line.id)?.name || line.id;
+      return `<div class="sub-caption-line"><b>${escapeHtml(name)}</b>${escapeHtml(line.text)}</div>`;
+    })
+    .join("");
+  host.innerHTML = orig + body || '<div class="hint">ยังไม่มีคำแปล</div>';
+}
+
+function renderSubTranslateUi() {
+  const source = document.getElementById("subTrSource");
+  if (source) {
+    source.innerHTML = SUB_SOURCE_LANGS.map(
+      (l) => `<option value="${l.id}" ${l.id === subConfig.source ? "selected" : ""}>${escapeHtml(l.name)}</option>`
+    ).join("");
+  }
+  const langs = document.getElementById("subTrLangs");
+  if (langs) {
+    langs.innerHTML = SUB_TARGET_LANGS.map(
+      (l) => `<label class="toggle option-check"><input type="checkbox" data-sub-lang="${l.id}" ${
+        subConfig.targets.includes(l.id) ? "checked" : ""
+      } /><span>${escapeHtml(l.name)}</span></label>`
+    ).join("");
+  }
+  const enabled = document.getElementById("subTrEnabled");
+  if (enabled) enabled.checked = !!subConfig.enabled;
+  const showOrig = document.getElementById("subTrShowOriginal");
+  if (showOrig) showOrig.checked = subConfig.showOriginal !== false;
+  const speak = document.getElementById("subTrSpeak");
+  if (speak) speak.checked = !!subConfig.speak;
+}
+
+async function translateSubtitle(text, fromMic) {
+  const cleaned = String(text || "").replace(/\s+/g, " ").trim();
+  if (!cleaned) return;
+  const now = Date.now();
+  if (fromMic && cleaned === lastSubText && now - lastSubAt < 2500) return;
+  lastSubText = cleaned;
+  lastSubAt = now;
+  const targets = subConfig.targets.filter((id) => id !== subSourceCode());
+  if (!targets.length) {
+    setSubStatus("เลือกภาษาปลายทางที่ต่างจากภาษาที่พูด");
+    return;
+  }
+  setSubStatus("กำลังแปลทั้งประโยค...");
+  const res = await fetch(`${TTS_DIRECT}/translate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    cache: "no-store",
+    body: JSON.stringify({
+      text: cleaned,
+      source: subSourceCode(),
+      targets,
+      showOriginal: subConfig.showOriginal !== false,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !Array.isArray(data.lines) || !data.lines.length) {
+    throw new Error(data.error || "แปลไม่สำเร็จ — เปิดโปรแกรมใหม่ให้เซิร์ฟเวอร์เสียงทำงาน");
+  }
+  paintSubCaption(cleaned, data.lines);
+  if (subConfig.speak) {
+    for (const line of data.lines) {
+      const pick = SUB_SPEAK_VOICE[line.id] || { voice: "en-US-AvaMultilingualNeural", lang: "en-US" };
+      speakThai(line.text, pick);
+    }
+  }
+  const missed = Array.isArray(data.errors) && data.errors.length ? ` · ข้าม ${data.errors.map((e) => e.id).join(", ")}` : "";
+  setSubStatus(`${fromMic ? "ฟังแล้วแปล" : "ทดสอบแปลแล้ว"}${missed}`);
+}
+
+function stopSubRec() {
+  subWanted = false;
+  clearTimeout(subPhraseTimer);
+  subPhrase = "";
+  if (subRec) {
+    const rec = subRec;
+    subRec = null;
+    try {
+      rec.onend = null;
+      rec.stop();
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+function startSubRec() {
+  const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Rec) {
+    setSubStatus("หน้านี้ยังฟังไมค์ไม่ได้ — พิมพ์ในช่องทดสอบคำแปลได้");
+    return;
+  }
+  stopSubRec();
+  subWanted = true;
+  const rec = new Rec();
+  subRec = rec;
+  rec.lang = subConfig.source || "th-TH";
+  rec.continuous = true;
+  rec.interimResults = true;
+  rec.onresult = (event) => {
+    let interim = "";
+    let finals = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const piece = event.results[i][0]?.transcript || "";
+      if (event.results[i].isFinal) finals += ` ${piece}`;
+      else interim += piece;
+    }
+    if (interim.trim()) setSubStatus(`กำลังฟัง: ${interim.trim()}`);
+    if (finals.trim()) {
+      subPhrase = `${subPhrase} ${finals}`.replace(/\s+/g, " ").trim();
+      clearTimeout(subPhraseTimer);
+      subPhraseTimer = setTimeout(() => {
+        const phrase = subPhrase.trim();
+        subPhrase = "";
+        if (!phrase) return;
+        translateSubtitle(phrase, true).catch((err) => setSubStatus(err.message || "แปลไม่สำเร็จ"));
+      }, 800);
+    }
+  };
+  rec.onerror = (event) => {
+    const code = event?.error || "";
+    if (code === "not-allowed" || code === "service-not-allowed") {
+      subWanted = false;
+      subConfig.enabled = false;
+      saveSubConfig();
+      const box = document.getElementById("subTrEnabled");
+      if (box) box.checked = false;
+      setSubStatus("ไมค์ถูกบล็อก — ปิดแล้วเปิด Monkeyeffect ใหม่ แล้วติ๊กเปิดใช้อีกครั้ง");
+      return;
+    }
+    if (code !== "no-speech" && code !== "aborted") setSubStatus(`ไมค์: ${code}`);
+  };
+  rec.onend = () => {
+    if (!subWanted || subRec !== rec) return;
+    setTimeout(() => {
+      if (!subWanted || subRec !== rec) return;
+      try {
+        rec.start();
+      } catch {
+        /* ignore */
+      }
+    }, 350);
+  };
+  try {
+    rec.start();
+    setSubStatus("กำลังฟังไมค์ — พูดให้จบประโยค");
+  } catch (err) {
+    setSubStatus(err?.message || "เปิดไมค์ไม่สำเร็จ");
+  }
+}
+
+async function enableSubListening() {
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error("ใช้ไมค์ไม่ได้");
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach((track) => track.stop());
+  } catch {
+    subConfig.enabled = false;
+    saveSubConfig();
+    const box = document.getElementById("subTrEnabled");
+    if (box) box.checked = false;
+    setSubStatus("ใช้ไมค์ไม่ได้ — อนุญาตไมโครโฟน แล้วปิดเปิดโปรแกรมใหม่");
+    return;
+  }
+  startSubRec();
+}
+
+function wireSubTranslate() {
+  document.getElementById("subTrEnabled")?.addEventListener("change", (e) => {
+    subConfig.enabled = !!e.target.checked;
+    saveSubConfig();
+    if (subConfig.enabled) enableSubListening();
+    else {
+      stopSubRec();
+      setSubStatus("ปิดการฟังไมค์แล้ว");
+    }
+  });
+  document.getElementById("subTrSource")?.addEventListener("change", (e) => {
+    subConfig.source = e.target.value;
+    saveSubConfig();
+    if (subConfig.enabled) startSubRec();
+  });
+  document.getElementById("subTrLangs")?.addEventListener("change", (e) => {
+    const id = e.target?.dataset?.subLang;
+    if (!id) return;
+    const on = !!e.target.checked;
+    const next = new Set(subConfig.targets);
+    if (on) next.add(id);
+    else next.delete(id);
+    if (next.size > 6) {
+      e.target.checked = false;
+      next.delete(id);
+      setSubStatus("เลือกได้พร้อมกันไม่เกิน 6 ภาษา");
+    }
+    subConfig.targets = SUB_TARGET_LANGS.map((l) => l.id).filter((lang) => next.has(lang));
+    if (!subConfig.targets.length) {
+      subConfig.targets = ["en"];
+      e.target.checked = id === "en";
+      const en = document.querySelector('[data-sub-lang="en"]');
+      if (en) en.checked = true;
+    }
+    saveSubConfig();
+  });
+  document.getElementById("subTrShowOriginal")?.addEventListener("change", (e) => {
+    subConfig.showOriginal = !!e.target.checked;
+    saveSubConfig();
+  });
+  document.getElementById("subTrSpeak")?.addEventListener("change", (e) => {
+    subConfig.speak = !!e.target.checked;
+    saveSubConfig();
+  });
+  document.getElementById("subTrTestBtn")?.addEventListener("click", () => {
+    const text = document.getElementById("subTrTestText")?.value.trim();
+    if (!text) {
+      setSubStatus("พิมพ์ประโยคก่อนทดสอบแปล");
+      return;
+    }
+    translateSubtitle(text, false).catch((err) => setSubStatus(err.message || "แปลไม่สำเร็จ"));
   });
 }
 
@@ -8668,7 +9096,6 @@ document.getElementById("ttsRate")?.addEventListener("input", (e) => {
   const rate = Number(e.target.value) / 10;
   ttsConfig.rate = rate;
   document.getElementById("ttsRateLabel").textContent = rate.toFixed(1);
-  if (ttsAudio) ttsAudio.playbackRate = Math.min(2, Math.max(0.5, rate));
   saveTtsConfig();
 });
 document.getElementById("ttsVoice")?.addEventListener("change", (e) => {
@@ -8753,6 +9180,9 @@ renderVideoUiState();
 renderWinUiState();
 syncWinScoreToOverlay();
 renderTtsUiState();
+wireSubTranslate();
+renderSubTranslateUi();
+if (subConfig.enabled) enableSubListening();
 renderPhotoPrintUiState();
 seedDefaultWinIfNeeded();
 setInterval(refreshTtsStatus, 8000);

@@ -1,8 +1,8 @@
 {
-  "version": "1.2.4",
-  "notes": "Monkeyeffect 1.2.4 - Normal LIVE connect reads the room id from the TikTok profile when the live page is blocked. Uses the same webcast connection as machines that already connect.",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.2.4/Monkeyeffect-1.2.4-update.zip",
-  "sha256": "f93da8fcf72dea3fcffccfc34b98769b416fddeb1adbf0d45a8c4f015be897c5",
+  "version": "1.2.5",
+  "notes": "Monkeyeffect 1.2.5 - ซับแปลภาษา เพิ่มเสียงและสุ่มเสียง แก้เสียง AI อ่านแล้วหยุดกลางประโยค",
+  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.5-update.zip",
+  "sha256": "3235f959bc8ae8f839cb4db16b63bbdb94a0fcb9fe982f6dbf18089616803b88",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

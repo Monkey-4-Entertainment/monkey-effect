@@ -2823,3 +2823,40 @@ p.hint:not([id]),
 #noDefaultsHint {
   display: none !important;
 }
+
+.sub-lang-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 8px 0 12px;
+}
+
+.sub-caption {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border);
+  min-height: 72px;
+}
+
+.sub-caption-orig {
+  color: #c4b5fd;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.sub-caption-line {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.sub-caption-line b {
+  display: inline-block;
+  min-width: 4.8rem;
+  margin-right: 8px;
+  color: #a78bfa;
+  font-size: 0.75rem;
+  font-weight: 600;
+}

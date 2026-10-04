@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ซับแปลภาษา</title>
+    <style>
+      html, body {
+        margin: 0;
+        background: transparent;
+        overflow: hidden;
+        font-family: "Noto Sans Thai", "Segoe UI", sans-serif;
+      }
+      #box {
+        position: fixed;
+        left: 4vw;
+        right: 4vw;
+        bottom: 8vh;
+        text-align: center;
+        color: #fff;
+        text-shadow: 0 2px 8px #000, 0 0 2px #000;
+      }
+      .orig {
+        font-size: 22px;
+        opacity: 0.9;
+        margin-bottom: 6px;
+      }
+      .line {
+        font-size: 34px;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+      .line b {
+        display: inline-block;
+        min-width: 5.2rem;
+        margin-right: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        opacity: 0.85;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="box"></div>
+    <script>
+      const NAMES = {
+        en: "อังกฤษ", "zh-CN": "จีน", ja: "ญี่ปุ่น", ko: "เกาหลี", vi: "เวียดนาม",
+        id: "อินโดนีเซีย", ms: "มาเลย์", lo: "ลาว", km: "เขมร", my: "พม่า",
+        es: "สเปน", fr: "ฝรั่งเศส", de: "เยอรมัน", ru: "รัสเซีย", pt: "โปรตุเกส",
+        ar: "อาหรับ", hi: "ฮินดี", th: "ไทย",
+      };
+      const box = document.getElementById("box");
+      function esc(s) {
+        return String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+      }
+      async function tick() {
+        try {
+          const res = await fetch("http://127.0.0.1:3848/subtitle", { cache: "no-store" });
+          const data = await res.json();
+          const age = Date.now() - (Number(data.at) || 0);
+          if (!data.original || age > 12000) {
+            box.innerHTML = "";
+            return;
+          }
+          const orig = data.showOriginal === false ? "" : `<div class="orig">${esc(data.original)}</div>`;
+          const lines = (data.lines || [])
+            .map((line) => `<div class="line"><b>${esc(NAMES[line.id] || line.id)}</b>${esc(line.text)}</div>`)
+            .join("");
+          box.innerHTML = orig + lines;
+        } catch {
+          /* server not up yet */
+        }
+      }
+      tick();
+      setInterval(tick, 400);
+    </script>
+  </body>
+</html>
