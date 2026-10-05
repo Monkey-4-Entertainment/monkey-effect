@@ -8,6 +8,8 @@
   const root = document.getElementById("root");
   const canvas = document.getElementById("fx");
   const ctx = canvas.getContext("2d");
+  const sultanScope = params.get("scope") === "all" ? "all" : "live";
+  const sultanLayout = panel === "topgifters" ? window.MonkeySultanLayout.create({ root, scope: sultanScope, edit: params.get("edit") === "1" }) : null;
   html.classList.toggle("chroma", chroma);
   html.classList.toggle("demo", !!demo || gallery);
   const CENTER = new Set(["coins", "points", "viewers", "coinmatch", "coinjar", "slider", "timer", "subathon", "fortune", "actions", "tiny", "songs", "userinfo", "social", "welcome"]);
@@ -18,13 +20,16 @@
   if (CENTER.has(panel)) html.classList.add("center");
   if (FX_ONLY.has(panel)) html.classList.add("fx-only");
   if (BOARD.has(panel)) html.classList.add("board");
+  if (panel === "topgifters") html.classList.add("sultan-panel");
   if (INFO_LIST.has(panel)) html.classList.add("info-panel");
   if (INFO_WIDE.has(panel)) html.classList.add("info-wide");
+  if (panel === "welcome") html.classList.add("welcome-panel");
   if (panel === "viewers") html.classList.add("stat-hero");
 
   const seen = new Set();
   let lastKey = "";
   let lastHtml = "";
+  let lastWelcomeAt = 0;
   let spin = 0;
   let socialIdx = 0;
   let particles = [];
@@ -117,6 +122,37 @@
         return `<div class="rank-row${i < 3 ? ` is-top is-top${i + 1}` : ""}"><div class="medal">${medal(i)}</div>${portrait}<div class="meta"><span class="nick">${esc(row.nick || row.user || "ผู้ชม")}</span><span class="gift">${esc(sub)}</span></div><div class="score">${fmt(score)}</div></div>`;
       }).join("")}</div>`);
   }
+  function sultanTopThree(rows) {
+    const leaders = (Array.isArray(rows) ? rows : []).filter((row) => row && typeof row === "object").slice(0, 3);
+    const ranks = ["gold", "silver", "bronze"];
+    return `<section class="sultan-wrap" aria-label="สุลต่าน 3 อันดับสูงสุด">
+      <div class="sultan-content">
+        ${leaders.length ? "" : '<header class="sultan-heading"><p>รอผู้ส่งของขวัญเข้ามาติดอันดับ</p></header>'}
+        <ol class="sultan-list">${ranks.map((rank, index) => {
+          const row = leaders[index];
+          const name = row ? row.nick || row.user || "ผู้ชม" : "รอผู้สนับสนุน";
+          const rawScore = Number(row?.coins);
+          const score = fmt(Number.isFinite(rawScore) ? Math.max(0, rawScore) : 0);
+          const portrait = row ? av(row) : '<span class="sultan-avatar-empty" aria-hidden="true">◇</span>';
+          return `<li class="sultan-row sultan-${rank}${row ? "" : " is-empty"}" data-rank="${index + 1}">
+            <div class="sultan-avatar">
+              <span class="sultan-ring" aria-hidden="true"></span>
+              <span class="sultan-orbit" aria-hidden="true"></span>
+              <span class="sultan-comet" aria-hidden="true"></span>
+              <span class="sultan-sparks" aria-hidden="true"><i></i><i></i><i></i></span>
+              ${index === 0 ? '<svg class="sultan-crown" viewBox="0 0 48 32" aria-hidden="true"><path d="M6 8l10 8L24 3l8 13 10-8-5 20H11z" fill="currentColor"/><path d="M13 24h22" fill="none" stroke="#fff4cf" stroke-width="2" stroke-linecap="round"/></svg>' : ''}
+              <div class="sultan-portrait">${portrait}</div><span class="sultan-position" aria-label="อันดับ ${index + 1}">${index + 1}</span></div>
+            <div class="sultan-person">
+              <div class="sultan-name" title="${esc(name)}">${esc(name)}</div>
+              <div class="sultan-score${score.length > 10 ? " is-wide" : ""}" title="${row ? esc(score) + " เพชร" : "ยังไม่มีอันดับ"}">
+                <b>${row ? score : "—"}</b><span>${row ? "เพชร" : ""}</span>
+              </div>
+            </div>
+          </li>`;
+        }).join("")}</ol>
+      </div>
+    </section>`;
+  }
   function goalPct(data) {
     const goal = Math.max(1, Number(cfg(data).goal) || 1000);
     return Math.max(0, Math.min(100, Math.round((Number(data.coins) || 0) * 100 / goal)));
@@ -157,15 +193,16 @@
     if (!base) return null;
     const live = liveWelcomePerson(data);
     if (!live) return { ...base };
-    const level = Number(live.level) || Number(base.level) || 20;
+    // A tier preview uses the selected sample level; only identity comes from live data.
+    const level = base.level;
     return {
       ...base,
       nick: live.nick || live.user || base.nick,
       user: live.user || live.nick || base.user,
       avatar: live.avatar || base.avatar || "",
       level,
-      superFan: !!(live.superFan || live.fanLevel || base.superFan),
-      fanLevel: Number(live.fanLevel) || base.fanLevel || 0,
+      superFan: base.superFan,
+      fanLevel: base.fanLevel,
       tier: base.tier,
     };
   }
@@ -280,7 +317,7 @@
         return infoShell("list", "GIFT FEED", infoRows(rows, (row) => personRow(row, `${row.gift || "Gift"} ×${row.count || 1} · ◆${fmt(row.coins)}`), "ยังไม่มีของขวัญ"));
       }
       case "topgifters":
-        return rankList(data.topGifters, "coins");
+        return sultanTopThree(data.topGifters);
       case "topliker":
         return rankList(data.topLikers, "likes");
       case "ranking":
@@ -293,20 +330,25 @@
       case "welcome": {
         const card = welcomeVisible(data);
         if (!card) return "";
-        const tier = welcomeTier(card);
+        const rawTier = welcomeTier(card);
+        const tier = Object.hasOwn(TIER_TH, rawTier) ? rawTier : "silver";
+        const style = window.MonkeyWelcomeDesigns.normalize(
+          (demo && params.get("style")) || studio(data).welcome?.style
+        );
         const level = Number(card.level) || 0;
         const fanLv = Number(card.fanLevel) || 0;
         const tierName = TIER_TH[tier] || "ต้อนรับ";
         const kicker = card.superFan
           ? `Superfan${fanLv > 0 ? " · คลับ " + fanLv : ""}`
           : "เข้าไลฟ์";
-        return `<div class="welcome welcome-${esc(tier)}">
-          <div class="welcome-glow"></div>
+        return `<div class="welcome welcome-${esc(tier)} welcome-style-${style}">
           <div class="welcome-card">
             <div class="welcome-kicker">${esc(kicker)}</div>
             <div class="welcome-portrait">
               <div class="welcome-av">${av({ nick: card.nick || card.user, avatar: card.avatar })}</div>
-              <img class="welcome-frame-art" alt="" src="/welcome/frames/${esc(tier)}.png" />
+              ${style === "classic"
+                ? `<img class="welcome-frame-art" alt="" src="/welcome/frames/${esc(tier)}.png" />`
+                : `<span class="welcome-modern-ring" aria-hidden="true"></span><span class="welcome-orbit-dot" aria-hidden="true"></span>${window.MonkeyWelcomeDesigns.ornament(tier)}`}
             </div>
             <div class="welcome-name">${esc(card.nick || card.user || "ผู้ชม")}</div>
             <div class="welcome-level">${level > 0 ? `<span>LV</span><b>${level}</b>` : `<b>${esc(tierName)}</b>`}</div>
@@ -516,8 +558,26 @@
         if (panel === "snow" && !root.innerHTML) root.innerHTML = "";
         return;
       }
+      if (sultanLayout) {
+        sultanLayout.sync(studio(data).sultanLayouts?.[sultanScope]);
+        // Preserve pointer capture and the dragged portrait while live ranks update.
+        if (sultanLayout.isDragging()) return;
+        const sultanHtml = render(data);
+        if (sultanHtml !== lastHtml) {
+          lastHtml = sultanHtml;
+          root.innerHTML = sultanHtml;
+          sultanLayout.mount();
+        }
+        return;
+      }
       const htmlOut = render(data);
+      // Keep portraits mounted when polling does not change the leaderboard.
+      if (panel === "topgifters" && htmlOut === lastHtml) return;
       const wel = welcomeVisible(data);
+      const welcomeAt = Number(wel?.at) || 0;
+      // Unrelated counters must not restart the welcome entrance animation.
+      if (panel === "welcome" && htmlOut === lastHtml && welcomeAt === lastWelcomeAt) return;
+      lastWelcomeAt = welcomeAt;
       const key = data.rev + ":" + spin + ":" + socialIdx + ":" + remain(data) + ":" + (Date.now() < hopUntil ? "1" : "0") + ":" + (wel ? wel.at : "0");
       if (key === lastKey && htmlOut === lastHtml) return;
       lastKey = key;
@@ -537,6 +597,7 @@
     if (panel === "firework" || panel === "cannon" || panel === "drop") burst("gift", { nick: "Emma", gift: "Rose", count: 5 });
     if (panel === "emojify") burst("chat", { text: "🔥" });
   }
+  sultanLayout?.mount();
   poll();
   setInterval(poll, 400);
   window.__overlayDebug = () => ({ panel, primed, seen: seen.size, particles: particles.length, types: particles.map((p) => p.t).slice(0, 12) });

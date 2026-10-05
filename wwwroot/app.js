@@ -5227,33 +5227,420 @@ const TTS_KEY = "tgr_tts_config";
 const TTS_API = "/api/tts";
 const TTS_API_FALLBACK = "http://127.0.0.1:3848";
 const BUILTIN_TTS_VOICES = [
-  { id: "random", name: "สุ่มเสียง" },
-  { id: "th-TH-PremwadeeNeural", name: "Premwadee (หญิง)" },
-  { id: "th-TH-NiwatNeural", name: "Niwat (ชาย)" },
-  { id: "th-TH-AcharaNeural", name: "Achara (หญิง)" },
-  { id: "en-US-AvaMultilingualNeural", name: "Ava (หญิง · หลายภาษา)" },
-  { id: "en-US-AndrewMultilingualNeural", name: "Andrew (ชาย · หลายภาษา)" },
-  { id: "en-US-EmmaMultilingualNeural", name: "Emma (หญิง · หลายภาษา)" },
-  { id: "en-US-BrianMultilingualNeural", name: "Brian (ชาย · หลายภาษา)" },
-  { id: "zh-CN-XiaoxiaoMultilingualNeural", name: "Xiaoxiao (หญิง · จีน)" },
-  { id: "th-google", name: "ไทย AI สำรอง" },
+  {
+    "id": "random",
+    "name": "สุ่มทุกเสียง",
+    "random": true
+  },
+  {
+    "id": "random-female",
+    "name": "สุ่มเสียงหญิง",
+    "random": true,
+    "gender": "Female"
+  },
+  {
+    "id": "random-male",
+    "name": "สุ่มเสียงชาย",
+    "random": true,
+    "gender": "Male"
+  },
+  {
+    "id": "th-TH-NiwatNeural",
+    "name": "Niwat (ชาย · ไทย)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "th-TH-PremwadeeNeural",
+    "name": "Premwadee (หญิง · ไทย)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "en-US-AndrewMultilingualNeural",
+    "name": "Andrew (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "en-US",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "en-US-AvaMultilingualNeural",
+    "name": "Ava (หญิง · หลายภาษา)",
+    "gender": "Female",
+    "locale": "en-US",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "en-US-BrianMultilingualNeural",
+    "name": "Brian (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "en-US",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "en-US-EmmaMultilingualNeural",
+    "name": "Emma (หญิง · หลายภาษา)",
+    "gender": "Female",
+    "locale": "en-US",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "de-DE-FlorianMultilingualNeural",
+    "name": "Florian (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "de-DE",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "it-IT-GiuseppeMultilingualNeural",
+    "name": "Giuseppe (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "it-IT",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "ko-KR-HyunsuMultilingualNeural",
+    "name": "Hyunsu (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "ko-KR",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "fr-FR-RemyMultilingualNeural",
+    "name": "Remy (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "fr-FR",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "de-DE-SeraphinaMultilingualNeural",
+    "name": "Seraphina (หญิง · หลายภาษา)",
+    "gender": "Female",
+    "locale": "de-DE",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "pt-BR-ThalitaMultilingualNeural",
+    "name": "Thalita (หญิง · หลายภาษา)",
+    "gender": "Female",
+    "locale": "pt-BR",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "fr-FR-VivienneMultilingualNeural",
+    "name": "Vivienne (หญิง · หลายภาษา)",
+    "gender": "Female",
+    "locale": "fr-FR",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "en-AU-WilliamMultilingualNeural",
+    "name": "William (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "en-AU",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "th-google",
+    "name": "ไทย AI สำรอง",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "google",
+    "dialect": "central"
+  },
+  {
+    "id": "paxa:khanomkrok",
+    "name": "Khanom Krok (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:nomyen",
+    "name": "Nom Yen (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:tako",
+    "name": "Tako (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:foithong",
+    "name": "Foi Thong (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:massaman",
+    "name": "Massaman (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:thongek",
+    "name": "Thong Ek (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:panang",
+    "name": "Panang (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:oliang",
+    "name": "Oliang (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:sanaechan",
+    "name": "Sanae Chan (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:tubtimkrob",
+    "name": "Tub Tim Krob (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:mooping",
+    "name": "Moo Ping (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:bualoi",
+    "name": "Bua Loi (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:lukchup",
+    "name": "Luk Chup (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:lodchong",
+    "name": "Lod Chong (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:woon",
+    "name": "Woon (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:sangkaya",
+    "name": "Sangkaya (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:padthai",
+    "name": "Pad Thai (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:khaoniao",
+    "name": "Khao Niao (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:tomyum",
+    "name": "Tom Yum (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:khanomchan",
+    "name": "Khanom Chan (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:kaprao",
+    "name": "Kaprao (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:yoyo",
+    "name": "Yoyo (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:somtam",
+    "name": "Som Tam (หญิง · อีสาน)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "isan",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:larb",
+    "name": "Larb (ชาย · อีสาน)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "isan",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:khaosoi",
+    "name": "Khao Soi (หญิง · เหนือ)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "northern",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:roti",
+    "name": "Roti (ชาย · ใต้)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "southern",
+    "model": "paxa-tts-flash-v1"
+  }
 ];
 
 let ttsConfig = loadTtsConfig();
-let ttsAudio = null;
+let ttsActiveJob = null;
+let ttsHealthPending = null;
 let ttsAudioCtx = null;
-let ttsStopSource = null;
 let ttsReady = false;
 let ttsSpeakQueue = [];
 let ttsSpeaking = false;
 let ttsSpokenDedupe = new Map(); // dedupeKey -> timestamp
 
-async function ttsFetch(path, options = {}) {
+// Keep the deadline through response-body reading, not just response headers.
+async function ttsJson(path, options = {}, timeoutMs = 7000) {
+  const controller = new AbortController();
+  const parent = options.signal;
+  const abort = () => controller.abort(parent?.reason || new Error("ยกเลิกการอ่าน"));
+  const timer = setTimeout(() => controller.abort(new Error("บริการเสียงตอบช้าเกินไป — ข้ามไปข้อความถัดไป")), timeoutMs);
+  if (parent?.aborted) abort();
+  else parent?.addEventListener("abort", abort, { once: true });
+  let rejectAbort;
+  const interrupted = new Promise((_, reject) => { rejectAbort = () => reject(controller.signal.reason); });
+  controller.signal.addEventListener("abort", rejectAbort, { once: true });
+  const request = async () => {
+    controller.signal.throwIfAborted();
+    let res;
+    try {
+      res = await fetch(TTS_API + path, { ...options, signal: controller.signal, cache: "no-store" });
+    } catch (err) {
+      // Never replay a POST after an ambiguous network error: it may already be speaking.
+      if (controller.signal.aborted || (options.method && options.method !== "GET")) throw err;
+      res = await fetch(TTS_API_FALLBACK + path, { ...options, signal: controller.signal, cache: "no-store" });
+    }
+    const data = await res.json();
+    controller.signal.throwIfAborted();
+    if (!res.ok) throw new Error(data.error || "บริการเสียงไม่พร้อม (" + res.status + ")");
+    return data;
+  };
   try {
-    const res = await fetch(`${TTS_API}${path}`, { ...options, cache: "no-store" });
-    return res;
-  } catch {
-    return fetch(`${TTS_API_FALLBACK}${path}`, { ...options, cache: "no-store" });
+    return await Promise.race([request(), interrupted]);
+  } finally {
+    clearTimeout(timer);
+    parent?.removeEventListener("abort", abort);
+    controller.signal.removeEventListener("abort", rejectAbort);
   }
 }
 function setTtsActivity(msg) {
@@ -5264,6 +5651,7 @@ function setTtsActivity(msg) {
 function defaultTtsConfig() {
   return {
     enabled: false,
+    provider: "builtin", dialect: "central", convertDialect: true,
     voiceURI: "th-TH-PremwadeeNeural",
     rate: 1,
     readName: true,
@@ -5286,6 +5674,9 @@ function loadTtsConfig() {
     }
     return {
       enabled: !!parsed.enabled,
+      provider: parsed.provider === "paxa" ? "paxa" : "builtin",
+      dialect: ["central", "northern", "isan", "southern"].includes(parsed.dialect) ? parsed.dialect : "central",
+      convertDialect: parsed.convertDialect !== false,
       voiceURI,
       rate: typeof parsed.rate === "number" ? parsed.rate : 1,
       readName: parsed.readName !== false,
@@ -5303,40 +5694,136 @@ function saveTtsConfig() {
   localStorage.setItem(TTS_KEY, JSON.stringify(ttsConfig));
 }
 
+function ttsVoicePool() {
+  const paxa = ttsConfig.provider === "paxa";
+  const dialect = paxa ? ttsConfig.dialect : "central";
+  return BUILTIN_TTS_VOICES.filter(v => !v.random && (paxa ? v.engine === "paxa" && v.dialect === dialect : v.engine !== "paxa"));
+}
 function fillTtsVoices() {
   const select = document.getElementById("ttsVoice");
   if (!select) return;
-  const current = ttsConfig.voiceURI;
-  select.innerHTML = BUILTIN_TTS_VOICES.map(
-    (v) =>
-      `<option value="${v.id}" ${v.id === current ? "selected" : ""}>${escapeHtml(v.name)}</option>`
-  ).join("");
-  if (!BUILTIN_TTS_VOICES.some((v) => v.id === ttsConfig.voiceURI)) {
-    ttsConfig.voiceURI = BUILTIN_TTS_VOICES[0].id;
-    select.value = ttsConfig.voiceURI;
+  const pool = ttsVoicePool();
+  const choices = [...BUILTIN_TTS_VOICES.filter(v => v.random && (!v.gender || pool.some(p => p.gender === v.gender))), ...pool];
+  if (!choices.some(v => v.id === ttsConfig.voiceURI)) {
+    ttsConfig.voiceURI = choices[0]?.id || "th-TH-PremwadeeNeural";
     saveTtsConfig();
   }
+  select.innerHTML = choices.map(v => '<option value="' + v.id + '"' + (v.id === ttsConfig.voiceURI ? ' selected' : '') + '>' + escapeHtml(v.name) + '</option>').join("");
 }
 
 async function refreshTtsStatus() {
-  const hint = document.getElementById("ttsVoiceHint");
-  try {
-    const res = await ttsFetch("/health");
-    const data = await res.json();
-    ttsReady = !!data.ok;
-    if (hint) {
-      hint.textContent = ttsReady
-        ? "สถานะเสียง AI: พร้อมใช้งาน (ในโปรแกรม · ไม่ใช้เสียง Windows)"
-        : "สถานะเสียง AI: ยังไม่พร้อม — รอสักครู่แล้วลองใหม่";
+  if (ttsHealthPending) return ttsHealthPending;
+  ttsHealthPending = (async () => {
+    const hint = document.getElementById("ttsVoiceHint");
+    try {
+      const data = await ttsJson("/health");
+      ttsReady = !!data.ok;
+    } catch {
+      ttsReady = false;
     }
-  } catch {
-    ttsReady = false;
-    if (hint) {
-      hint.textContent =
-        "สถานะเสียง AI: ยังไม่พร้อม — ปิดแล้วเปิด Monkeyeffect ใหม่ (หรือเปิดจากไอคอนทางลัด)";
-    }
-  }
+    if (hint) hint.textContent = ttsReady
+      ? "สถานะเสียง AI: พร้อมใช้งาน · อ่านต่อได้เมื่อพับโปรแกรม"
+      : "สถานะเสียง AI: กำลังเชื่อมต่อใหม่อัตโนมัติ…";
+  })();
+  try { await ttsHealthPending; } finally { ttsHealthPending = null; }
 }
+
+let ttsPaxaConfigured = false;
+let ttsPreviewController = null;
+function showTtsPreview(text) {
+  const output = document.getElementById("ttsDialectPreview");
+  if (output) { output.hidden = false; output.textContent = text; }
+}
+function renderTtsProviderUi() {
+  const paxa = ttsConfig.provider === "paxa";
+  const provider = document.getElementById("ttsProvider");
+  const dialect = document.getElementById("ttsDialect");
+  const convert = document.getElementById("ttsConvertDialect");
+  if (provider) provider.value = paxa ? "paxa" : "builtin";
+  if (dialect) { dialect.disabled = !paxa; dialect.value = paxa ? ttsConfig.dialect : "central"; }
+  const regional = paxa && ttsConfig.dialect !== "central";
+  if (convert) { convert.checked = ttsConfig.convertDialect !== false; convert.disabled = !regional; }
+  const conversionRow = document.getElementById("ttsConversionRow");
+  if (conversionRow) conversionRow.hidden = !regional;
+  const panel = document.getElementById("ttsPaxaSettings");
+  if (panel) panel.hidden = !paxa;
+  const status = document.getElementById("ttsProviderStatus");
+  if (status) status.textContent = !paxa ? "15 เสียงพร้อมใช้ · สุ่มได้ทั้งชายและหญิง"
+    : ttsPaxaConfigured ? "เชื่อมต่อ Paxa แล้ว · ใช้เครดิตตามบัญชีของคุณ" : "ยังไม่ได้เชื่อมต่อ — ใส่ API key ของ Paxa เพื่อใช้เสียงชุดนี้";
+  const rate = document.getElementById("ttsRate");
+  if (rate) {
+    rate.max = paxa ? "15" : "20";
+    if (paxa && ttsConfig.rate > 1.5) { ttsConfig.rate = 1.5; saveTtsConfig(); }
+    rate.value = String(Math.round((ttsConfig.rate || 1) * 10));
+    const label = document.getElementById("ttsRateLabel");
+    if (label) label.textContent = (ttsConfig.rate || 1).toFixed(1);
+  }
+  fillTtsVoices();
+}
+async function refreshTtsProvider() {
+  try {
+    const data = await ttsJson("/providers");
+    ttsPaxaConfigured = !!data.paxaConfigured;
+    renderTtsProviderUi();
+  } catch { /* Keep current selection if the app is restarting. */ }
+}
+function clearTtsPreview() {
+  ttsPreviewController?.abort();
+  const output = document.getElementById("ttsDialectPreview");
+  if (output) { output.hidden = true; output.textContent = ""; }
+}
+document.getElementById("ttsProvider")?.addEventListener("change", (e) => {
+  stopTtsAudio(); clearTtsPreview();
+  ttsConfig.provider = e.target.value === "paxa" ? "paxa" : "builtin";
+  ttsConfig.voiceURI = "random";
+  saveTtsConfig(); renderTtsProviderUi(); refreshTtsProvider();
+});
+document.getElementById("ttsDialect")?.addEventListener("change", (e) => {
+  stopTtsAudio(); clearTtsPreview();
+  ttsConfig.dialect = e.target.value;
+  ttsConfig.voiceURI = "random";
+  saveTtsConfig(); renderTtsProviderUi();
+});
+document.getElementById("ttsConvertDialect")?.addEventListener("change", (e) => {
+  ttsConfig.convertDialect = e.target.checked;
+  clearTtsPreview(); saveTtsConfig();
+});
+async function saveTtsProviderKey(remove = false) {
+  const input = document.getElementById("ttsPaxaKey");
+  const status = document.getElementById("ttsKeyStatus");
+  const key = remove ? "" : input?.value?.trim();
+  if (!remove && !key) { if (status) status.textContent = "ใส่ API key ที่ต้องการบันทึกก่อน"; return; }
+  const save = document.getElementById("ttsSaveKeyBtn"), clear = document.getElementById("ttsRemoveKeyBtn");
+  if (save) save.disabled = true;
+  if (clear) clear.disabled = true;
+  if (status) status.textContent = remove ? "กำลังลบคีย์…" : "กำลังตรวจสอบคีย์…";
+  try {
+    const data = await ttsJson("/provider-key", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ apiKey: key }) }, 15000);
+    if (input) input.value = "";
+    ttsPaxaConfigured = !!data.paxaConfigured;
+    if (status) status.textContent = remove ? "ลบคีย์จากเครื่องแล้ว" : "บันทึกและตรวจสอบคีย์แล้ว พร้อมใช้งาน";
+    renderTtsProviderUi();
+  } catch (err) { if (status) status.textContent = err.message || "บันทึกไม่สำเร็จ"; }
+  finally { if (save) save.disabled = false; if (clear) clear.disabled = false; }
+}
+document.getElementById("ttsSaveKeyBtn")?.addEventListener("click", () => saveTtsProviderKey());
+document.getElementById("ttsRemoveKeyBtn")?.addEventListener("click", () => saveTtsProviderKey(true));
+document.getElementById("ttsTestText")?.addEventListener("input", clearTtsPreview);
+document.getElementById("ttsPreviewBtn")?.addEventListener("click", async () => {
+  const text = document.getElementById("ttsTestText")?.value?.trim();
+  if (!text) { showTtsPreview("ใส่ข้อความทดสอบก่อน"); return; }
+  clearTtsPreview();
+  const controller = new AbortController();
+  ttsPreviewController = controller;
+  showTtsPreview("กำลังเตรียมข้อความ…");
+  try {
+    const data = await ttsJson("/preview", { method: "POST", signal: controller.signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, voice: resolveTtsVoiceId(), dialect: ttsConfig.provider === "paxa" ? ttsConfig.dialect : "central", convertDialect: ttsConfig.convertDialect !== false }) }, 35000);
+    if (!controller.signal.aborted) showTtsPreview(data.text);
+  } catch (err) { if (!controller.signal.aborted) showTtsPreview(err.message || "แปลงข้อความไม่สำเร็จ"); }
+  finally { if (ttsPreviewController === controller) ttsPreviewController = null; }
+});
 
 function renderTtsUiState() {
   const enabledEl = document.getElementById("ttsEnabled");
@@ -5355,7 +5842,7 @@ function renderTtsUiState() {
   if (readMessageEl) readMessageEl.checked = ttsConfig.readMessage !== false;
   if (readEmojiEl) readEmojiEl.checked = !!ttsConfig.readEmoji;
   if (cutSpamEl) cutSpamEl.checked = ttsConfig.cutSpam !== false;
-  fillTtsVoices();
+  renderTtsProviderUi();
   refreshTtsStatus();
 }
 
@@ -5368,183 +5855,79 @@ function getTtsAudioContext() {
 
 function resolveTtsVoiceId() {
   const id = ttsConfig.voiceURI || "th-TH-PremwadeeNeural";
-  if (id !== "random") return id;
-  const pool = BUILTIN_TTS_VOICES.map((v) => v.id).filter((v) => v !== "random" && v !== "th-google");
-  return pool[Math.floor(Math.random() * pool.length)] || "th-TH-PremwadeeNeural";
+  const pool = ttsVoicePool();
+  if (!id.startsWith("random")) return pool.find(v => v.id === id)?.id || pool[0]?.id || "th-TH-PremwadeeNeural";
+  const gender = id === "random-female" ? "Female" : id === "random-male" ? "Male" : null;
+  const candidates = pool.filter(v => v.engine !== "google" && (!gender || v.gender === gender));
+  return (candidates[Math.floor(Math.random() * candidates.length)] || pool[0])?.id || "th-TH-PremwadeeNeural";
 }
 
 function ttsVoiceLabel(id) {
   return BUILTIN_TTS_VOICES.find((v) => v.id === id)?.name || id;
 }
 
+function cancelTtsJob(job) {
+  if (!job.cancelPromise) {
+    job.cancelPromise = ttsJson("/cancel", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: job.id }),
+    }, 5000).catch((err) => { console.warn("tts cancel:", err.message || err); });
+  }
+  return job.cancelPromise;
+}
+
 function stopTtsAudio() {
   ttsSpeakQueue = [];
-  ttsSpeaking = false;
-  if (typeof ttsStopSource === "function") {
-    const stop = ttsStopSource;
-    ttsStopSource = null;
-    try {
-      stop();
-    } catch {
-      /* ignore */
-    }
+  const job = ttsActiveJob;
+  if (job) {
+    job.controller.abort(new Error("หยุดอ่านแล้ว"));
+    cancelTtsJob(job);
   }
-  if (ttsAudio) {
-    try {
-      ttsAudio.pause();
-      ttsAudio.src = "";
-    } catch {
-      /* ignore */
-    }
-    ttsAudio = null;
-  }
+  // The current drain retains ownership until cancellation/cleanup has finished.
+  setTtsActivity("หยุดอ่านแล้ว");
 }
 
 async function duckHostMusic(factor) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 1500);
   try {
     await fetch("/api/media/duck", {
-      method: "POST",
+      method: "POST", signal: controller.signal,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ factor }),
     });
-  } catch {
-    /* ignore */
-  }
+  } catch { /* Music failure must not lock the voice queue. */ }
+  finally { clearTimeout(timer); }
 }
 
-async function speakThaiNow(text, voiceOverride, langOverride) {
-  const cleaned = String(text || "").trim();
+async function speakThaiNow(text, voiceOverride, langOverride, job) {
+  const cleaned = String(text || "").trim().slice(0, 800);
   if (!cleaned) return;
-
-  unlockAudio();
-  if (!ttsReady) await refreshTtsStatus();
-  if (!ttsReady) {
-    // one more kick — backend starts TTS lazily
-    await new Promise((r) => setTimeout(r, 800));
-    await refreshTtsStatus();
-  }
-  if (!ttsReady) {
-    setTtsActivity("ยังไม่พบเสียง AI — ปิดแล้วเปิดโปรแกรมใหม่");
-    return;
-  }
-
+  const signal = job.controller.signal;
+  signal.throwIfAborted();
   const voice = voiceOverride || resolveTtsVoiceId();
-  const lang = langOverride || "th-TH";
-  setTtsActivity(`กำลังอ่าน (${ttsVoiceLabel(voice)}): ${cleaned}`);
-  await duckHostMusic(0.16);
-
-  const body = JSON.stringify({
-    text: cleaned,
-    voice,
-    rate: ttsConfig.rate || 1,
-    lang,
-  });
-
-  const useServerPlay = document.hidden || document.visibilityState === "hidden";
-
+  setTtsActivity("กำลังอ่าน (" + ttsVoiceLabel(voice) + "): " + cleaned);
   try {
-  if (useServerPlay) {
-    // Minimized / hidden → server plays via MCI (plays the whole file).
-    try {
-      const playRes = await ttsFetch("/speak-play", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-      });
-      if (playRes.ok) {
-        const data = await playRes.json().catch(() => ({}));
-        if (data?.ok || data?.played) return;
-      }
-    } catch (err) {
-      console.warn("tts speak-play failed, fallback to browser audio", err);
-    }
-  }
-
-  const res = await ttsFetch("/speak", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-  });
-
-  if (!res.ok) {
-    let msg = "อ่านเสียงไม่สำเร็จ";
-    try {
-      const err = await res.json();
-      if (err.error) msg = err.error;
-    } catch {
-      /* ignore */
-    }
-    throw new Error(msg);
-  }
-
-  const blob = await res.blob();
-  if (!blob || blob.size < 64) {
-    throw new Error("ได้ไฟล์เสียงว่าง");
-  }
-  const ctx = getTtsAudioContext();
-  if (ctx) {
-    try {
-      if (ctx.state === "suspended") await ctx.resume();
-      const raw = await blob.arrayBuffer();
-      const audioBuf = await ctx.decodeAudioData(raw.slice(0));
-      const source = ctx.createBufferSource();
-      source.buffer = audioBuf;
-      source.connect(ctx.destination);
-      await new Promise((resolve, reject) => {
-        let settled = false;
-        const done = () => {
-          if (settled) return;
-          settled = true;
-          if (ttsStopSource === stop) ttsStopSource = null;
-          resolve();
-        };
-        const stop = () => {
-          try {
-            source.stop();
-          } catch {
-            done();
-          }
-        };
-        ttsStopSource = stop;
-        source.onended = done;
-        try {
-          source.start(0);
-        } catch (err) {
-          ttsStopSource = null;
-          reject(err);
-        }
-      });
-      return;
-    } catch (err) {
-      console.warn("tts decode failed, fallback to audio element", err);
-      ttsStopSource = null;
-    }
-  }
-
-  const url = URL.createObjectURL(blob);
-  const audio = new Audio(url);
-  ttsAudio = audio;
-  audio.volume = 1;
-
-  await new Promise((resolve, reject) => {
-    audio.onended = () => {
-      URL.revokeObjectURL(url);
-      if (ttsAudio === audio) ttsAudio = null;
-      resolve();
-    };
-    audio.onerror = () => {
-      URL.revokeObjectURL(url);
-      if (ttsAudio === audio) ttsAudio = null;
-      reject(new Error("เล่นเสียงไม่สำเร็จ"));
-    };
-    const playPromise = audio.play();
-    if (playPromise && typeof playPromise.then === "function") {
-      playPromise.catch((err) => {
-        reject(new Error(err?.message || "เบราว์เซอร์บล็อกเสียง — กดทดสอบอีกครั้ง"));
-      });
-    }
-  });
+    await duckHostMusic(0.16);
+    signal.throwIfAborted();
+    // A single native player handles visible AND minimized windows. Changing
+    // visibility mid-sentence cannot suspend WebAudio or cause duplicate playback.
+    const data = await ttsJson("/speak-play", {
+      method: "POST", signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: job.id, text: cleaned, voice,
+        rate: ttsConfig.rate || 1, lang: langOverride || "th-TH", dialect: job.dialect, convertDialect: job.convertDialect, protectedTerms: job.protectedTerms }),
+    }, 175000);
+    signal.throwIfAborted();
+    if (!data.ok || !data.played) throw new Error(data.error || "เล่นเสียงไม่สำเร็จ");
+    ttsReady = true;
+    if (data.converted) showTtsPreview(data.spokenText);
+    devLog("tts", "completed", { requestId: job.id });
+  } catch (err) {
+    await cancelTtsJob(job);
+    throw err;
   } finally {
+    if (job.cancelPromise) await job.cancelPromise;
     await duckHostMusic(1);
   }
 }
@@ -5552,20 +5935,37 @@ async function speakThaiNow(text, voiceOverride, langOverride) {
 async function drainTtsQueue() {
   if (ttsSpeaking) return;
   ttsSpeaking = true;
-  while (ttsSpeakQueue.length) {
-    const item = ttsSpeakQueue.shift();
-    const text = typeof item === "string" ? item : item?.text;
-    const voice = typeof item === "string" ? null : item?.voice;
-    const lang = typeof item === "string" ? null : item?.lang;
-    try {
-      await speakThaiNow(text, voice, lang);
-    } catch (err) {
-      console.warn(err);
-      setTtsActivity(`ผิดพลาด: ${err.message || err}`);
+  let failed = false;
+  let stopped = false;
+  try {
+    while (ttsSpeakQueue.length) {
+      const item = ttsSpeakQueue.shift();
+      const job = { id: window.crypto?.randomUUID?.() || (Date.now() + "-" + Math.random().toString(16).slice(2)), controller: new AbortController(), cancelPromise: null };
+      job.dialect = item?.dialect || "central";
+      job.convertDialect = item?.convertDialect;
+      job.protectedTerms = item?.protectedTerms || [];
+      ttsActiveJob = job;
+      failed = false;
+      stopped = false;
+      try {
+        await speakThaiNow(typeof item === "string" ? item : item?.text, item?.voice, item?.lang, job);
+      } catch (err) {
+        stopped = job.controller.signal.aborted;
+        if (!stopped) {
+          failed = true;
+          console.warn("tts job failed:", err);
+          devLog("tts", "failed", { requestId: job.id, error: String(err?.message || err) });
+          setTtsActivity("อ่านไม่สำเร็จ: " + (err.message || err) + " · จะลองใหม่เมื่อมีข้อความถัดไป");
+          refreshTtsStatus();
+        }
+      } finally {
+        if (ttsActiveJob === job) ttsActiveJob = null;
+      }
     }
+  } finally {
+    ttsSpeaking = false;
+    if (!failed && !stopped && ttsConfig.enabled) setTtsActivity("รออีเวนต์จากไลฟ์...");
   }
-  ttsSpeaking = false;
-  if (ttsConfig.enabled) setTtsActivity("รออีเวนต์จากไลฟ์...");
 }
 
 function speakThai(text, opts) {
@@ -5573,7 +5973,10 @@ function speakThai(text, opts) {
   if (!cleaned) return Promise.resolve();
   ttsSpeakQueue.push({
     text: cleaned,
-    voice: opts?.voice || null,
+    voice: opts?.voice || resolveTtsVoiceId(),
+    dialect: ttsConfig.provider === "paxa" ? ttsConfig.dialect : "central",
+    convertDialect: ttsConfig.convertDialect !== false,
+    protectedTerms: opts?.protectedTerms || [],
     lang: opts?.lang || null,
   });
   // จำกัดคิว — เก็บล่าสุด 16 บรรทัด
@@ -5593,7 +5996,7 @@ function speakTemplate(_template, data) {
     );
     return;
   }
-  speakThai(text).catch((err) => {
+  speakThai(text, { protectedTerms: [data.name, data.gift, data.speakGiftName].filter(Boolean) }).catch((err) => {
     console.warn(err);
     setTtsActivity(`สถานะเสียง AI: ${err.message || "ผิดพลาด"}`);
   });
@@ -7460,17 +7863,22 @@ function updateStatus(data) {
 }
 
 let _fetchStatusInFlight = false;
+let _lastStatusPollAt = 0;
 let _statusGiftLogFp = "";
 async function fetchStatus() {
   if (_fetchStatusInFlight) return;
   _fetchStatusInFlight = true;
+  _lastStatusPollAt = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const res = await fetch("/api/status");
+    const res = await fetch("/api/status", { signal: controller.signal });
     const data = await res.json();
     updateStatus(data);
   } catch {
     // ignore transient poll errors
   } finally {
+    clearTimeout(timeout);
     _fetchStatusInFlight = false;
   }
 }
@@ -9104,25 +9512,15 @@ document.getElementById("ttsVoice")?.addEventListener("change", (e) => {
 });
 document.getElementById("ttsStopBtn")?.addEventListener("click", stopTtsAudio);
 document.getElementById("ttsTestBtn")?.addEventListener("click", () => {
-  unlockAudio();
-  // ทดสอบตามติ๊ก: ชื่อผู้ส่ง / ข้อความที่พิมพ์ / ของขวัญ / อิโมจิ
-  // ปุ่มทดสอบอ่านได้แม้ยังไม่ติ๊ก “เปิดใช้”
-  const prevEnabled = ttsConfig.enabled;
-  ttsConfig.enabled = true;
-  speakTemplate(null, {
-    name: "ผู้ทดสอบ",
-    message: "สวัสดีครับ",
-    gift: "กุหลาบ",
-    speakGiftName: "กุหลาบ",
-    kind: "gift",
-    rawText: "ผู้ทดสอบ สวัสดีครับ กุหลาบ",
-  });
-  ttsConfig.enabled = prevEnabled;
+  const text = document.getElementById("ttsTestText")?.value?.trim();
+  if (text) speakThai(text);
+  else setTtsActivity("ใส่ข้อความทดสอบก่อนครับ");
 });
 
 document.querySelector('.nav-btn[data-panel="tts"]')?.addEventListener("click", () => {
   unlockAudio();
   refreshTtsStatus();
+  refreshTtsProvider();
 });
 
 document.getElementById("photoPrintEnabled")?.addEventListener("change", (e) => {
@@ -9180,6 +9578,7 @@ renderVideoUiState();
 renderWinUiState();
 syncWinScoreToOverlay();
 renderTtsUiState();
+refreshTtsProvider();
 wireSubTranslate();
 renderSubTranslateUi();
 if (subConfig.enabled) enableSubListening();
@@ -9196,9 +9595,11 @@ loadGames().finally(() => {
   seedRouletteDefaultsIfNeeded();
 });
 
-/** Host keep-alive: drain interrupt queue only — do NOT re-hit /api/status (pollTimer already does). */
+/** The native timer also polls if WebView background timers have stopped. */
 window.__tgrKeepAlive = function tgrKeepAlive() {
   try {
+    if (Date.now() - _lastStatusPollAt >= 2500) fetchStatus();
+    if (!ttsSpeaking && ttsSpeakQueue.length) drainTtsQueue();
     if (typeof kickInterruptDrain === "function") kickInterruptDrain();
   } catch {
     /* ignore */
@@ -9293,7 +9694,7 @@ loadJarCatalogUi();
 renderJarUiState();
 
 const LIVE_OVERLAY_BASE = "http://127.0.0.1:3847/live-overlay.html";
-const LIVE_OVERLAY_VER = "gal86";
+const LIVE_OVERLAY_VER = "sultan96";
 const WELCOME_LINK_URL = "http://127.0.0.1:3847/welcome-9x12.html";
 
 function welcomeObsLink() {
@@ -9394,7 +9795,7 @@ const OVERLAY_SETTINGS = {
   "dragon-hoard": { fields: ["dragonControls"], hint: "ของขวัญจริงตกกองตามมูลค่า · มังกรวิวัฒนาการและตอบสนองต่อของขวัญราคาแพงด้วยไฟสีสมจริง" },
   roulette: { hint: "รายการของรางวัลและกฎสุ่มตั้งที่หน้ากล่องสุ่ม", panel: "roulette", panelLabel: "เปิดหน้ากล่องสุ่ม" },
   points: { hint: "แต้มผู้ชมตั้งที่หน้าแต้ม", panel: "points", panelLabel: "เปิดหน้าแต้มผู้ชม" },
-  topgifters: { fields: ["lbReset"], hint: "อันดับเพชรของไลฟ์นี้เท่านั้น — กดล้างได้" },
+  topgifters: { fields: ["lbReset"], hint: "วงแหวนแยก 3 อันดับสูงสุด · รีเซ็ตอันดับไลฟ์นี้ได้" },
   topliker: { fields: ["lbReset"], hint: "อันดับไลค์ของไลฟ์นี้เท่านั้น — กดล้างได้" },
   ranking: { fields: ["lbReset"], hint: "อันดับรวมเพชร+ไลค์ของไลฟ์นี้เท่านั้น — กดล้างได้" },
   pointsboard: { fields: ["lbReset"], hint: "อันดับแต้มของไลฟ์นี้เท่านั้น — กดล้างได้", panel: "points", panelLabel: "เปิดหน้าแต้มผู้ชม" },
@@ -9445,7 +9846,7 @@ function overlayThemeOptions(selected) {
   ).join("");
 }
 function usesOverlayTheme(item) {
-  return OVERLAY_THEME_CATS.has(item.cat);
+  return overlayPanelId(item) !== "topgifters" && OVERLAY_THEME_CATS.has(item.cat);
 }
 
 const OVERLAY_GALLERY = [
@@ -9470,12 +9871,12 @@ const OVERLAY_GALLERY = [
   { id: "userinfo", name: "User Info Screen", desc: "ชื่อ รูป และของขวัญผู้ชมคนล่าสุด", cat: "ข้อมูล", w: 480, h: 480 },
   { id: "commands", name: "Command Info Screen", desc: "รายการคำสั่งที่ตั้งไว้บนจอ", cat: "ข้อมูล", w: 520, h: 480 },
   { id: "myactions", name: "My Actions", desc: "อีเวนต์ล่าสุดจากไลฟ์", cat: "ข้อมูล", w: 480, h: 480 },
-  { id: "topgifters", overlay: "topgifters", scope: "live", name: "สุลต่านประจำห้อง", desc: "อันดับเพชรเฉพาะไลฟ์นี้ — กดล้างได้", cat: "อันดับประจำไลฟ์", w: 440, h: 480 },
+  { id: "topgifters", overlay: "topgifters", scope: "live", name: "สุลต่านประจำห้อง", desc: "วงแหวนอันดับ 1–2–3 · รูปใหญ่ ชื่อเด่น พื้นหลังใส", cat: "อันดับประจำไลฟ์", w: 440, h: 480 },
   { id: "topliker", overlay: "topliker", scope: "live", name: "Top Liker", desc: "อันดับไลค์เฉพาะไลฟ์นี้ — กดล้างได้", cat: "อันดับประจำไลฟ์", w: 440, h: 480 },
   { id: "ranking", overlay: "ranking", scope: "live", name: "Ranking List", desc: "อันดับรวมเพชร+ไลค์เฉพาะไลฟ์นี้ — กดล้างได้", cat: "อันดับประจำไลฟ์", w: 440, h: 480 },
   { id: "pointsboard", overlay: "pointsboard", scope: "live", name: "Points Leaderboard", desc: "อันดับแต้มเฉพาะไลฟ์นี้ — กดล้างได้", cat: "อันดับประจำไลฟ์", w: 440, h: 480 },
   { id: "viewers", name: "Viewer Count", desc: "จำนวนคนดูตอนนี้", cat: "อันดับประจำไลฟ์", w: 560, h: 280 },
-  { id: "topgifters-all", overlay: "topgifters", scope: "all", name: "สุลต่านทั้งหมด", desc: "อันดับเพชรสะสมทั้งหมด — ล้างไม่ได้", cat: "อันดับทั้งหมด", w: 440, h: 480 },
+  { id: "topgifters-all", overlay: "topgifters", scope: "all", name: "สุลต่านทั้งหมด", desc: "วงแหวนอันดับ 1–2–3 · ทอง เงิน บรอนซ์ พื้นหลังใส", cat: "อันดับทั้งหมด", w: 440, h: 480 },
   { id: "topliker-all", overlay: "topliker", scope: "all", name: "Top Liker ทั้งหมด", desc: "อันดับไลค์สะสมทั้งหมด — ล้างไม่ได้", cat: "อันดับทั้งหมด", w: 440, h: 480 },
   { id: "ranking-all", overlay: "ranking", scope: "all", name: "Ranking ทั้งหมด", desc: "อันดับรวมสะสมทั้งหมด — ล้างไม่ได้", cat: "อันดับทั้งหมด", w: 440, h: 480 },
   { id: "pointsboard-all", overlay: "pointsboard", scope: "all", name: "Points ทั้งหมด", desc: "อันดับแต้มสะสมทั้งหมด — ล้างไม่ได้", cat: "อันดับทั้งหมด", w: 440, h: 480 },
@@ -9724,14 +10125,13 @@ function overlaySettingsPop(item) {
 }
 
 function welcomeGalleryExtras() {
-  return `<div id="welcomeLivePerson" class="welcome-live-person">รอคนเข้าไลฟ์ LV 20+ — กรอบจะดึงชื่อ รูป และเลข LV จากไลฟ์</div>
+  const stylePicker = window.MonkeyWelcomeDesigns.picker(window.getWelcomeStyle?.());
+  return `<div class="welcome-design-heading"><strong>รูปแบบกรอบต้อนรับ</strong><span>พื้นหลังโปร่งใสทุกแบบ</span></div>
+    <div data-welcome-style-picker>${stylePicker}</div>
+    <div id="welcomeLivePerson" class="welcome-live-person">รอคนเข้าไลฟ์ LV 20+ — กรอบจะดึงชื่อ รูป และเลข LV จากไลฟ์</div>
     <p class="hint">คัดลอก URL → ใน TikTok เพิ่ม <strong>ลิงก์</strong> แล้วตั้งความละเอียดกำหนดเอง <strong>720×960 (9:12 เท่านั้น)</strong> · ถ้ายังแบน ลากกล่องแดงให้สูงจนแถบเตือนหาย</p>
-    <div class="welcome-tier-picks" id="welcomeTierPicks">
-      <button type="button" class="welcome-tier-card" data-welcome-demo="silver"><span>ตัวอย่างโล่เงิน</span><strong>LV 20–29</strong></button>
-      <button type="button" class="welcome-tier-card" data-welcome-demo="gold"><span>ตัวอย่างโล่ทอง</span><strong>LV 30–39</strong></button>
-      <button type="button" class="welcome-tier-card" data-welcome-demo="platinum"><span>ตัวอย่างโล่แพลตินัม</span><strong>LV 40–49</strong></button>
-      <button type="button" class="welcome-tier-card" data-welcome-demo="diamond"><span>ตัวอย่างโล่เพชร</span><strong>LV 50+</strong></button>
-    </div>`;
+    <div class="welcome-tier-heading">พรีวิวตามระดับ <span>สีและลายเปลี่ยนตามเลเวลจริงอัตโนมัติ</span></div>
+    ${window.MonkeyWelcomeDesigns.tierPicker("demo")}`;
 }
 
 function overlayWidgetCard(item, featured) {
@@ -9747,7 +10147,7 @@ function overlayWidgetCard(item, featured) {
     : "";
   const previewBtn = featured
     ? ""
-    : `<button type="button" class="btn ghost small og-preview" data-id="${item.id}" data-url="${escapeHtml(previewUrl)}" data-w="${item.w}" data-h="${item.h}">พรีวิว</button>`;
+    : `<button type="button" class="btn ghost small og-preview" data-id="${item.id}" data-url="${escapeHtml(previewUrl)}" data-w="${item.w}" data-h="${item.h}">${overlayPanelId(item) === "topgifters" ? "พรีวิว / จัดตำแหน่ง" : "พรีวิว"}</button>`;
   const resetBtn = item.scope === "live"
     ? `<button type="button" class="btn ghost small og-lb-reset" title="รีเซ็ตอันดับประจำไลฟ์">รีเซ็ต</button>`
     : "";
@@ -10431,11 +10831,12 @@ function openOverlayPreview(url, w, h, id) {
     });
     modal.querySelector("#ogPreviewClose")?.addEventListener("click", () => modal.classList.add("hidden"));
   }
+  url = window.MonkeySultanLayout.configurePreview(modal, url, id);
   const frame = modal.querySelector("#ogPreviewFrame");
   const box = modal.querySelector(".og-preview-dialog");
   if (box) {
     box.style.width = Math.min(980, Math.max(420, Number(w) || 720)) + "px";
-    box.style.height = Math.min(940, Math.max(380, Number(h) || 420) + 56) + "px";
+    box.style.height = Math.min(940, Math.max(380, Number(h) || 420) + ((id === "topgifters" || id === "topgifters-all") ? 164 : 56)) + "px";
   }
   if (frame) frame.src = url;
   modal.dataset.id = id || "";
@@ -10450,15 +10851,14 @@ const WELCOME_SAMPLES = {
   diamond: { nick: "ผู้ชม LV 50", level: 50, superFan: true, fanLevel: 10 },
 };
 
-function showWelcomeDemo(kind) {
-  const key = String(kind || "gold").toLowerCase();
-  const frame = document.getElementById("welcomeGalleryFrame") || document.getElementById("welcomePreviewFrame");
+function showWelcomeDemo(kind, frameId = "welcomeGalleryFrame") {
+  const key = WELCOME_SAMPLES[kind] ? kind : "silver";
+  const frame = document.getElementById(frameId);
   if (frame) {
-    frame.src = `/live-overlay.html?panel=welcome&v=${LIVE_OVERLAY_VER}&gallery=1&demo=${encodeURIComponent(key)}&w=720&h=960&width=720&height=960&t=${Date.now()}`;
+    frame.src = `/live-overlay.html?panel=welcome&v=${LIVE_OVERLAY_VER}&gallery=1&demo=${encodeURIComponent(key)}&style=${window.getWelcomeStyle?.() || "classic"}&w=720&h=960&width=720&height=960&t=${Date.now()}`;
   }
-  document.querySelectorAll("[data-welcome-demo]").forEach((btn) => {
-    btn.classList.toggle("is-on", btn.getAttribute("data-welcome-demo") === key);
-  });
+  const scope = frame?.closest(".og-widget, #panel-welcome");
+  if (scope) window.MonkeyWelcomeDesigns.paintTier(key, scope);
 }
 
 function welcomeTierKey(level) {

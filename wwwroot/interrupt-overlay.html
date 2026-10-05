@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monkeyeffect Interrupt</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        font-family: "Segoe UI", "Noto Sans Thai", Tahoma, sans-serif;
+        user-select: none;
+      }
+      html.popup-mode,
+      html.popup-mode body {
+        background: #f0f0f0;
+      }
+      #stage {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+      }
+      #stage.show {
+        display: flex;
+      }
+      #player,
+      #still {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000;
+      }
+      #still {
+        display: none;
+      }
+      #stage.show.still-mode #player {
+        display: none;
+      }
+      #stage.show.still-mode #still {
+        display: block;
+      }
+      #errLayer {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.55);
+      }
+      html.popup-mode #errLayer {
+        background: transparent;
+        align-items: stretch;
+        justify-content: stretch;
+      }
+      #errLayer.show {
+        display: flex;
+      }
+      .err-box {
+        width: min(420px, 92vw);
+        background: #f0f0f0;
+        border: 1px solid #707070;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+        color: #1a1a1a;
+      }
+      html.popup-mode .err-box {
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        box-shadow: none;
+        border: 1px solid #a0a0a0;
+        display: flex;
+        flex-direction: column;
+      }
+      html.popup-mode .err-body {
+        flex: 1;
+      }
+      .err-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        background: linear-gradient(180deg, #fff 0%, #e8e8e8 100%);
+        border-bottom: 1px solid #c0c0c0;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .err-icon {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #e81123;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .err-body {
+        display: flex;
+        gap: 14px;
+        padding: 18px 16px 8px;
+        align-items: flex-start;
+      }
+      .err-big {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #e81123;
+        color: #fff;
+        font-size: 20px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .err-text {
+        font-size: 13px;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .err-code {
+        margin-top: 8px;
+        color: #555;
+        font-size: 12px;
+      }
+      .err-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding: 12px 16px 16px;
+        gap: 8px;
+      }
+      .err-ok {
+        min-width: 88px;
+        height: 28px;
+        border: 1px solid #adadad;
+        border-radius: 3px;
+        background: linear-gradient(180deg, #fdfdfd 0%, #e1e1e1 100%);
+        color: #1a1a1a;
+        font: inherit;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .err-ok:hover {
+        border-color: #0078d7;
+        background: linear-gradient(180deg, #e5f1fb 0%, #cce4f7 100%);
+      }
+      .err-ok:active {
+        background: #cce4f7;
+      }
+      #idleHint {
+        position: fixed;
+        inset: 0;
+        display: none; /* ห้ามจอดำทับจอระหว่างรอ/ระหว่างคลิป */
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.2);
+        font-size: 14px;
+        background: transparent;
+        pointer-events: none;
+      }
+      #idleHint:not(.hide) {
+        display: none;
+      }
+      html.popup-mode #idleHint {
+        background: #f0f0f0;
+        color: rgba(0, 0, 0, 0.2);
+      }
+      #idleHint.hide {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="idleHint">Monkeyeffect · รอขัดขวาง</div>
+    <div id="stage">
+      <video id="player" playsinline></video>
+      <img id="still" alt="" />
+    </div>
+    <div id="errLayer">
+      <div class="err-box" role="alertdialog" aria-modal="true">
+        <div class="err-title">
+          <span class="err-icon">!</span>
+          <span id="errTitle">Windows</span>
+        </div>
+        <div class="err-body">
+          <span class="err-big">✕</span>
+          <div>
+            <div class="err-text" id="errMessage">An unexpected error has occurred.</div>
+            <div class="err-code" id="errCode"></div>
+          </div>
+        </div>
+        <div class="err-actions">
+          <button type="button" class="err-ok" id="errOkBtn">OK</button>
+        </div>
+      </div>
+    </div>
+    <script src="/interrupt-overlay.js?v=still1062"></script>
+  </body>
+</html>

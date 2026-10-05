@@ -5,7 +5,6 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
 namespace TempleGiftRelay;
@@ -18,13 +17,14 @@ public sealed class MainForm : Form
 
 	private bool _navigated;
 
-	private readonly System.Windows.Forms.Timer _keepAliveTimer;
+	private readonly Timer _keepAliveTimer;
+
+	private const uint EsContinuous = 2147483648u;
+
+	private const uint EsSystemRequired = 1u;
 
 	[DllImport("kernel32.dll")]
 	private static extern uint SetThreadExecutionState(uint esFlags);
-
-	private const uint EsContinuous = 0x80000000;
-	private const uint EsSystemRequired = 0x00000001;
 
 	public MainForm()
 	{
@@ -40,16 +40,27 @@ public sealed class MainForm : Form
 		};
 		base.Controls.Add(_webView);
 		base.Shown += OnShownAsync;
-		base.Resize += (_, _) => SyncKeepAliveInterval();
+		base.Resize += delegate
+		{
+			SyncKeepAliveInterval();
+		};
 		base.FormClosed += delegate
 		{
-			try { _keepAliveTimer.Stop(); } catch { }
+			try
+			{
+				_keepAliveTimer.Stop();
+			}
+			catch
+			{
+			}
 			TransparentWidgetWindow.CloseAll();
-			SetThreadExecutionState(EsContinuous);
+			SetThreadExecutionState(2147483648u);
 			Application.Exit();
 		};
-		// Host-driven poke — faster while minimized so interrupt drain / status keep moving.
-		_keepAliveTimer = new System.Windows.Forms.Timer { Interval = 1000 };
+		_keepAliveTimer = new Timer
+		{
+			Interval = 1000
+		};
 		_keepAliveTimer.Tick += KeepAliveTick;
 		_keepAliveTimer.Start();
 	}
@@ -60,18 +71,20 @@ public sealed class MainForm : Form
 		{
 			_keepAliveTimer.Interval = 2000;
 		}
-		catch { }
+		catch
+		{
+		}
 	}
 
 	private void KeepAliveTick(object? sender, EventArgs e)
 	{
 		try
 		{
-			SetThreadExecutionState(EsContinuous | EsSystemRequired);
-			if (_webView.CoreWebView2 == null) return;
-			if (WindowState == FormWindowState.Minimized) return;
-			_ = _webView.CoreWebView2.ExecuteScriptAsync(
-				"(function(){try{if(typeof window.__tgrKeepAlive==='function')window.__tgrKeepAlive();}catch(e){}})();");
+			SetThreadExecutionState(2147483649u);
+			if (_webView.CoreWebView2 != null)
+			{
+				_webView.CoreWebView2.ExecuteScriptAsync("(function(){try{if(typeof window.__tgrKeepAlive==='function')window.__tgrKeepAlive();}catch(e){}})();");
+			}
 		}
 		catch
 		{
@@ -82,26 +95,25 @@ public sealed class MainForm : Form
 	{
 		try
 		{
-			string[] candidates =
+			string[] array = new string[3]
 			{
 				Path.Combine(AppPaths.AppDir, "monkeyeffect.ico"),
 				Path.Combine(AppPaths.AppDir, "wwwroot", "logo.png"),
 				Path.Combine(AppPaths.AppDir, "app-icon.png")
 			};
-			foreach (string path in candidates)
+			foreach (string text in array)
 			{
-				if (!File.Exists(path))
+				if (File.Exists(text))
 				{
-					continue;
+					if (text.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
+					{
+						base.Icon = new Icon(text);
+						break;
+					}
+					using Bitmap bitmap = new Bitmap(text);
+					base.Icon = System.Drawing.Icon.FromHandle(bitmap.GetHicon());
+					break;
 				}
-				if (path.EndsWith(".ico", StringComparison.OrdinalIgnoreCase))
-				{
-					Icon = new Icon(path);
-					return;
-				}
-				using Bitmap bmp = new Bitmap(path);
-				Icon = Icon.FromHandle(bmp.GetHicon());
-				return;
 			}
 		}
 		catch
@@ -111,18 +123,11 @@ public sealed class MainForm : Form
 
 	private async void OnShownAsync(object sender, EventArgs e)
 	{
-		_ = 1;
+		_ = 2;
 		try
 		{
-			await _webView.EnsureCoreWebView2Async(await WebViewEnv.GetAsync());
-			_webView.CoreWebView2.PermissionRequested += (_, args) =>
-			{
-				if (args.PermissionKind == CoreWebView2PermissionKind.Microphone)
-				{
-					args.State = CoreWebView2PermissionState.Allow;
-					args.Handled = true;
-				}
-			};
+			WebView2 webView = _webView;
+			await webView.EnsureCoreWebView2Async(await WebViewEnv.GetAsync());
 			_webView.CoreWebView2.NewWindowRequested += TransparentWidgetWindow.OnNewWindowRequested;
 			await NavigateWhenReadyAsync();
 		}

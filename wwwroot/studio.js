@@ -50,16 +50,6 @@
         perChat: 1,
         users: {},
       },
-      dailyTts: {
-        enabled: false,
-        hour: 9,
-        lastDate: "",
-        snippets: [
-          "สวัสดีตอนเช้า วันนี้พร้อมไลฟ์แล้ว",
-          "อย่าลืมส่งกุหลาบทักทายกันนะ",
-          "ขอบคุณที่อยู่ด้วยกันทุกวัน",
-        ],
-      },
       minecraft: {
         enabled: false,
         host: "127.0.0.1",
@@ -70,6 +60,7 @@
         ],
       },
       welcome: {
+        style: "classic",
         enabled: true,
         minLevel: 20,
         durationSec: 8,
@@ -92,7 +83,6 @@
         bot: { ...base.bot, ...(parsed.bot || {}) },
         subathon: { ...base.subathon, ...(parsed.subathon || {}) },
         points: { ...base.points, ...(parsed.points || {}), users: parsed.points?.users || {} },
-        dailyTts: { ...base.dailyTts, ...(parsed.dailyTts || {}) },
         minecraft: { ...base.minecraft, ...(parsed.minecraft || {}) },
         welcome: { ...base.welcome, ...(parsed.welcome || {}) },
         profiles: Array.isArray(parsed.profiles) ? parsed.profiles : [],
@@ -167,8 +157,29 @@
       subathon: studioState.subathon,
       welcome: studioState.welcome,
       welcomeCard: studioState.welcomeCard || null,
+      sultanLayouts: window.MonkeySultanLayout.readAll(),
     };
   }
+
+  window.saveSultanLayout = async (scope, value) => {
+    const key = scope === "all" ? "all" : "live";
+    const current = await fetch("/api/live-stats", { cache: "no-store" });
+    if (!current.ok) throw new Error("Cannot load Sultan positions");
+    const latest = await current.json();
+    const currentStudio = JSON.parse(latest.config?.studioJson || "{}");
+    const layouts = { ...window.MonkeySultanLayout.readAll(), ...(currentStudio.sultanLayouts || {}) };
+    layouts[key] = window.MonkeySultanLayout.normalize(value);
+    const payload = { ...currentStudio, sultanLayouts: layouts };
+    const response = await fetch("/api/live-stats/settings", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studioJson: JSON.stringify(payload) }),
+    });
+    if (!response.ok) throw new Error("Cannot save Sultan positions");
+    const snapshot = await response.json();
+    const stored = JSON.parse(snapshot.config?.studioJson || "{}");
+    if (JSON.stringify(stored.sultanLayouts?.[key]) !== JSON.stringify(layouts[key])) throw new Error("Sultan positions not saved");
+    window.MonkeySultanLayout.writeAll(layouts);
+  };
 
   function publishStudioOverlay() {
     const payload = overlayStudioPayload();
@@ -636,15 +647,6 @@
         .join("") || '<div class="hint">ยังไม่มีโปรไฟล์ — บันทึกชุดตั้งค่าปัจจุบันด้านบน</div>';
   }
 
-  function renderDailySnippets() {
-    const host = document.getElementById("dailyTtsList");
-    if (!host) return;
-    const rows = studioState.dailyTts.snippets || [];
-    host.innerHTML = rows
-      .map((s, i) => `<article class="song-item"><div>${escapeHtml(s)}</div><button type="button" class="btn ghost small" data-daily-del="${i}">ลบ</button></article>`)
-      .join("") || '<div class="hint">ยังไม่มีวลี</div>';
-  }
-
   async function renderSubathonClock() {
     const el = document.getElementById("subathonClock");
     if (!el) return;
@@ -729,42 +731,24 @@
       bot: { ...base.bot, ...(parsed.bot || {}) },
       subathon: { ...base.subathon, ...(parsed.subathon || {}) },
       points: { ...base.points, ...(parsed.points || {}), users: parsed.points?.users || {} },
-      dailyTts: { ...base.dailyTts, ...(parsed.dailyTts || {}) },
       minecraft: { ...base.minecraft, ...(parsed.minecraft || {}) },
       welcome: { ...base.welcome, ...(parsed.welcome || {}) },
       profiles: studioState.profiles,
     };
   }
 
-  function todayStamp() {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  }
-
-  function maybeSpeakDailySnippet(force) {
-    const cfg = studioState.dailyTts;
-    if (!cfg.enabled && !force) return;
-    const snippets = (cfg.snippets || []).map((s) => String(s).trim()).filter(Boolean);
-    if (!snippets.length) return;
-    const now = new Date();
-    if (!force && now.getHours() < (Number(cfg.hour) || 0)) return;
-    const stamp = todayStamp();
-    if (!force && cfg.lastDate === stamp) return;
-    const text = snippets[Math.floor(Math.random() * snippets.length)];
-    cfg.lastDate = stamp;
-    persistStudio();
-    speak(text);
-    setActivity("dailyTtsActivity", `อ่านวันนี้: ${text}`);
-  }
+  window.getWelcomeStyle = () => window.MonkeyWelcomeDesigns.normalize(studioState.welcome.style);
 
   function paintStudioUi() {
+    const tierHost = document.getElementById("welcomeTierPicker");
+    if (tierHost && !tierHost.childElementCount) tierHost.innerHTML = window.MonkeyWelcomeDesigns.tierPicker("test");
+    window.MonkeyWelcomeDesigns.paint(window.getWelcomeStyle());
     bindToggle("alertEnabled", () => studioState.alerts.enabled, (v) => (studioState.alerts.enabled = v));
     bindToggle("chatCmdEnabled", () => studioState.commands.enabled, (v) => (studioState.commands.enabled = v));
     bindToggle("botEnabled", () => studioState.bot.enabled, (v) => (studioState.bot.enabled = v));
     bindToggle("subathonEnabled", () => studioState.subathon.enabled, (v) => (studioState.subathon.enabled = v));
     bindToggle("pointsEnabled", () => studioState.points.enabled, (v) => (studioState.points.enabled = v));
     bindToggle("mcEnabled", () => studioState.minecraft.enabled, (v) => (studioState.minecraft.enabled = v));
-    bindToggle("dailyTtsEnabled", () => studioState.dailyTts.enabled, (v) => (studioState.dailyTts.enabled = v));
     bindToggle("welcomeEnabled", () => studioState.welcome.enabled, (v) => (studioState.welcome.enabled = v));
 
     const vol = document.getElementById("alertVolume");
@@ -782,7 +766,6 @@
     bindNumber("pointsPerLike", () => studioState.points.perLike, (v) => (studioState.points.perLike = v));
     bindNumber("pointsPerFollow", () => studioState.points.perFollow, (v) => (studioState.points.perFollow = v));
     bindNumber("pointsPerChat", () => studioState.points.perChat, (v) => (studioState.points.perChat = v));
-    bindNumber("dailyTtsHour", () => studioState.dailyTts.hour, (v) => (studioState.dailyTts.hour = v));
     bindNumber("mcPort", () => studioState.minecraft.port, (v) => (studioState.minecraft.port = v));
     bindNumber("welcomeMinLevel", () => studioState.welcome.minLevel, (v) => (studioState.welcome.minLevel = v));
     bindNumber("welcomeDurationSec", () => studioState.welcome.durationSec, (v) => (studioState.welcome.durationSec = v));
@@ -799,11 +782,31 @@
     renderPointsTable();
     renderMcRules();
     renderProfiles();
-    renderDailySnippets();
     renderSubathonClock();
   }
 
   function wireStudio() {
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-welcome-style]");
+      if (!button) return;
+      const style = window.MonkeyWelcomeDesigns.normalize(button.dataset.welcomeStyle);
+      studioState.welcome.style = style;
+      persistStudio();
+      window.MonkeyWelcomeDesigns.paint(style);
+      // Preview locally; choosing a design must not trigger a welcome on the live stream.
+      document.querySelectorAll("#welcomePreviewFrame, #welcomeGalleryFrame").forEach((frame) => {
+        if (!frame.getAttribute("src") || frame.getAttribute("src") === "about:blank") return;
+        const url = new URL(frame.src, location.href);
+        url.searchParams.set("demo", url.searchParams.get("demo") || "silver");
+        url.searchParams.set("style", style);
+        url.searchParams.set("v", "welcome91");
+        frame.src = url.href;
+        const scope = frame.closest(".og-widget, #panel-welcome");
+        if (scope) window.MonkeyWelcomeDesigns.paintTier(url.searchParams.get("demo"), scope);
+      });
+      const name = window.MonkeyWelcomeDesigns.styles.find((item) => item.id === style).name;
+      setActivity("welcomeStyleActivity", "เลือก " + name + " แล้ว · ใช้กับลิงก์ต้อนรับเดิมอัตโนมัติ");
+    });
     document.getElementById("alertVolume")?.addEventListener("input", (e) => {
       studioState.alerts.volume = Number(e.target.value) / 100;
       const lab = document.getElementById("alertVolumeLabel");
@@ -920,48 +923,11 @@
     });
 
     document.querySelectorAll("[data-welcome-test]").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const kind = btn.getAttribute("data-welcome-test") || "gold";
-        const samples = {
-          fan: { nick: "ผู้ชม Superfan", level: 20, superFan: true, fanLevel: 1 },
-          silver: { nick: "ผู้ชม LV 20", level: 20, superFan: false, fanLevel: 0 },
-          gold: { nick: "ผู้ชม LV 30", level: 30, superFan: false, fanLevel: 0 },
-          platinum: { nick: "ผู้ชม LV 40", level: 40, superFan: true, fanLevel: 6 },
-          diamond: { nick: "ผู้ชม LV 50", level: 50, superFan: true, fanLevel: 10 },
-        };
-        let sample = { ...(samples[kind] || samples.silver) };
-        try {
-          const snap = await fetch("/api/live-stats", { cache: "no-store" }).then((r) => r.json());
-          const live = snap.welcome || snap.lastUser;
-          if (live && (live.nick || live.user)) {
-            sample.nick = live.nick || live.user;
-            sample.user = live.user || live.nick;
-            sample.avatar = live.avatar || "";
-            if (Number(live.level) > 0) sample.level = Number(live.level);
-            sample.superFan = !!(live.superFan || sample.superFan);
-            if (Number(live.fanLevel) > 0) sample.fanLevel = Number(live.fanLevel);
-          }
-        } catch { /* demo still works offline */ }
-        studioState.welcomeCard = { ...sample, at: Date.now(), tier: kind === "fan" ? "fan" : kind };
-        persistStudio();
-        const holdSec = Math.max(8, Number(studioState.welcome.durationSec) || 8);
-        await patchLiveSettings({
-          welcomeEnabled: studioState.welcome.enabled !== false,
-          welcomeMinLevel: Number(studioState.welcome.minLevel) || 20,
-          welcomeDurationSec: holdSec,
-          welcomeNow: sample,
-          studioJson: JSON.stringify(overlayStudioPayload()),
-        });
-        const frame = document.getElementById("welcomePreviewFrame");
-        if (frame) {
-          frame.src = `/live-overlay.html?panel=welcome&v=gal18&demo=${encodeURIComponent(kind)}&t=${Date.now()}`;
-        }
-        const label = sample.superFan && sample.level > 20
-          ? `Superfan LV ${sample.level}`
-          : sample.superFan
-            ? "Superfan"
-            : `LV ${sample.level}`;
-        setActivity("welcomeActivity", `ทดสอบกรอบ ${label} · ${sample.nick}`);
+      btn.addEventListener("click", () => {
+        const kind = btn.getAttribute("data-welcome-test");
+        showWelcomeDemo(kind, "welcomePreviewFrame");
+        const tier = window.MonkeyWelcomeDesigns.tiers.find((item) => item.id === kind);
+        setActivity("welcomeActivity", "พรีวิวกรอบ" + tier.name + " · " + tier.range);
       });
     });
 
@@ -1037,26 +1003,7 @@
       setActivity("mcActivity", await sendMinecraftCommand(cmd));
     });
 
-    document.getElementById("dailyTtsAddBtn")?.addEventListener("click", () => {
-      const text = document.getElementById("dailyTtsText")?.value.trim();
-      if (!text) return;
-      studioState.dailyTts.snippets.push(text);
-      persistStudio();
-      renderDailySnippets();
-      document.getElementById("dailyTtsText").value = "";
-    });
-    document.getElementById("dailyTtsList")?.addEventListener("click", (e) => {
-      const i = e.target.dataset.dailyDel;
-      if (i == null) return;
-      studioState.dailyTts.snippets.splice(Number(i), 1);
-      persistStudio();
-      renderDailySnippets();
-    });
-    document.getElementById("dailyTtsTestBtn")?.addEventListener("click", () => maybeSpeakDailySnippet(true));
-
     setInterval(renderSubathonClock, 1000);
-    setTimeout(() => maybeSpeakDailySnippet(false), 2500);
-    setInterval(() => maybeSpeakDailySnippet(false), 60000);
     publishStudioOverlay();
     syncCommandOverlay();
   }

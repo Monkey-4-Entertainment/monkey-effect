@@ -1,8 +1,8 @@
 {
-  "version": "1.2.5",
-  "notes": "Monkeyeffect 1.2.5 - ซับแปลภาษา เพิ่มเสียงและสุ่มเสียง แก้เสียง AI อ่านแล้วหยุดกลางประโยค",
-  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.5-update.zip",
-  "sha256": "3235f959bc8ae8f839cb4db16b63bbdb94a0fcb9fe982f6dbf18089616803b88",
+  "version": "1.2.6",
+  "notes": "Monkeyeffect 1.2.6 - กรอบต้อนรับโปร่งใสแยกตาม LV, วงแหวนสุลต่าน Top 3 ลากจัดตำแหน่งได้, แก้ AI อ่านค้างและอ่านต่อเมื่อพับโปรแกรม, เพิ่มเสียงและเชื่อมต่อ Paxa เหนือ/อีสาน/ใต้ พร้อมแปลงถ้อยคำแบบทดลอง, ลบ Daily TTS Snippets",
+  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.6-update.zip",
+  "sha256": "5aa5b47d8c3369afdb94405ab82aeef747c208bddf8104897f6207f9481aad94",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

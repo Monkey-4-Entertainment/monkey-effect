@@ -1,0 +1,44 @@
+/* Shared by the settings swatches and the transparent overlay. */
+.welcome-silver, [data-welcome-tier="silver"], [data-welcome-demo="silver"], [data-welcome-test="silver"] {
+  --tier-primary: #e2e8f0;
+  --tier-secondary: #8fabc9;
+  --tier-highlight: #ffffff;
+  --tier-glow: rgba(190,212,238,.32);
+  --tier-ring-width: 2px;
+  --tier-mark: "✧";
+  --tier-art: url('/welcome/frames/silver.png');
+}
+.welcome-gold, [data-welcome-tier="gold"], [data-welcome-demo="gold"], [data-welcome-test="gold"] {
+  --tier-primary: #ffd777;
+  --tier-secondary: #df932d;
+  --tier-highlight: #fff5cb;
+  --tier-glow: rgba(255,189,65,.4);
+  --tier-ring-width: 3px;
+  --tier-mark: "♛";
+  --tier-art: url('/welcome/frames/gold.png');
+}
+.welcome-platinum, [data-welcome-tier="platinum"], [data-welcome-demo="platinum"], [data-welcome-test="platinum"] {
+  --tier-primary: #79f0f4;
+  --tier-secondary: #5294ef;
+  --tier-highlight: #e4ffff;
+  --tier-glow: rgba(76,219,255,.4);
+  --tier-ring-width: 4px;
+  --tier-mark: "✦";
+  --tier-art: url('/welcome/frames/platinum.png');
+}
+.welcome-diamond, [data-welcome-tier="diamond"], [data-welcome-demo="diamond"], [data-welcome-test="diamond"] {
+  --tier-primary: #d0a3ff;
+  --tier-secondary: #ff8bcf;
+  --tier-highlight: #b8f5ff;
+  --tier-glow: rgba(192,139,255,.48);
+  --tier-ring-width: 5px;
+  --tier-mark: "◇";
+  --tier-art: url('/welcome/frames/diamond.png');
+}
+.welcome-fan {
+  --tier-primary: #f0a9eb;
+  --tier-secondary: #a78bfa;
+  --tier-highlight: #ffe5f8;
+  --tier-glow: rgba(236,130,217,.35);
+  --tier-ring-width: 3px;
+}

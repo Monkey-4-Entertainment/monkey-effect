@@ -11,7 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css?v=v125-subtranslate" />
+    <link rel="stylesheet" href="/welcome-tier-palette.css?v=welcome91" />
+    <link rel="stylesheet" href="/style.css?v=v125-sultan96" />
   </head>
   <body>
     <div class="bg"></div>
@@ -1051,6 +1052,23 @@ Facebook Fanpage</textarea>
           </p>
 
           <div class="form-grid">
+              <div><label for="ttsProvider">ระบบเสียง</label><select id="ttsProvider" class="field select"><option value="builtin">เสียงในโปรแกรม · ไม่ใช้ API key</option><option value="paxa">Paxa Labs · เพิ่มเสียงและภาษาถิ่น</option></select></div>
+              <div><label for="ttsDialect">ภาษาและสำเนียง</label><select id="ttsDialect" class="field select"><option value="central">ไทยกลาง</option><option value="northern">เหนือ · กำเมือง</option><option value="isan">อีสาน</option><option value="southern">ใต้</option></select></div>
+            </div>
+            <p id="ttsProviderStatus" class="hint" role="status"></p>
+            <div id="ttsConversionRow" hidden>
+              <label class="toggle option-check"><input id="ttsConvertDialect" type="checkbox" checked /><span>แปลงถ้อยคำไทยกลางเป็นภาษาถิ่นก่อนอ่าน (ทดลอง)</span></label>
+              <p id="ttsConversionHint" class="hint">เปิดเพื่อเปลี่ยนคำและสำนวนด้วย AI ก่อนอ่าน · ปิดเพื่ออ่านคำเดิมด้วยสำเนียงท้องถิ่น<br />ลองดูข้อความและฟังตัวอย่างก่อนใช้กับไลฟ์ ความถูกต้องของคำถิ่นอาจต่างกันตามประโยค</p>
+            </div>
+            <details id="ttsPaxaSettings" hidden class="tts-provider-settings">
+              <summary>เชื่อมต่อ Paxa Labs / เปลี่ยน API key</summary>
+              <p id="ttsPaxaHint" class="hint">เสียงและการแปลงข้อความใช้เครดิต Paxa ตามบัญชีของคุณ คีย์เก็บแบบเข้ารหัสในเครื่องนี้<br /><a href="https://paxalabs.com/docs/authentication" target="_blank" rel="noopener noreferrer">วิธีสร้าง API key</a> · <a href="https://paxalabs.com/pricing" target="_blank" rel="noopener noreferrer">ดูราคาและโควตา</a></p>
+              <label for="ttsPaxaKey">Paxa API key</label>
+              <input id="ttsPaxaKey" class="field" type="password" placeholder="pxa_…" autocomplete="off" spellcheck="false" />
+              <div class="actions"><button id="ttsSaveKeyBtn" class="btn secondary" type="button">บันทึกและตรวจคีย์</button><button id="ttsRemoveKeyBtn" class="btn ghost" type="button">ลบคีย์จากเครื่อง</button></div>
+              <p id="ttsKeyStatus" class="hint" role="status"></p>
+            </details>
+            <div class="form-grid">
             <div>
               <label for="ttsVoice">เสียง</label>
               <select id="ttsVoice" class="field select"></select>
@@ -1064,38 +1082,18 @@ Facebook Fanpage</textarea>
           <p id="ttsVoiceHint" class="hint">สถานะเสียง AI: กำลังเชื่อมต่อ...</p>
           <p id="ttsActivity" class="hint tts-activity">รออีเวนต์จากไลฟ์...</p>
 
+          <label for="ttsTestText">ข้อความทดสอบ · พิมพ์ภาษาไทยกลางได้</label>
+          <textarea id="ttsTestText" class="field" rows="3" maxlength="800" style="display:block;box-sizing:border-box;width:100%;min-height:90px;margin:8px 0 14px;padding:12px 14px;resize:vertical;font:inherit;color:inherit;background:rgba(7,11,21,.5);border:1px solid rgba(255,255,255,.1);border-radius:12px">สวัสดีครับ วันนี้เป็นอย่างไรบ้าง ขอบคุณที่เข้ามาพูดคุยกัน</textarea>
+          <p id="ttsDialectPreview" class="tts-preview" role="status" hidden style="white-space:pre-wrap; padding:12px; border-left:3px solid #9b7cff; background:rgba(155,124,255,.08); border-radius:8px"></p>
+
           <div class="actions">
-            <button id="ttsTestBtn" class="btn secondary" type="button">ทดสอบอ่านไทย</button>
+            <button id="ttsPreviewBtn" class="btn ghost" type="button">ดูข้อความก่อนอ่าน</button>
+              <button id="ttsTestBtn" class="btn secondary" type="button">ทดลองฟัง</button>
             <button id="ttsStopBtn" class="btn ghost" type="button">หยุดพูด</button>
           </div>
         </section>
 
-        <section class="card">
-          <div class="card-head">
-            <h2>Daily TTS Snippets</h2>
-            <label class="toggle">
-              <input id="dailyTtsEnabled" type="checkbox" />
-              <span>เปิดใช้</span>
-            </label>
-          </div>
-          <p class="hint">สุ่มอ่านวลีวันละครั้ง หลังถึงชั่วโมงที่ตั้ง — ใช้ทักทายไลฟ์ประจำวัน</p>
-          <div class="form-grid">
-            <div>
-              <label for="dailyTtsHour">อ่านหลังชั่วโมง</label>
-              <input id="dailyTtsHour" class="field" type="number" min="0" max="23" value="9" />
-            </div>
-            <div>
-              <label for="dailyTtsText">วลีใหม่</label>
-              <input id="dailyTtsText" class="field" type="text" placeholder="สวัสดีตอนเช้า วันนี้พร้อมไลฟ์แล้ว" />
-            </div>
-          </div>
-          <div class="actions tight">
-            <button id="dailyTtsAddBtn" class="btn secondary" type="button">เพิ่มวลี</button>
-            <button id="dailyTtsTestBtn" class="btn ghost" type="button">ทดสอบอ่านสุ่ม</button>
-          </div>
-          <p id="dailyTtsActivity" class="hint">ยังไม่ได้อ่านวันนี้</p>
-          <div id="dailyTtsList" class="rules-list"></div>
-        </section>
+
       </div>
 
       <div id="panel-subtranslate" class="panel">
@@ -1565,12 +1563,11 @@ Facebook Fanpage</textarea>
               <input id="welcomeDurationSec" class="field" type="number" min="2" max="60" value="3" />
             </div>
           </div>
-          <div class="welcome-tier-picks">
-            <button type="button" class="welcome-tier-card" data-welcome-test="silver"><span>ตัวอย่างโล่เงิน</span><strong>LV 20–29</strong></button>
-            <button type="button" class="welcome-tier-card" data-welcome-test="gold"><span>ตัวอย่างโล่ทอง</span><strong>LV 30–39</strong></button>
-            <button type="button" class="welcome-tier-card" data-welcome-test="platinum"><span>ตัวอย่างโล่แพลตินัม</span><strong>LV 40–49</strong></button>
-            <button type="button" class="welcome-tier-card" data-welcome-test="diamond"><span>ตัวอย่างโล่เพชร</span><strong>LV 50+</strong></button>
-          </div>
+          <div class="welcome-design-heading"><strong>รูปแบบกรอบต้อนรับ</strong><span>พื้นหลังโปร่งใสทุกแบบ</span></div>
+          <div data-welcome-style-picker></div>
+          <p id="welcomeStyleActivity" class="hint" role="status" aria-live="polite">เลือกรูปแบบเพื่อดูตัวอย่าง · บันทึกอัตโนมัติและใช้กับลิงก์เดิม</p>
+          <div class="welcome-tier-heading">พรีวิวตามระดับ <span>สีและลายเปลี่ยนตามเลเวลจริงอัตโนมัติ</span></div>
+          <div id="welcomeTierPicker"></div>
           <p id="welcomeActivity" class="hint">รอผู้ชม LV 20 ขึ้นไปเข้าไลฟ์...</p>
         </section>
         <section class="card">
@@ -1615,9 +1612,10 @@ Facebook Fanpage</textarea>
         <section class="card">
           <div class="card-head">
             <h2>พรีวิวในแอพ</h2>
+            <span class="chip">ลายตารางแสดงพื้นที่โปร่งใส</span>
           </div>
           <div class="welcome-preview-wrap">
-            <iframe id="welcomePreviewFrame" class="welcome-preview-frame" title="พรีวิวกรอบต้อนรับ" src="about:blank" data-src="/live-overlay.html?panel=welcome&v=gal82&w=720&h=960&width=720&height=960"></iframe>
+            <iframe id="welcomePreviewFrame" class="welcome-preview-frame" title="พรีวิวกรอบต้อนรับ" src="about:blank" data-src="/live-overlay.html?panel=welcome&v=welcome91&w=720&h=960&width=720&height=960"></iframe>
           </div>
         </section>
       </div>
@@ -1685,8 +1683,10 @@ Facebook Fanpage</textarea>
     </main>
 
     <div id="giftPicker" class="gift-picker hidden" hidden></div>
-    <script src="/app.js?v=v125-subtranslate"></script>
-    <script src="/studio.js?v=studio18"></script>
+    <script src="/welcome-designs.js?v=welcome91"></script>
+    <script src="/sultan-layout.js?v=sultan96"></script>
+    <script src="/app.js?v=v126-tts99"></script>
+    <script src="/studio.js?v=v126-daily99"></script>
     <script src="/members.js?v=m13-login"></script>
     <script src="/farm-preset-editor.js?v=10"></script>
   </body>

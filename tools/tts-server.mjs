@@ -1,3 +1,4 @@
+import { prepareRegionalSpeech, synthesizePaxa } from './tts-regional.mjs';
 /**
  * Monkeyeffect built-in Thai TTS server
  * เสียงพูดอยู่ในโปรแกรม — ไม่ใช้เสียง Windows
@@ -10,9 +11,7 @@ import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
 import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 
-const execFileAsync = promisify(execFile);
 
 const require = createRequire(import.meta.url);
 const WebSocket = require("ws");
@@ -26,15 +25,360 @@ const SEC_MS_GEC_VERSION = `1-${CHROMIUM_FULL_VERSION}`;
 const BASE = "speech.platform.bing.com/consumer/speech/synthesize/readaloud";
 
 const BUILTIN_VOICES = [
-  { id: "th-TH-PremwadeeNeural", name: "Premwadee (หญิง)", gender: "Female", locale: "th-TH", engine: "edge" },
-  { id: "th-TH-NiwatNeural", name: "Niwat (ชาย)", gender: "Male", locale: "th-TH", engine: "edge" },
-  { id: "th-TH-AcharaNeural", name: "Achara (หญิง)", gender: "Female", locale: "th-TH", engine: "edge" },
-  { id: "en-US-AvaMultilingualNeural", name: "Ava (หญิง · หลายภาษา)", gender: "Female", locale: "en-US", engine: "edge" },
-  { id: "en-US-AndrewMultilingualNeural", name: "Andrew (ชาย · หลายภาษา)", gender: "Male", locale: "en-US", engine: "edge" },
-  { id: "en-US-EmmaMultilingualNeural", name: "Emma (หญิง · หลายภาษา)", gender: "Female", locale: "en-US", engine: "edge" },
-  { id: "en-US-BrianMultilingualNeural", name: "Brian (ชาย · หลายภาษา)", gender: "Male", locale: "en-US", engine: "edge" },
-  { id: "zh-CN-XiaoxiaoMultilingualNeural", name: "Xiaoxiao (หญิง · จีน)", gender: "Female", locale: "zh-CN", engine: "edge" },
-  { id: "th-google", name: "ไทย AI สำรอง", gender: "Female", locale: "th-TH", engine: "google" },
+  {
+    "id": "th-TH-NiwatNeural",
+    "name": "Niwat (ชาย · ไทย)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "th-TH-PremwadeeNeural",
+    "name": "Premwadee (หญิง · ไทย)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "en-US-AndrewMultilingualNeural",
+    "name": "Andrew (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "en-US",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "en-US-AvaMultilingualNeural",
+    "name": "Ava (หญิง · หลายภาษา)",
+    "gender": "Female",
+    "locale": "en-US",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "en-US-BrianMultilingualNeural",
+    "name": "Brian (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "en-US",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "en-US-EmmaMultilingualNeural",
+    "name": "Emma (หญิง · หลายภาษา)",
+    "gender": "Female",
+    "locale": "en-US",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "de-DE-FlorianMultilingualNeural",
+    "name": "Florian (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "de-DE",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "it-IT-GiuseppeMultilingualNeural",
+    "name": "Giuseppe (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "it-IT",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "ko-KR-HyunsuMultilingualNeural",
+    "name": "Hyunsu (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "ko-KR",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "fr-FR-RemyMultilingualNeural",
+    "name": "Remy (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "fr-FR",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "de-DE-SeraphinaMultilingualNeural",
+    "name": "Seraphina (หญิง · หลายภาษา)",
+    "gender": "Female",
+    "locale": "de-DE",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "pt-BR-ThalitaMultilingualNeural",
+    "name": "Thalita (หญิง · หลายภาษา)",
+    "gender": "Female",
+    "locale": "pt-BR",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "fr-FR-VivienneMultilingualNeural",
+    "name": "Vivienne (หญิง · หลายภาษา)",
+    "gender": "Female",
+    "locale": "fr-FR",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "en-AU-WilliamMultilingualNeural",
+    "name": "William (ชาย · หลายภาษา)",
+    "gender": "Male",
+    "locale": "en-AU",
+    "engine": "edge",
+    "dialect": "central"
+  },
+  {
+    "id": "th-google",
+    "name": "ไทย AI สำรอง",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "google",
+    "dialect": "central"
+  },
+  {
+    "id": "paxa:khanomkrok",
+    "name": "Khanom Krok (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:nomyen",
+    "name": "Nom Yen (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:tako",
+    "name": "Tako (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:foithong",
+    "name": "Foi Thong (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:massaman",
+    "name": "Massaman (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:thongek",
+    "name": "Thong Ek (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:panang",
+    "name": "Panang (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:oliang",
+    "name": "Oliang (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:sanaechan",
+    "name": "Sanae Chan (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:tubtimkrob",
+    "name": "Tub Tim Krob (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:mooping",
+    "name": "Moo Ping (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:bualoi",
+    "name": "Bua Loi (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:lukchup",
+    "name": "Luk Chup (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:lodchong",
+    "name": "Lod Chong (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:woon",
+    "name": "Woon (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:sangkaya",
+    "name": "Sangkaya (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:padthai",
+    "name": "Pad Thai (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:khaoniao",
+    "name": "Khao Niao (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:tomyum",
+    "name": "Tom Yum (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:khanomchan",
+    "name": "Khanom Chan (หญิง · ไทยกลาง)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:kaprao",
+    "name": "Kaprao (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:yoyo",
+    "name": "Yoyo (ชาย · ไทยกลาง)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "central",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:somtam",
+    "name": "Som Tam (หญิง · อีสาน)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "isan",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:larb",
+    "name": "Larb (ชาย · อีสาน)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "isan",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:khaosoi",
+    "name": "Khao Soi (หญิง · เหนือ)",
+    "gender": "Female",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "northern",
+    "model": "paxa-tts-flash-v1"
+  },
+  {
+    "id": "paxa:roti",
+    "name": "Roti (ชาย · ใต้)",
+    "gender": "Male",
+    "locale": "th-TH",
+    "engine": "paxa",
+    "dialect": "southern",
+    "model": "paxa-tts-flash-v1"
+  }
 ];
 
 const TRANSLATE_LANGS = new Set([
@@ -45,6 +389,7 @@ const TRANSLATE_LANGS = new Set([
 function resolveVoice(voiceId) {
   const known = BUILTIN_VOICES.find((v) => v.id === voiceId);
   if (known) return known;
+  if (String(voiceId || "").startsWith("paxa:")) throw new Error("ไม่พบเสียง Paxa ที่เลือก");
   if (/^[a-z]{2,3}-[A-Za-z]{2,4}-[A-Za-z0-9]+Neural$/.test(String(voiceId || ""))) {
     return { id: voiceId, engine: "edge" };
   }
@@ -87,6 +432,7 @@ async function translateOne(text, target, source) {
     "&dt=t&dj=1&ie=UTF-8&oe=UTF-8&q=" +
     encodeURIComponent(text);
   const res = await fetch(url, {
+    signal: AbortSignal.timeout(12000),
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
@@ -164,8 +510,9 @@ function buildSsml(text, voice, rate, lang) {
   );
 }
 
-function synthesizeEdge(text, voice, rate, lang = "th-TH", timeoutMs = 20000) {
+function synthesizeEdge(text, voice, rate, lang = "th-TH", timeoutMs = 20000, signal) {
   return new Promise((resolve, reject) => {
+    signal?.throwIfAborted();
     const connectionId = uuidNoDash();
     const secMsGec = generateSecMsGec();
     const url =
@@ -181,6 +528,7 @@ function synthesizeEdge(text, voice, rate, lang = "th-TH", timeoutMs = 20000) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
       try {
         ws.terminate();
       } catch {
@@ -201,6 +549,10 @@ function synthesizeEdge(text, voice, rate, lang = "th-TH", timeoutMs = 20000) {
         "Cache-Control": "no-cache",
       },
     });
+
+    const onAbort = () => finish(signal.reason || new Error("Speech cancelled"));
+    signal?.addEventListener("abort", onAbort, { once: true });
+    if (signal?.aborted) { onAbort(); return; }
 
     let endArmed = false;
     const armEnd = (waitMs) => {
@@ -266,7 +618,9 @@ function synthesizeEdge(text, voice, rate, lang = "th-TH", timeoutMs = 20000) {
   });
 }
 
-async function synthesizeGoogle(text) {
+async function synthesizeGoogle(text, signal) {
+  const bounded = signal ? AbortSignal.any([signal, AbortSignal.timeout(12000)]) : AbortSignal.timeout(12000);
+  bounded.throwIfAborted();
   const chunkSize = 180;
   const slices = [];
   for (let i = 0; i < text.length; i += chunkSize) {
@@ -278,6 +632,7 @@ async function synthesizeGoogle(text) {
         "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=th&q=" +
         encodeURIComponent(slice);
       const res = await fetch(url, {
+        signal: bounded,
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
           Referer: "https://translate.google.com/",
@@ -287,26 +642,32 @@ async function synthesizeGoogle(text) {
       return Buffer.from(await res.arrayBuffer());
     })
   );
-  if (!parts.length) throw new Error("Google TTS empty");
+  if (!parts.length || parts.some((part) => part.length < 64)) throw new Error("Google TTS empty");
   return Buffer.concat(parts);
 }
 
-async function synthesize(text, voiceId, rate, lang = "th-TH") {
+async function synthesize(text, voiceId, rate, lang = "th-TH", signal, apiKey) {
+  signal?.throwIfAborted();
   const voice = resolveVoice(voiceId);
+  if (voice.engine === "paxa" && !apiKey) throw new Error("ยังไม่ได้เชื่อมต่อ Paxa — ใส่ API key ในโปรแกรม");
   const cacheKey = `${voice.id}|${rate}|${lang}|${text}`;
   const cached = synthCache.get(cacheKey);
   if (cached) return cached;
   let audio;
-  if (voice.engine === "google") {
-    audio = await synthesizeGoogle(text);
+  if (voice.engine === "paxa") {
+    audio = await synthesizePaxa(text, voice, rate, apiKey, signal);
+  } else if (voice.engine === "google") {
+    audio = await synthesizeGoogle(text, signal);
   } else {
     try {
-      audio = await synthesizeEdge(text, voice.id, rate, lang);
+      audio = await synthesizeEdge(text, voice.id, rate, lang, 20000, signal);
     } catch (err) {
+      signal?.throwIfAborted();
       console.warn("[TTS] Edge failed → Google:", err.message || err);
-      audio = await synthesizeGoogle(text);
+      audio = await synthesizeGoogle(text, signal);
     }
   }
+  signal?.throwIfAborted();
   if (synthCache.size >= SYNTH_CACHE_MAX) {
     const first = synthCache.keys().next().value;
     if (first) synthCache.delete(first);
@@ -318,7 +679,8 @@ async function synthesize(text, voiceId, rate, lang = "th-TH") {
 /** Play mp3 outside WebView so minimized UI still speaks. */
 let playChain = Promise.resolve();
 
-function playMp3File(filePath) {
+function playMp3File(filePath, signal) {
+  signal?.throwIfAborted();
   const ps1 = `${filePath}.ps1`;
   const pathLit = String(filePath).replace(/'/g, "''");
   const script = [
@@ -343,25 +705,29 @@ function playMp3File(filePath) {
     "if ($play -ne 0) { throw \"mci play $play\" }",
   ].join("\r\n");
   fs.writeFileSync(ps1, script, "utf8");
-  return execFileAsync(
-    "powershell.exe",
-    ["-NoProfile", "-WindowStyle", "Hidden", "-ExecutionPolicy", "Bypass", "-File", ps1],
-    { windowsHide: true, timeout: 100000, maxBuffer: 2 * 1024 * 1024 }
-  ).finally(() => {
-    try {
-      fs.unlinkSync(ps1);
-    } catch {
-      /* ignore */
-    }
-  });
+  // Wait for the child to actually close after Stop before releasing the queue.
+  return new Promise((resolve, reject) => {
+    let failure = null;
+    const child = execFile("powershell.exe",
+      ["-NoProfile", "-WindowStyle", "Hidden", "-ExecutionPolicy", "Bypass", "-File", ps1],
+      { windowsHide: true, timeout: 100000, maxBuffer: 2 * 1024 * 1024, signal },
+      (err) => { failure = err; });
+    child.on("error", (err) => { failure = err; });
+    child.once("close", () => {
+      if (signal?.aborted) reject(signal.reason || new Error("Speech cancelled"));
+      else if (failure) reject(failure);
+      else resolve();
+    });
+  }).finally(() => { try { fs.unlinkSync(ps1); } catch {} });
 }
 
-function enqueuePlayMp3(buffer) {
+function enqueuePlayMp3(buffer, signal) {
   const job = playChain.then(async () => {
+    signal?.throwIfAborted();
     const file = path.join(os.tmpdir(), `monkey-tts-${Date.now()}-${Math.random().toString(16).slice(2)}.mp3`);
     fs.writeFileSync(file, buffer);
     try {
-      await playMp3File(file);
+      await playMp3File(file, signal);
     } finally {
       try {
         fs.unlinkSync(file);
@@ -374,7 +740,17 @@ function enqueuePlayMp3(buffer) {
   return job;
 }
 
+const speechJobs = new Map();
+const cancelledJobs = new Map();
+function rememberCancellation(id) {
+  const now = Date.now();
+  for (const [key, at] of cancelledJobs) if (now - at > 300000) cancelledJobs.delete(key);
+  cancelledJobs.set(id, now);
+  while (cancelledJobs.size > 128) cancelledJobs.delete(cancelledJobs.keys().next().value);
+}
+
 function sendJson(res, status, obj) {
+  if (res.destroyed || res.writableEnded) return;
   const body = JSON.stringify(obj);
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
@@ -429,7 +805,7 @@ const server = http.createServer(async (req, res) => {
       const voice = resolveVoice(body.voice).id;
       const rate = Number(body.rate) || 1;
       const lang = /^[a-z]{2,3}-[A-Za-z]{2}$/.test(String(body.lang || "")) ? String(body.lang) : "th-TH";
-      const audio = await synthesize(text.slice(0, 800), voice, rate, lang);
+      const audio = await synthesize(text.slice(0, 800), voice, rate, lang, AbortSignal.timeout(35000), req.headers["x-monkeyeffect-paxa-key"]);
       res.writeHead(200, {
         "Content-Type": "audio/mpeg",
         "Content-Length": audio.length,
@@ -444,25 +820,80 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Synthesize + play on the TTS process (works even if main window is minimized).
-  if (req.method === "POST" && url.pathname === "/speak-play") {
+  if (req.method === "POST" && url.pathname === "/preview") {
+    const controller = new AbortController();
+    const closed = () => { if (!res.writableEnded) controller.abort(new Error("Preview cancelled")); };
+    res.once("close", closed);
     try {
-      const raw = await readBody(req);
-      const body = raw ? JSON.parse(raw) : {};
-      const text = String(body.text || "").trim();
-      if (!text) {
-        sendJson(res, 400, { error: "ไม่มีข้อความ" });
-        return;
+      const body = JSON.parse(await readBody(req) || "{}");
+      if (!String(body.text || "").trim()) { sendJson(res, 400, { error: "กรุณาใส่ข้อความทดสอบ" }); return; }
+      const prepared = await prepareRegionalSpeech(body, controller.signal, req.headers["x-monkeyeffect-paxa-key"], resolveVoice(body.voice));
+      sendJson(res, 200, { ok: true, ...prepared });
+    } catch (err) { sendJson(res, 400, { error: err.message || String(err) }); }
+    finally { res.removeListener("close", closed); }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/cancel") {
+    try {
+      const body = JSON.parse(await readBody(req) || "{}");
+      const id = String(body.requestId || "").slice(0, 100);
+      if (!id) { sendJson(res, 400, { error: "Missing requestId" }); return; }
+      // A cancel may arrive before its synthesis POST. Remember it so late
+      // responses cannot start an old voice after the user has pressed Stop.
+      rememberCancellation(id);
+      const job = speechJobs.get(id);
+      if (job) {
+        job.controller.abort(new Error("Speech cancelled"));
+        await job.done;
       }
+      sendJson(res, 200, { ok: true, cancelled: true });
+    } catch (err) { sendJson(res, 500, { error: err.message || String(err) }); }
+    return;
+  }
+
+  // Native playback continues through minimize/restore, including mid-sentence.
+  if (req.method === "POST" && url.pathname === "/speak-play") {
+    let job = null;
+    let onClose = null;
+    let deadline = null;
+    let id = "";
+    const started = Date.now();
+    try {
+      const body = JSON.parse(await readBody(req) || "{}");
+      const text = String(body.text || "").trim().slice(0, 800);
+      if (!text) { sendJson(res, 400, { error: "ไม่มีข้อความ" }); return; }
+      id = String(body.requestId || crypto.randomUUID()).slice(0, 100);
+      if (cancelledJobs.has(id)) { sendJson(res, 409, { error: "Speech cancelled" }); return; }
+      if (speechJobs.has(id)) { sendJson(res, 409, { error: "Speech already in progress" }); return; }
+      if (speechJobs.size >= 32) { sendJson(res, 429, { error: "คิวเสียงเต็ม" }); return; }
+      let complete;
+      job = { controller: new AbortController(), done: new Promise((resolve) => { complete = resolve; }), complete: () => complete() };
+      speechJobs.set(id, job);
+      const signal = job.controller.signal;
+      deadline = setTimeout(() => job.controller.abort(new Error("Speech job timeout")), 160000);
+      onClose = () => { if (!res.writableEnded) job.controller.abort(new Error("Speech client disconnected")); };
+      res.once("close", onClose);
+      if (res.destroyed) onClose();
       const voice = resolveVoice(body.voice).id;
       const rate = Number(body.rate) || 1;
       const lang = /^[a-z]{2,3}-[A-Za-z]{2}$/.test(String(body.lang || "")) ? String(body.lang) : "th-TH";
-      const audio = await synthesize(text.slice(0, 800), voice, rate, lang);
-      await enqueuePlayMp3(audio);
-      sendJson(res, 200, { ok: true, played: true, bytes: audio.length });
+      const key = req.headers["x-monkeyeffect-paxa-key"];
+      const prepared = await prepareRegionalSpeech(body, signal, key, resolveVoice(voice));
+      const audio = await synthesize(prepared.text, voice, rate, lang, signal, key);
+      signal.throwIfAborted();
+      console.log("[TTS] playing", id, "bytes=" + audio.length);
+      await enqueuePlayMp3(audio, signal);
+      signal.throwIfAborted();
+      console.log("[TTS] completed", id, "ms=" + (Date.now() - started));
+      sendJson(res, 200, { ok: true, played: true, bytes: audio.length, requestId: id, spokenText: prepared.text, dialect: prepared.dialect, converted: prepared.converted });
     } catch (err) {
-      console.error("[TTS] speak-play error:", err);
-      sendJson(res, 500, { error: err.message || String(err) });
+      console.warn("[TTS] job ended", id, err.message || String(err));
+      sendJson(res, job?.controller.signal.aborted ? 409 : 500, { error: err.message || String(err) });
+    } finally {
+      clearTimeout(deadline);
+      if (onClose) res.removeListener("close", onClose);
+      if (job) { speechJobs.delete(id); job.complete(); }
     }
     return;
   }
