@@ -1,10 +1,13 @@
-Monkeyeffect online update pack v1.2.6
+Monkeyeffect online update pack v1.2.7
 
 Feed: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json
-Zip: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.6-update.zip
-SHA256: 5aa5b47d8c3369afdb94405ab82aeef747c208bddf8104897f6207f9481aad94
+Zip: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.7-update.zip
+SHA256: a00c045698665c650741b212e3687fcb3251fabaf71f69c5f0c616a04fb60428
 
 Changes:
+- Fix Paxa API key validation: call the documented GET /v1/me instead of the nonexistent /v1/account.
+- Distinguish invalid/disabled keys from rate limits and service failures; preserve prior keys on failed validation.
+- Ten isolated validation tests pass, including valid accounts with zero credit and malformed success responses.
 - Removed Daily TTS Snippets and its timed speech scheduler.
 - Transparent welcome frames with four visual styles and distinct LV 20/30/40/50 tiers.
 - Sultan Top 3 animated rings with portraits, names and saved drag positions.
