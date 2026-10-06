@@ -1,8 +1,8 @@
 {
-  "version": "1.2.7",
-  "notes": "Monkeyeffect 1.2.7 - แก้ตรวจ API key Paxa ไม่ผ่านโดยใช้ /v1/me, แยกข้อผิดพลาดคีย์/เครือข่าย/บริการ และเก็บคีย์เดิมเมื่อการตรวจไม่สำเร็จ รวมการปรับปรุงทั้งหมดจาก 1.2.6",
-  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.7-update.zip",
-  "sha256": "a00c045698665c650741b212e3687fcb3251fabaf71f69c5f0c616a04fb60428",
+  "version": "1.2.8",
+  "notes": "Monkeyeffect 1.2.8 - แก้ Paxa HTTP 400 ในการแปลงภาษาถิ่นเมื่อไม่มีชื่อที่ต้องคงเดิม พร้อมแสดงสาเหตุข้อผิดพลาดแยกการแปลงภาษาและสร้างเสียง รวมการปรับปรุงทั้งหมดจาก 1.2.7",
+  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.8-update.zip",
+  "sha256": "135b76a9200a1f4ffea86a179ce671f70050e6fad360f8f933d969d0ecbc5346",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

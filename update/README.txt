@@ -1,10 +1,13 @@
-Monkeyeffect online update pack v1.2.7
+Monkeyeffect online update pack v1.2.8
 
 Feed: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json
-Zip: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.7-update.zip
-SHA256: a00c045698665c650741b212e3687fcb3251fabaf71f69c5f0c616a04fb60428
+Zip: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.8-update.zip
+SHA256: 135b76a9200a1f4ffea86a179ce671f70050e6fad360f8f933d969d0ecbc5346
 
 Changes:
+- Fix dialect conversion HTTP 400 by omitting do_not_translate when no protected names are present.
+- Show safe provider error codes and distinguish translation failures from speech synthesis failures.
+- Regression tests pass; live Northern Thai conversion and native audio playback verified through the installed application.
 - Fix Paxa API key validation: call the documented GET /v1/me instead of the nonexistent /v1/account.
 - Distinguish invalid/disabled keys from rate limits and service failures; preserve prior keys on failed validation.
 - Ten isolated validation tests pass, including valid accounts with zero credit and malformed success responses.
