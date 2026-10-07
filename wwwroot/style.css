@@ -2997,6 +2997,10 @@ p.hint:not([id]),
 
 .og-sultan-controls { flex: none; padding: 9px 14px; border-bottom: 1px solid var(--border); background: #111c2b; }
 .og-sultan-controls[hidden] { display: none; }
+.og-sultan-controls .og-sultan-sizes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 8px 0 12px; }
+.og-sultan-sizes label { display: block; min-width: 0; color: #e5edf8; font-size: 12px; }
+.og-sultan-sizes output { float: right; color: #f9d47f; font-variant-numeric: tabular-nums; }
+.og-sultan-sizes input[type="range"] { display: block; width: 100%; margin: 8px 0 0; padding: 0; accent-color: #e6bf70; cursor: pointer; }
 .og-sultan-controls p { margin: 0 0 7px; font-size: 12px; color: #c3cfdf; }
 .og-sultan-controls > div { display: flex; gap: 8px; flex-wrap: wrap; }
 .og-sultan-controls [role="status"] { display: block; margin-top: 5px; color: #d2bb85; font-size: 11px; }

@@ -1,28 +1,24 @@
-Monkeyeffect online update pack v1.2.8
+Monkeyeffect online update pack v1.2.9
 
 Feed: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json
-Zip: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.8-update.zip
-SHA256: 135b76a9200a1f4ffea86a179ce671f70050e6fad360f8f933d969d0ecbc5346
+Zip: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.9-update.zip
+SHA256: 854857577c11e0aab8da44dfb725a94c172d855b7b73145549d1a0c7b431face
 
 Changes:
-- Fix dialect conversion HTTP 400 by omitting do_not_translate when no protected names are present.
-- Show safe provider error codes and distinguish translation failures from speech synthesis failures.
-- Regression tests pass; live Northern Thai conversion and native audio playback verified through the installed application.
-- Fix Paxa API key validation: call the documented GET /v1/me instead of the nonexistent /v1/account.
-- Distinguish invalid/disabled keys from rate limits and service failures; preserve prior keys on failed validation.
-- Ten isolated validation tests pass, including valid accounts with zero credit and malformed success responses.
-- Removed Daily TTS Snippets and its timed speech scheduler.
-- Transparent welcome frames with four visual styles and distinct LV 20/30/40/50 tiers.
-- Sultan Top 3 animated rings with portraits, names and saved drag positions.
-- Native speech continues while minimized; bounded requests, cancellation, queue recovery and process health checks.
-- 15 built-in voice choices and 26 optional Paxa voices, including Northern, Isan and Southern.
-- Paxa key is encrypted per Windows user; dialect wording conversion is experimental and can be previewed.
+- Resize Sultan ranks 1, 2 and 3 independently (50-150%) with saved positions and separate live/all layouts.
+- Restore the video compositor canvas so the overlay initializes and plays instead of remaining green.
+- Identify each playback command and deduplicate BroadcastChannel, storage and HTTP deliveries, including retries.
+- Match completion to the current playback command; ignore stale status and tolerate clips shorter than a polling interval.
+- Correct overlapping gift credits, retain counts above 500, and let long active clips finish without the former 120-second cutoff.
+- Cancel pending file/audio work when stopped; queue previews and retain pending jobs when the overlay is unavailable.
+- Includes the existing 1.2.8 Paxa and built-in TTS fixes.
 
 Validation:
-- Frontend queue/deadline/stop and native host recovery tests passed.
-- All 14 Edge voices synthesized Thai successfully; Google remains a backup choice.
-- Regional provider contracts, filtering, missing-key and cancellation tests passed.
-- Real Paxa synthesis and dialect wording quality need validation with an account API key.
-- Minimized playback and native Stop verified in the installed app.
+- Regression suite reproduced the original triple start, 501-to-500 truncation, and 2-to-3 overlapping-gift overcount.
+- 30 requested plays produced 30 completions with all three transports and with HTTP alone.
+- Five accelerated real-video runs produced five loads, starts and completions with no JavaScript errors.
+- Cancellation, stale status, missing-file continuation, long playback, retry identity and delayed commands passed.
+- Updated app verified through its native Test button; Setup installation and all 2,559 payload hashes verified.
 
-This update merges application files into an existing installation. It contains no user settings, logs or API keys.
+This update merges application files into an existing installation and includes no user settings, logs or API keys.
+Tests cover the local video pipeline; upstream TikTok/network delivery is not guaranteed by these tests.

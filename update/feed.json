@@ -1,8 +1,8 @@
 {
-  "version": "1.2.8",
-  "notes": "Monkeyeffect 1.2.8 - แก้ Paxa HTTP 400 ในการแปลงภาษาถิ่นเมื่อไม่มีชื่อที่ต้องคงเดิม พร้อมแสดงสาเหตุข้อผิดพลาดแยกการแปลงภาษาและสร้างเสียง รวมการปรับปรุงทั้งหมดจาก 1.2.7",
-  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.8-update.zip",
-  "sha256": "135b76a9200a1f4ffea86a179ce671f70050e6fad360f8f933d969d0ecbc5346",
+  "version": "1.2.9",
+  "notes": "Monkeyeffect 1.2.9 - ปรับขนาดสุลต่านแยกอันดับ 1–3 ได้ 50–150% พร้อมบันทึกตำแหน่ง แก้วิดีโอค้างพื้นเขียว ป้องกันคำสั่งเล่นซ้ำ สถานะเก่าข้ามคิว และการนับของขวัญซ้อนกันเกินจำนวน เก็บคิวเกิน 500 รายการ และแก้หยุดแล้วกลับมาเล่นเอง รวมระบบเสียงและการแก้ไขจาก 1.2.8",
+  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.9-update.zip",
+  "sha256": "854857577c11e0aab8da44dfb725a94c172d855b7b73145549d1a0c7b431face",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

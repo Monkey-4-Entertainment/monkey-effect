@@ -2009,6 +2009,12 @@ let videoQueue = [];
 let videoPlaying = false;
 let videoDrainPromise = null;
 let videoCompanionAudio = null;
+let videoAudioGeneration = 0;
+let videoQueueGeneration = 0;
+let videoCancelWait = null;
+let videoCommandSequence = 0;
+let videoOverlayOpenedAt = 0;
+const videoCommandSession = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
 /** comboKey → { n, at } units already queued from early UI, so game finalize only adds the rest. */
 const videoComboCredit = new Map();
 const VIDEO_COMBO_CREDIT_TTL_MS = 120000;
@@ -2016,6 +2022,7 @@ const VIDEO_QUEUE_SOFT = 500;
 const videoChannel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(VIDEO_CHANNEL) : null;
 
 function stopVideoCompanionAudio() {
+  videoAudioGeneration++;
   if (!videoCompanionAudio) return;
   try {
     videoCompanionAudio.pause();
@@ -2030,6 +2037,7 @@ function stopVideoCompanionAudio() {
 
 async function playVideoCompanionAudio(id, volume) {
   stopVideoCompanionAudio();
+  const generation = videoAudioGeneration;
   unlockAudio();
   let blob = null;
   try {
@@ -2046,7 +2054,7 @@ async function playVideoCompanionAudio(id, volume) {
       /* ignore */
     }
   }
-  if (!blob) return;
+  if (!blob || generation !== videoAudioGeneration) return;
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
   audio._blobUrl = url;
@@ -2106,7 +2114,7 @@ function setVideoStatus(msg) {
 }
 
 function postOverlayCommand(cmd) {
-  const payload = { ...cmd, at: Date.now() };
+  const payload = { ...cmd, commandId: cmd.commandId || `${videoCommandSession}:${++videoCommandSequence}`, at: cmd.at || Date.now() };
   try {
     localStorage.setItem("tgr_video_overlay_cmd", JSON.stringify(payload));
   } catch {
@@ -2119,6 +2127,7 @@ function postOverlayCommand(cmd) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   }).catch(() => {});
+  return payload;
 }
 
 const videoOnDiskOk = new Set();
@@ -2171,7 +2180,7 @@ async function waitOverlayReady(timeoutMs = 8000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
-      const res = await fetch(`/api/video-overlay/status?t=${Date.now()}`);
+      const res = await fetch(`/api/video-overlay/status?t=${Date.now()}`, { signal: AbortSignal.timeout(5000) });
       if (res.ok) {
         const data = await res.json();
         if (data.open) {
@@ -2181,7 +2190,7 @@ async function waitOverlayReady(timeoutMs = 8000) {
           } catch {
             st = null;
           }
-          if (!st || st.state === "ready" || st.state === "idle" || st.state === "playing" || st.state === "error") {
+          if (st && Number(st.at || 0) >= videoOverlayOpenedAt && Date.now() - Number(st.at || 0) < 5000 && ["ready", "idle", "playing", "error"].includes(st.state)) {
             return true;
           }
         }
@@ -2195,6 +2204,7 @@ async function waitOverlayReady(timeoutMs = 8000) {
 }
 
 async function openVideoOverlay() {
+  videoOverlayOpenedAt = Date.now();
   const follow = !!document.getElementById("videoFollowGame")?.checked;
   const fullscreen = !!document.getElementById("videoFullscreen")?.checked;
   const clickThrough = !!document.getElementById("videoClickThrough")?.checked;
@@ -2239,6 +2249,8 @@ async function openVideoOverlay() {
 }
 
 async function closeVideoOverlay() {
+  videoQueueGeneration++;
+  videoCancelWait?.();
   postOverlayCommand({ type: "stop" });
   stopVideoCompanionAudio();
   try {
@@ -2260,6 +2272,8 @@ async function closeVideoOverlay() {
 }
 
 function stopVideoEffect() {
+  videoQueueGeneration++;
+  videoCancelWait?.();
   videoQueue = [];
   videoPlaying = false;
   stopVideoCompanionAudio();
@@ -2318,16 +2332,8 @@ function renderVideoPending() {
     btn.addEventListener("click", () => {
       const clip = videoPendingClips[Number(btn.dataset.videoPreview)];
       if (!clip) return;
-      openVideoOverlay()
-        .then(async () => {
-          await waitOverlayReady(8000);
-          await ensureVideoOnDisk(clip.id);
-          const vol = videoConfig.volume ?? 1;
-          playVideoCompanionAudio(clip.id, vol).catch(() => {});
-          postOverlayCommand({ type: "play", id: clip.id, volume: 0, muted: true });
-          setVideoStatus(`ตัวอย่าง: ${clip.name}`);
-        })
-        .catch((e) => alert(e.message || e));
+      videoQueue.push(clip);
+      kickVideoDrain().catch((e) => alert(e.message || e));
     });
   });
 }
@@ -2515,7 +2521,7 @@ function pruneVideoComboCredit() {
 function pickVideoClips(rule, times) {
   const videos = rule?.videos || [];
   if (!videos.length) return [];
-  const n = Math.max(1, Math.min(VIDEO_QUEUE_SOFT, Number(times) || 1));
+  const n = Math.max(1, Math.floor(Number(times) || 1));
   const clips = [];
   for (let i = 0; i < n; i++) {
     if (rule.playMode === "all") {
@@ -2532,44 +2538,77 @@ function pickVideoClips(rule, times) {
 }
 
 async function drainVideoQueueLoop() {
+  const generation = videoQueueGeneration;
+  let failures = 0;
   videoPlaying = true;
   setVideoStatus("กำลังเปิดหน้าต่างวิดีโอ...");
   await openVideoOverlay();
-  await waitOverlayReady(10000);
-  while (videoQueue.length) {
-    const clip = videoQueue.shift();
+  if (!await waitOverlayReady(10000)) {
+    videoPlaying = false;
+    throw new Error("หน้าต่างวิดีโอยังไม่พร้อม — คิวถูกเก็บไว้ กดทดสอบเพื่อเริ่มใหม่");
+  }
+  while (videoQueue.length && generation === videoQueueGeneration) {
+    const clip = videoQueue[0];
     try {
       const ok = await ensureVideoOnDisk(clip.id);
       if (!ok) {
+        if (generation !== videoQueueGeneration) break;
+        videoQueue.shift();
+        failures++;
         setVideoStatus(`ไม่พบไฟล์: ${clip.name} — เพิ่มไฟล์ใหม่`);
         continue;
       }
     } catch (e) {
-      console.warn(e);
+      if (generation !== videoQueueGeneration) break;
+      videoQueue.shift();
+      failures++;
+      devLog("video", "file-failed", { id: clip.id, error: String(e) }, "error");
+      continue;
     }
+    if (generation !== videoQueueGeneration) break;
+    videoQueue.shift();
     const left = videoQueue.length;
     setVideoStatus(
       left ? `กำลังแสดง: ${clip.name} · คิวอีก ${left}` : `กำลังแสดง: ${clip.name}`
     );
     const vol = videoConfig.volume ?? 1;
     // ภาพที่หน้าต่างเขียว (เงียบ) + เสียงจากโปรแกรมหลัก (ได้ยิน/จับเสียงไลฟ์ได้)
-    playVideoCompanionAudio(clip.id, vol).catch(() => {});
-    postOverlayCommand({ type: "play", id: clip.id, volume: 0, muted: true });
-    await waitOverlayIdle(120000);
+    const command = { type: "play", id: clip.id, volume: 0, muted: true,
+      commandId: `${videoCommandSession}:${++videoCommandSequence}`, at: Date.now() };
+    // Subscribe before sending; an error or a very short clip may finish immediately.
+    const finished = waitOverlayIdle(command, () => {
+      if (generation === videoQueueGeneration) playVideoCompanionAudio(clip.id, vol).catch(() => {});
+    });
+    postOverlayCommand(command);
+    const result = await finished;
     stopVideoCompanionAudio();
+    if (generation !== videoQueueGeneration) break;
+    if (result.state === "timeout" || result.state === "closed") {
+      postOverlayCommand({ type: "stop", targetCommandId: command.commandId });
+      // Delivery outcome is uncertain: keep remaining jobs, do not silently skip them.
+      throw new Error("วิดีโอขาดการตอบกลับ — หยุดคิวไว้ กรุณาตรวจหน้าต่างแล้วกดทดสอบใหม่");
+    }
+    if (result.state === "error") failures++;
+    devLog("video", "clip-finished", { commandId: command.commandId, id: clip.id, state: result.state });
   }
   videoPlaying = false;
-  setVideoStatus("พร้อม — รอของขวัญ");
+  if (generation === videoQueueGeneration) setVideoStatus(failures ? `เล่นจบคิว · มี ${failures} คลิปเล่นไม่สำเร็จ ตรวจ Dev Log` : "พร้อม — รอของขวัญ");
 }
 
 function kickVideoDrain() {
   if (videoDrainPromise) return videoDrainPromise;
   videoDrainPromise = (async () => {
+    let failed = false;
     try {
       await drainVideoQueueLoop();
+    } catch (error) {
+      failed = true;
+      setVideoStatus(error.message || String(error));
+      devLog("video", "queue-paused", { error: String(error), pending: videoQueue.length }, "error");
     } finally {
+      videoPlaying = false;
       videoDrainPromise = null;
-      if (videoQueue.length) kickVideoDrain();
+      if (!failed && videoQueue.length) kickVideoDrain();
     }
   })();
   return videoDrainPromise;
@@ -2579,21 +2618,35 @@ async function drainVideoQueue() {
   return kickVideoDrain();
 }
 
-function waitOverlayIdle(timeoutMs) {
+function waitOverlayIdle(command, onPlaying) {
   return new Promise((resolve) => {
     let done = false;
-    let sawPlaying = false;
-    const finish = () => {
+    let acknowledged = false;
+    let audioStarted = false;
+    let lastReply = Date.now();
+    let lastRetry = Date.now();
+    const started = Date.now();
+    let polling = false;
+    const finish = (status) => {
       if (done) return;
       done = true;
       videoChannel?.removeEventListener("message", onMsg);
       clearInterval(poll);
-      clearTimeout(timer);
-      resolve();
+      if (videoCancelWait === cancel) videoCancelWait = null;
+      resolve(status);
+    };
+    const cancel = () => finish({ state: "cancelled" });
+    videoCancelWait = cancel;
+    const accept = (st) => {
+      if (done || st?.commandId !== command.commandId) return;
+      acknowledged = true;
+      lastReply = Math.max(lastReply, Number(st.at) || Date.now());
+      if (st.state === "playing" && !audioStarted) { audioStarted = true; onPlaying?.(); }
+      if (["idle", "error", "closed"].includes(st.state)) finish(st);
     };
     const checkStatus = async () => {
       try {
-        const res = await fetch(`/api/video-overlay/status?t=${Date.now()}`);
+        const res = await fetch(`/api/video-overlay/status?t=${Date.now()}`, { signal: AbortSignal.timeout(5000) });
         if (!res.ok) return;
         const data = await res.json();
         let st = null;
@@ -2602,13 +2655,8 @@ function waitOverlayIdle(timeoutMs) {
         } catch {
           st = null;
         }
-        if (!st) return;
-        if (st.state === "playing") sawPlaying = true;
-        if (sawPlaying && (st.state === "idle" || st.state === "error" || st.state === "closed")) finish();
-        if (st.state === "error") {
-          setVideoStatus(`ผิดพลาด: ${st.error || ""}`);
-          finish();
-        }
+        if (data.open === false) finish({ state: "closed" });
+        else accept(st);
       } catch {
         /* ignore */
       }
@@ -2616,13 +2664,26 @@ function waitOverlayIdle(timeoutMs) {
     const onMsg = (ev) => {
       const d = ev.data;
       if (d?.type !== "overlay-status") return;
-      if (d.state === "playing") sawPlaying = true;
-      if (sawPlaying && (d.state === "idle" || d.state === "error" || d.state === "closed")) finish();
+      accept(d);
     };
     videoChannel?.addEventListener("message", onMsg);
-    const poll = setInterval(checkStatus, 300);
-    const timer = setTimeout(finish, timeoutMs);
-    checkStatus();
+    const tick = async () => {
+      if (done || polling) return;
+      polling = true;
+      try {
+        await checkStatus();
+        if (done) return;
+        const now = Date.now();
+        if ((!audioStarted && now - started > 15000) || (acknowledged && now - lastReply > 30000)) {
+          finish({ state: "timeout" });
+        } else if (!acknowledged && now - lastRetry > 2000) {
+          lastRetry = now;
+          postOverlayCommand(command); // Same identity: a retry must never restart a clip.
+        }
+      } finally { polling = false; }
+    };
+    const poll = setInterval(tick, 300);
+    tick();
   });
 }
 
@@ -2668,7 +2729,9 @@ function handleGiftForVideo(parsed) {
   if (parsed.phase === "game") {
     // Game finalize has the real combo xN — add only units not already queued from UI.
     fire = Math.max(0, count - already);
-    videoComboCredit.delete(key);
+    const remaining = Math.max(0, already - count);
+    if (remaining) videoComboCredit.set(key, { n: remaining, at: Date.now() });
+    else videoComboCredit.delete(key);
   } else {
     videoComboCredit.set(key, { n: already + count, at: Date.now() });
   }
@@ -9694,7 +9757,7 @@ loadJarCatalogUi();
 renderJarUiState();
 
 const LIVE_OVERLAY_BASE = "http://127.0.0.1:3847/live-overlay.html";
-const LIVE_OVERLAY_VER = "sultan96";
+const LIVE_OVERLAY_VER = "sultan-size129";
 const WELCOME_LINK_URL = "http://127.0.0.1:3847/welcome-9x12.html";
 
 function welcomeObsLink() {
@@ -10836,7 +10899,7 @@ function openOverlayPreview(url, w, h, id) {
   const box = modal.querySelector(".og-preview-dialog");
   if (box) {
     box.style.width = Math.min(980, Math.max(420, Number(w) || 720)) + "px";
-    box.style.height = Math.min(940, Math.max(380, Number(h) || 420) + ((id === "topgifters" || id === "topgifters-all") ? 164 : 56)) + "px";
+    box.style.height = Math.min(940, Math.max(380, Number(h) || 420) + ((id === "topgifters" || id === "topgifters-all") ? 228 : 56)) + "px";
   }
   if (frame) frame.src = url;
   modal.dataset.id = id || "";

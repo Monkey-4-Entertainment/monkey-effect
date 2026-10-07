@@ -9,6 +9,19 @@
   const player = document.getElementById("player");
   const view = document.getElementById("view");
   let playToken = 0;
+  let activeCommand = null;
+  let playbackState = "ready";
+  let statusExtra = {};
+  const seenCommands = new Map();
+  let polling = false;
+  let lastStopCommand = null;
+
+  function olderThan(command, reference) {
+    if (!reference || !command.at || !reference.at) return false;
+    if (command.at !== reference.at) return command.at < reference.at;
+    const a = String(command.commandId || "").split(":"), b = String(reference.commandId || "").split(":");
+    return a.length === 2 && b.length === 2 && a[0] === b[0] && Number(a[1]) < Number(b[1]);
+  }
   let raf = 0;
   const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(CHANNEL) : null;
   const compositor = createCompositor(view, clearMode);
@@ -54,6 +67,8 @@
   async function playVideo(msg) {
     const id = msg?.id;
     if (!id) return;
+    activeCommand = msg;
+    postStatus("loading");
     const token = ++playToken;
     try {
       player.pause();
@@ -88,6 +103,7 @@
         if (token !== playToken) return;
         postStatus("playing", { id, name: id, muted: true });
       } catch (err2) {
+        if (token !== playToken) return;
         stopDraw();
         postStatus("error", { error: err2.message || String(err2) });
         player.classList.remove("show");
@@ -97,7 +113,10 @@
   }
 
   function postStatus(state, extra = {}) {
-    const payload = { type: "overlay-status", state, ...extra, at: Date.now() };
+    playbackState = state;
+    statusExtra = extra;
+    const payload = { type: "overlay-status", state, commandId: activeCommand?.commandId || null,
+      id: activeCommand?.id || null, ...extra, at: Date.now() };
     try {
       localStorage.setItem("tgr_video_overlay_status", JSON.stringify(payload));
     } catch {
@@ -113,12 +132,24 @@
 
   function handleMessage(data) {
     if (!data || typeof data !== "object") return;
+    // One command arrives through BroadcastChannel, storage and HTTP polling.
+    // The clip id cannot be used here: genuine repeat gifts reuse the same clip.
+    const key = data.commandId || (data.at ? `${data.type}|${data.id || ""}|${data.at}` : null);
+    if (key) {
+      if (seenCommands.has(key)) return;
+      seenCommands.set(key, true);
+      if (seenCommands.size > 4096) seenCommands.delete(seenCommands.keys().next().value);
+    }
     if (data.type === "play") {
+      if (olderThan(data, lastStopCommand) || olderThan(data, activeCommand)) return;
       playVideo(data).catch((e) => postStatus("error", { error: e.message || String(e) }));
     } else if (data.type === "stop") {
+      if (data.targetCommandId && data.targetCommandId !== activeCommand?.commandId) return;
+      if (olderThan(data, activeCommand)) return;
+      lastStopCommand = data;
       stopVideo();
     } else if (data.type === "ping") {
-      postStatus(player.classList.contains("show") && !player.paused ? "playing" : "ready");
+      postStatus(playbackState, statusExtra);
     } else if (data.type === "set-volume") {
       if (!player.muted) {
         player.volume = Math.min(1, Math.max(0, Number(data.volume) || 0));
@@ -138,6 +169,8 @@
   });
 
   async function pollCommands() {
+    if (polling) return;
+    polling = true;
     try {
       const res = await fetch(`/api/video-overlay/poll?t=${Date.now()}`);
       if (!res.ok) return;
@@ -152,6 +185,8 @@
       }
     } catch {
       /* ignore */
+    } finally {
+      polling = false;
     }
   }
 
@@ -175,8 +210,9 @@
   });
 
   setInterval(pollCommands, 500);
-  pollCommands();
-  postStatus("ready");
+  pollCommands().finally(() => { if (!activeCommand) postStatus("ready"); });
+  // Repeat the terminal result too, so a very short clip is not lost between polls.
+  setInterval(() => postStatus(playbackState, statusExtra), 1000);
   window.addEventListener("beforeunload", () => postStatus("closed"));
 })();
 

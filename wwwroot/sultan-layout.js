@@ -8,6 +8,7 @@
     return {
       x: typeof p?.x === 'number' && Number.isFinite(p.x) ? clamp(p.x, 0, 100) : fallback.x,
       y: typeof p?.y === 'number' && Number.isFinite(p.y) ? clamp(p.y, 0, 100) : fallback.y,
+      scale: typeof p?.scale === 'number' && Number.isFinite(p.scale) ? clamp(p.scale, 50, 150) : 100,
     };
   });
   function readAll() {
@@ -29,8 +30,10 @@
       const area = list.getBoundingClientRect();
       if (!area.width || !area.height) return;
       list.querySelectorAll('.sultan-row').forEach((row, i) => {
+        row.style.transformOrigin = '50% 0';
+        row.style.transform = `translateX(-50%) scale(${layout[i].scale / 100})`;
         const box = row.getBoundingClientRect();
-        const half = box.width / area.width * 50;
+        const half = Math.min(50, box.width / area.width * 50);
         const x = clamp(layout[i].x, half, 100 - half);
         const y = clamp(layout[i].y, 0, Math.max(0, 100 - box.height / area.height * 100));
         row.style.left = x + '%';
@@ -48,8 +51,9 @@
       const row = list?.querySelector(`[data-rank="${index + 1}"]`);
       if (!row) return;
       const area = list.getBoundingClientRect(), box = row.getBoundingClientRect();
-      const half = box.width / area.width * 50;
+      const half = Math.min(50, box.width / area.width * 50);
       layout[index] = {
+        ...layout[index],
         x: Math.round(clamp(x, half, 100 - half) * 100) / 100,
         y: Math.round(clamp(y, 0, Math.max(0, 100 - box.height / area.height * 100)) * 100) / 100,
       };
@@ -109,6 +113,11 @@
         if (e.data.command === 'reset') {
           layout = normalize();
           dirty = JSON.stringify(layout) !== JSON.stringify(saved);
+        } else if (e.data.command === 'scale') {
+          const index = e.data.index, scale = e.data.scale;
+          if (!Number.isInteger(index) || index < 0 || index > 2 || typeof scale !== 'number' || !Number.isFinite(scale)) return;
+          layout[index].scale = clamp(scale, 50, 150);
+          dirty = JSON.stringify(layout) !== JSON.stringify(saved);
         } else if (e.data.command === 'saved') {
           saved = normalize(e.data.layout);
           dirty = JSON.stringify(layout) !== JSON.stringify(saved);
@@ -133,21 +142,34 @@
     if (!controls) {
       controls = document.createElement('div');
       controls.className = 'og-sultan-controls';
-      controls.innerHTML = '<p>ลากรูปหรือชื่อเพื่อย้ายแต่ละอันดับ แล้วกดบันทึก</p><div><button type="button" class="btn ghost small" data-sultan-reset>คืนตำแหน่งเดิม</button><button type="button" class="btn primary small" data-sultan-save disabled>บันทึกตำแหน่ง</button></div><span role="status" data-sultan-status>กำลังโหลดตำแหน่ง…</span>';
+      controls.innerHTML = '<p>ลากเพื่อย้าย · ปรับขนาดแต่ละอันดับได้ แล้วกดบันทึก</p><div class="og-sultan-sizes">' + [1, 2, 3].map(rank => `<label>อันดับ ${rank} <output data-sultan-size-value="${rank - 1}">100%</output><input type="range" min="50" max="150" step="5" value="100" data-sultan-size="${rank - 1}" aria-label="ขนาดสุลต่านอันดับ ${rank}" disabled></label>`).join('') + '</div><div><button type="button" class="btn ghost small" data-sultan-reset>คืนค่าเดิม</button><button type="button" class="btn primary small" data-sultan-save disabled>บันทึกขนาดและตำแหน่ง</button></div><span role="status" data-sultan-status>กำลังโหลด…</span>';
       modal.querySelector('.og-preview-bar').after(controls);
       const frame = modal.querySelector('#ogPreviewFrame');
       const reset = controls.querySelector('[data-sultan-reset]');
       const save = controls.querySelector('[data-sultan-save]');
       const status = controls.querySelector('[data-sultan-status]');
+      const sizes = [...controls.querySelectorAll('[data-sultan-size]')];
+      sizes.forEach((input, index) => input.addEventListener('input', () => {
+        const state = controls._state;
+        if (!state?.layout || state.saving) return;
+        const scale = clamp(Number(input.value), 50, 150);
+        controls.querySelector(`[data-sultan-size-value="${index}"]`).textContent = scale + '%';
+        frame.contentWindow?.postMessage({ type: 'monkey-sultan-layout-command', command: 'scale', index, scale }, location.origin);
+      }));
       const command = (cmd, layout) => frame.contentWindow?.postMessage({ type: 'monkey-sultan-layout-command', command: cmd, layout }, location.origin);
       window.addEventListener('message', e => {
         const state = controls._state;
         if (!state || e.origin !== location.origin || e.source !== frame.contentWindow || e.data?.type !== 'monkey-sultan-layout' || e.data.scope !== state.scope) return;
         state.layout = normalize(e.data.layout);
         state.dirty = !!e.data.dirty;
+        sizes.forEach((input, index) => {
+          input.disabled = !!state.saving;
+          input.value = String(state.layout[index].scale);
+          controls.querySelector(`[data-sultan-size-value="${index}"]`).textContent = state.layout[index].scale + '%';
+        });
         reset.disabled = !!state.saving;
         save.disabled = !!state.saving || !state.dirty;
-        if (!state.saving) status.textContent = state.dirty ? 'มีตำแหน่งที่ยังไม่บันทึก' : e.data.event === 'saved' ? 'บันทึกตำแหน่งแล้ว' : 'พร้อมจัดตำแหน่ง · ใช้ปุ่มลูกศรเลื่อนได้';
+        if (!state.saving) status.textContent = state.dirty ? 'มีขนาดหรือตำแหน่งที่ยังไม่บันทึก' : e.data.event === 'saved' ? 'บันทึกขนาดและตำแหน่งแล้ว' : 'ขนาด 50–150% · ใช้ปุ่มลูกศรเลื่อนได้';
       });
       reset.addEventListener('click', () => command('reset'));
       save.addEventListener('click', async () => {
@@ -155,18 +177,20 @@
         if (!state || !state.layout || state.saving) return;
         const submitted = normalize(state.layout);
         state.saving = true; save.disabled = true; reset.disabled = true;
+        sizes.forEach(input => { input.disabled = true; });
         status.textContent = 'กำลังบันทึก…';
         try {
           await window.saveSultanLayout(state.scope, submitted);
           if (controls._state !== state) return;
           state.saving = false;
           command('saved', submitted);
-          status.textContent = 'บันทึกตำแหน่งแล้ว';
+          status.textContent = 'บันทึกขนาดและตำแหน่งแล้ว';
         } catch {
           if (controls._state !== state) return;
           state.saving = false;
           status.textContent = 'บันทึกไม่สำเร็จ กดบันทึกอีกครั้ง';
           save.disabled = false; reset.disabled = false;
+          sizes.forEach(input => { input.disabled = false; });
         }
       });
     }
@@ -176,6 +200,7 @@
     if (!enabled) return url;
     controls.querySelector('[data-sultan-save]').disabled = true;
     controls.querySelector('[data-sultan-reset]').disabled = true;
+    controls.querySelectorAll('[data-sultan-size]').forEach(input => { input.disabled = true; });
     controls.querySelector('[data-sultan-status]').textContent = 'กำลังโหลดตำแหน่ง…';
     const next = new URL(url, location.href);
     next.searchParams.set('edit', '1');
