@@ -1,24 +1,22 @@
-Monkeyeffect online update pack v1.2.9
+Monkeyeffect online update pack v1.3.0
 
 Feed: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json
-Zip: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.9-update.zip
-SHA256: 854857577c11e0aab8da44dfb725a94c172d855b7b73145549d1a0c7b431face
+Zip: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.0-update.zip
+SHA256: 9a20fcb3d7460ff2696deb9f14174c8a4762fdeea33187908f65a9337984a687
 
 Changes:
-- Resize Sultan ranks 1, 2 and 3 independently (50-150%) with saved positions and separate live/all layouts.
-- Restore the video compositor canvas so the overlay initializes and plays instead of remaining green.
-- Identify each playback command and deduplicate BroadcastChannel, storage and HTTP deliveries, including retries.
-- Match completion to the current playback command; ignore stale status and tolerate clips shorter than a polling interval.
-- Correct overlapping gift credits, retain counts above 500, and let long active clips finish without the former 120-second cutoff.
-- Cancel pending file/audio work when stopped; queue previews and retain pending jobs when the overlay is unavailable.
-- Includes the existing 1.2.8 Paxa and built-in TTS fixes.
+- Preserve incoming chat in a full event history so built-in TTS continues receiving messages after prolonged use.
+- Restore Subathon rule creation, editing, deletion, testing and persistence; support named gift additions and deductions.
+- Remove the four-hour Subathon ceiling and allow continued accumulation beyond 24 hours without integer overflow.
+- Preserve the active timer deadline across application restarts.
+- Include the Sultan sizing and video queue fixes from 1.2.9.
 
 Validation:
-- Regression suite reproduced the original triple start, 501-to-500 truncation, and 2-to-3 overlapping-gift overcount.
-- 30 requested plays produced 30 completions with all three transports and with HTTP alone.
-- Five accelerated real-video runs produced five loads, starts and completions with no JavaScript errors.
-- Cancellation, stale status, missing-file continuation, long playback, retry identity and delayed commands passed.
-- Updated app verified through its native Test button; Setup installation and all 2,559 payload hashes verified.
+- Reproduced the lost-chat defect with 400 gift events; the fix retained 1,000 new chats following 5,000 mixed events.
+- Production frontend TTS processed 25 of 25 chats through actual local free playback with no duplicates.
+- Three free voice playback checks passed while the main application was minimized.
+- Subathon CRUD, persistence, gift combo deduplication, concurrent additions, subtraction, long durations and restart restoration passed.
+- Every update file matches the verified setup payload except the explicit 1.3.0 version markers; ZIP extraction hashes verified.
 
-This update merges application files into an existing installation and includes no user settings, logs or API keys.
-Tests cover the local video pipeline; upstream TikTok/network delivery is not guaranteed by these tests.
+This cumulative update contains no user settings, logs or API keys.
+Validation covers local application behavior; live TikTok network delivery was not exercised.

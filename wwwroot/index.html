@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/welcome-tier-palette.css?v=welcome91" />
-    <link rel="stylesheet" href="/style.css?v=v125-sultan-size129" />
+    <link rel="stylesheet" href="/style.css?v=subathon-unlimited1" />
   </head>
   <body>
     <div class="bg"></div>
@@ -1343,7 +1343,7 @@ Facebook Fanpage</textarea>
             <h2>Subathon Timer</h2>
             <label class="toggle">
               <input id="subathonEnabled" type="checkbox" />
-              <span>ยืดเวลาเมื่อมีของขวัญ</span>
+              <span>ใช้กฎเพิ่ม–ลดเวลาจากของขวัญ</span>
             </label>
           </div>
           <p class="hint">เริ่มจับเวลาแล้วของขวัญจะปรับเวลาให้อัตโนมัติ — ตั้งของขวัญเฉพาะชิ้นด้านล่างได้ (เพิ่มหรือลด)</p>
@@ -1374,8 +1374,9 @@ Facebook Fanpage</textarea>
               <input id="subathonSecPerLike" class="field" type="number" min="0" max="60" value="0" />
             </div>
             <div>
-              <label for="subathonMaxSeconds">เพดานสูงสุด (วินาที)</label>
-              <input id="subathonMaxSeconds" class="field" type="number" min="60" max="86400" value="14400" />
+              <label>เวลาสูงสุด</label>
+              <div class="field" id="subathonUnlimited">ไม่จำกัด</div>
+              <p class="hint">ของขวัญเพิ่มเวลาสะสมได้เรื่อย ๆ รวมถึงเกิน 24 ชั่วโมง</p>
             </div>
           </div>
 
@@ -1418,6 +1419,11 @@ Facebook Fanpage</textarea>
           </div>
           <div id="subathonGiftRulesList" class="rules-list" style="margin-top:.75rem"></div>
 
+          <div class="subathon-start-field">
+            <label for="subathonStartSeconds">เวลาเริ่มต้น (วินาที)</label>
+            <input id="subathonStartSeconds" class="field" type="number" min="1" max="86400" value="300" />
+            <span class="hint">ใช้เมื่อกดเริ่มจับเวลา · ของขวัญเพิ่มต่อได้ไม่จำกัด</span>
+          </div>
           <div class="actions">
             <button id="subathonSaveBtn" class="btn secondary" type="button">บันทึกกฎ</button>
             <button id="subathonStartBtn" class="btn primary" type="button">เริ่มจับเวลา</button>
@@ -1685,8 +1691,9 @@ Facebook Fanpage</textarea>
     <div id="giftPicker" class="gift-picker hidden" hidden></div>
     <script src="/welcome-designs.js?v=welcome91"></script>
     <script src="/sultan-layout.js?v=sultan-size129"></script>
-    <script src="/app.js?v=v128-video-queue-fix2"></script>
-    <script src="/studio.js?v=v126-daily99"></script>
+    <script src="/app.js?v=subathon-unlimited1"></script>
+    <script src="/subathon-rules.js?v=subathon-unlimited1"></script>
+    <script src="/studio.js?v=subathon-unlimited1"></script>
     <script src="/members.js?v=m13-login"></script>
     <script src="/farm-preset-editor.js?v=10"></script>
   </body>

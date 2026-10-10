@@ -1,8 +1,8 @@
 {
-  "version": "1.2.9",
-  "notes": "Monkeyeffect 1.2.9 - ปรับขนาดสุลต่านแยกอันดับ 1–3 ได้ 50–150% พร้อมบันทึกตำแหน่ง แก้วิดีโอค้างพื้นเขียว ป้องกันคำสั่งเล่นซ้ำ สถานะเก่าข้ามคิว และการนับของขวัญซ้อนกันเกินจำนวน เก็บคิวเกิน 500 รายการ และแก้หยุดแล้วกลับมาเล่นเอง รวมระบบเสียงและการแก้ไขจาก 1.2.8",
-  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.2.9-update.zip",
-  "sha256": "854857577c11e0aab8da44dfb725a94c172d855b7b73145549d1a0c7b431face",
+  "version": "1.3.0",
+  "notes": "Monkeyeffect 1.3.0 - แก้ AI เสียงฟรีหยุดอ่านเมื่อประวัติกิจกรรมเต็ม แก้เพิ่มและบันทึกกฎ Subathon รองรับเพิ่ม/ลดเวลาตามของขวัญ เพิ่มเวลาได้ต่อเนื่องไม่จำกัด 4 ชั่วโมง และคงเวลาจับถอยหลังเมื่อเปิดโปรแกรมใหม่ รวมการแก้ไขสุลต่านและวิดีโอจาก 1.2.9",
+  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.0-update.zip",
+  "sha256": "9a20fcb3d7460ff2696deb9f14174c8a4762fdeea33187908f65a9337984a687",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

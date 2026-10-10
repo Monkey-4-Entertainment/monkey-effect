@@ -10,6 +10,8 @@
   const studioState = loadStudio();
   let studioAlertFile = null;
   let studioMcCooldown = new Map();
+  let studioPublishQueue = Promise.resolve();
+  let subathonController;
 
   function uid() {
     return typeof window.uid === "function"
@@ -40,7 +42,9 @@
         secPerCoin: 1,
         secPerGift: 0,
         secPerLike: 0,
-        maxSeconds: 14400,
+        maxSeconds: 0,
+        startSeconds: 300,
+        giftRules: [],
       },
       points: {
         enabled: true,
@@ -94,7 +98,7 @@
 
   function persistStudio() {
     localStorage.setItem(STUDIO_KEY, JSON.stringify(studioState));
-    publishStudioOverlay();
+    return publishStudioOverlay();
   }
 
   function coinsFor(giftName) {
@@ -140,13 +144,17 @@
 
   async function patchLiveSettings(extra) {
     try {
-      await fetch("/api/live-stats/settings", {
+      const response = await fetch("/api/live-stats/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(extra),
+        signal: AbortSignal.timeout(8000),
       });
+      if (!response.ok) return null;
+      return await response.json();
     } catch {
       /* overlay sync is best-effort */
+      return null;
     }
   }
 
@@ -183,17 +191,19 @@
 
   function publishStudioOverlay() {
     const payload = overlayStudioPayload();
-    patchLiveSettings({
+    const settings = {
       studioJson: JSON.stringify(payload),
       subathonEnabled: !!studioState.subathon.enabled,
       subathonSecPerCoin: Number(studioState.subathon.secPerCoin) || 0,
       subathonSecPerGift: Number(studioState.subathon.secPerGift) || 0,
       subathonSecPerLike: Number(studioState.subathon.secPerLike) || 0,
-      subathonMaxSeconds: Number(studioState.subathon.maxSeconds) || 14400,
+      subathonMaxSeconds: 0,
       welcomeEnabled: studioState.welcome.enabled !== false,
       welcomeMinLevel: Number(studioState.welcome.minLevel) || 20,
       welcomeDurationSec: Number(studioState.welcome.durationSec) || 8,
-    });
+    };
+    studioPublishQueue = studioPublishQueue.then(() => patchLiveSettings(settings));
+    return studioPublishQueue;
   }
 
   function setActivity(id, text) {
@@ -270,43 +280,6 @@
       user.points += Number(p.perChat) || 0;
     }
     return user;
-  }
-
-  async function extendSubathon(parsed) {
-    if (!studioState.subathon.enabled) return;
-    const s = studioState.subathon;
-    let add = 0;
-    if (parsed.kind === "gift") {
-      const coins = coinsFor(parsed.giftName) * (Number(parsed.count) || 1);
-      add = (Number(s.secPerGift) || 0) * (Number(parsed.count) || 1) + (Number(s.secPerCoin) || 0) * coins;
-    } else if (parsed.kind === "like") {
-      add = (Number(s.secPerLike) || 0) * (Number(parsed.count) || 1);
-    }
-    if (add <= 0) return;
-    let used = false;
-    try {
-      const snap = await fetch("/api/live-stats", { cache: "no-store" }).then((r) => r.json());
-      const c = snap.config || {};
-      if (!c.timerRunning) {
-        setActivity("subathonActivity", "ยังไม่เริ่มจับเวลา — กดเริ่มก่อน แล้วค่อยส่งของขวัญ");
-        return;
-      }
-      const before = c.timerEndsAt ? Math.max(0, Math.ceil((c.timerEndsAt - Date.now()) / 1000)) : 0;
-      await patchLiveSettings({ addSeconds: add });
-      const afterSnap = await fetch("/api/live-stats", { cache: "no-store" }).then((r) => r.json());
-      const ac = afterSnap.config || {};
-      const after = ac.timerEndsAt ? Math.max(0, Math.ceil((ac.timerEndsAt - Date.now()) / 1000)) : 0;
-      used = after >= before + add - 1;
-      if (!used) {
-        const cap = Number(s.maxSeconds) || 14400;
-        await patchLiveSettings({ timerSeconds: Math.min(cap, before + add), timer: "start" });
-        used = true;
-      }
-    } catch {
-      used = false;
-    }
-    if (used) setActivity("subathonActivity", `+${add} วินาที จาก ${parsed.sender} (${parsed.giftName || parsed.kind})`);
-    renderSubathonClock();
   }
 
   function commandHelpText() {
@@ -472,9 +445,6 @@
       if (studioState.alerts.enabled) {
         const rule = matchAlert(parsed);
         if (rule) playAlertSound(rule);
-      }
-      if (parsed.kind === "gift" || parsed.kind === "like") {
-        extendSubathon(parsed);
       }
       if (parsed.kind === "chat") {
         if (studioState.commands.enabled !== false) {
@@ -651,9 +621,10 @@
     const el = document.getElementById("subathonClock");
     if (!el) return;
     const sec = await remainingTimerSec();
-    const m = Math.floor(sec / 60);
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor(sec / 60) % 60;
     const r = sec % 60;
-    el.textContent = `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+    el.textContent = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
   }
 
   function collectLocalStorageBundle() {
@@ -746,7 +717,6 @@
     bindToggle("alertEnabled", () => studioState.alerts.enabled, (v) => (studioState.alerts.enabled = v));
     bindToggle("chatCmdEnabled", () => studioState.commands.enabled, (v) => (studioState.commands.enabled = v));
     bindToggle("botEnabled", () => studioState.bot.enabled, (v) => (studioState.bot.enabled = v));
-    bindToggle("subathonEnabled", () => studioState.subathon.enabled, (v) => (studioState.subathon.enabled = v));
     bindToggle("pointsEnabled", () => studioState.points.enabled, (v) => (studioState.points.enabled = v));
     bindToggle("mcEnabled", () => studioState.minecraft.enabled, (v) => (studioState.minecraft.enabled = v));
     bindToggle("welcomeEnabled", () => studioState.welcome.enabled, (v) => (studioState.welcome.enabled = v));
@@ -758,10 +728,7 @@
       if (volLab) volLab.textContent = vol.value;
     }
     bindNumber("botCooldown", () => studioState.bot.cooldownSec, (v) => (studioState.bot.cooldownSec = v));
-    bindNumber("subathonSecPerCoin", () => studioState.subathon.secPerCoin, (v) => (studioState.subathon.secPerCoin = v));
-    bindNumber("subathonSecPerGift", () => studioState.subathon.secPerGift, (v) => (studioState.subathon.secPerGift = v));
-    bindNumber("subathonSecPerLike", () => studioState.subathon.secPerLike, (v) => (studioState.subathon.secPerLike = v));
-    bindNumber("subathonMaxSeconds", () => studioState.subathon.maxSeconds, (v) => (studioState.subathon.maxSeconds = v));
+    subathonController?.paint();
     bindNumber("pointsPerCoin", () => studioState.points.perCoin, (v) => (studioState.points.perCoin = v));
     bindNumber("pointsPerLike", () => studioState.points.perLike, (v) => (studioState.points.perLike = v));
     bindNumber("pointsPerFollow", () => studioState.points.perFollow, (v) => (studioState.points.perFollow = v));
@@ -904,22 +871,8 @@
       renderBotRules();
     });
 
-    document.getElementById("subathonSaveBtn")?.addEventListener("click", () => {
-      persistStudio();
-      publishStudioOverlay();
-      setActivity("subathonActivity", "บันทึกกฎยืดเวลาแล้ว — กดเริ่ม Timer ใน Overlay Gallery ด้วย");
-    });
-    document.getElementById("subathonStartBtn")?.addEventListener("click", async () => {
-      const sec = Number(document.getElementById("liveTimerSeconds")?.value) || Number(studioState.subathon.maxSeconds) || 300;
-      await patchLiveSettings({ timerSeconds: sec, timer: "start", subathonEnabled: true });
-      renderSubathonClock();
-    });
-    document.getElementById("subathonStopBtn")?.addEventListener("click", async () => {
-      await patchLiveSettings({ timer: "stop" });
-      renderSubathonClock();
-    });
     document.getElementById("subathonTestBtn")?.addEventListener("click", () => {
-      window.handleStudioEvent({ kind: "gift", sender: "Test User", giftName: "Rose", count: 1 });
+      window.handleSubathonEvent({ kind: "gift", sender: "Test User", giftName: "Rose", count: 1 });
     });
 
     document.querySelectorAll("[data-welcome-test]").forEach((btn) => {
@@ -1008,6 +961,11 @@
     syncCommandOverlay();
   }
 
+  subathonController = window.MonkeySubathon.create({
+    getState: () => studioState.subathon, save: persistStudio, coinsFor,
+    onTimerChanged: renderSubathonClock,
+  });
+  window.handleSubathonEvent = subathonController.handleEvent;
   paintStudioUi();
   wireStudio();
 })();

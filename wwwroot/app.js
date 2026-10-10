@@ -7720,6 +7720,7 @@ function claimUiFeature(feature, parsed) {
 }
 
 function fanOutUiFunctions(parsed) {
+  if (typeof window.handleSubathonEvent === "function") window.handleSubathonEvent(parsed);
   // Interrupt = exact xN from FINAL game line only (no early ui → no under/over stack).
   // Video starts on UI, then game finalize queues remaining combo units (never drop / never cut).
   if (parsed.phase === "game") {
