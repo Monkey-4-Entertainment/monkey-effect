@@ -37,6 +37,9 @@ const gameChannel =
   typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(GAME_CHANNEL) : null;
 let gameCatalog = [];
 let savingGame = false;
+let gameSelectionQueue = Promise.resolve();
+let gameSelectionRevision = 0;
+let keymapLoadRevision = 0;
 
 let connecting = false;
 let pollTimer = null;
@@ -8133,7 +8136,7 @@ function cleanGameDisplayName(id, name) {
 }
 
 function getSelectedGameSnapshot(extra = {}) {
-  const id = extra.id || gameSelect?.value || TEMPLE_GAME_ID;
+  const id = extra.id || gameSelect?.value || "none";
   const opt = gameSelect?.selectedOptions?.[0];
   return {
     id,
@@ -8164,7 +8167,7 @@ function broadcastSelectedGame(game) {
   }
 }
 
-function syncEffectsPanelForGame(game) {
+async function syncEffectsPanelForGame(game) {
   if (!game?.id) return;
   currentSelectedGame = {
     id: game.id,
@@ -8189,6 +8192,16 @@ function syncEffectsPanelForGame(game) {
     setWorkspaceMeta("effects");
   }
 
+  if (game.id === "none") {
+    keymapLoadRevision++;
+    renderEffectsKeymapTable([], false);
+    renderEffectsEventsTable([]);
+    for (const id of ["effectsKeymapCard", "effectsEventsCard", "effectsImportCard"]) document.getElementById(id)?.classList.add("hidden");
+    noDefaultsCard?.classList.remove("hidden");
+    if (noDefaultsHint) noDefaultsHint.textContent = "เพิ่มเกมที่หน้าหลัก แล้วตั้งพรีเซ็ตครั้งแรก";
+    setGamePresetStatus("ยังไม่มีเกม — กดเพิ่มเกมเพื่อเริ่มตั้งค่า");
+    return;
+  }
   const isTemple = currentSelectedGame.id === TEMPLE_GAME_ID;
   const keymapCard = document.getElementById("effectsKeymapCard");
   const eventsCard = document.getElementById("effectsEventsCard");
@@ -8210,7 +8223,8 @@ function syncEffectsPanelForGame(game) {
     if (testHint) {
       testHint.textContent = `ส่งของทดสอบเข้า ${name} — กดคีย์ตาม Actions / Events ที่ตั้งไว้`;
     }
-    loadEffectsKeymapUI().then(() => {
+    await loadEffectsKeymapUI().then(() => {
+      if (currentSelectedGame?.id !== game.id) return;
       keymapCard?.classList.remove("hidden");
       eventsCard?.classList.remove("hidden");
       const hasRows = (keymapDraftRules || []).length > 0;
@@ -8222,7 +8236,8 @@ function syncEffectsPanelForGame(game) {
     if (testHint) {
       testHint.textContent = `ส่งของทดสอบเข้า ${name} — กดคีย์ตาม Keyboard Mapping เข้าหน้าต่างเกม`;
     }
-    loadEffectsKeymapUI().then(() => {
+    await loadEffectsKeymapUI().then(() => {
+      if (currentSelectedGame?.id !== game.id) return;
       const hasRows = (keymapDraftRules || []).length > 0;
       keymapCard?.classList.toggle("hidden", !hasRows);
       eventsCard?.classList.toggle("hidden", !hasRows);
@@ -8335,6 +8350,7 @@ let effectsKeymapUiForced = false;
 let effectsPanelGameId = "";
 
 function openEffectsPresetPicker() {
+  if (!gameSelect?.value || gameSelect.value === "none") { alert("เพิ่มและเลือกเกมก่อนนำเข้าพรีเซ็ต"); return; }
   document.getElementById("effectsImportFile")?.click();
 }
 
@@ -8885,13 +8901,7 @@ function currentEffectsGame() {
 async function applyImportedEffectsPreset(data, rawText) {
   const keep = currentEffectsGame();
   revealEffectsKeymapCards();
-  const local = rawText ? parseImportedKeymapText(rawText) : null;
-  if (local) {
-    renderEffectsKeymapTable(local.rules, true);
-    renderEffectsEventsTable(local.events);
-  } else {
-    await loadEffectsKeymapUI();
-  }
+  await loadEffectsKeymapUI();
   currentSelectedGame = { id: keep.id, displayName: keep.displayName };
   syncEffectsPanelForGame(currentSelectedGame);
   syncGiftChipsForGame(true);
@@ -8957,11 +8967,19 @@ async function importEffectsKeymapFile(ev) {
 }
 
 async function saveEffectsKeymap() {
+  if (savingGame || !currentSelectedGame?.id || currentSelectedGame.id === "none") { setKeymapMsg("เลือกเกมก่อนบันทึก", true); return; }
+  const targetGameId = currentSelectedGame.id;
   const rules = readKeymapRowsFromDom();
   const events = readEventsFromDom();
   setKeymapMsg("กำลังบันทึก…");
   setEventsMsg("กำลังบันทึก…");
   try {
+    const selectionResponse = await fetch("/api/games");
+    if (!selectionResponse.ok) throw new Error("ตรวจสอบเกมก่อนบันทึกไม่สำเร็จ");
+    const selection = await selectionResponse.json();
+    if (savingGame || currentSelectedGame?.id !== targetGameId || selection.selected?.id !== targetGameId) {
+      throw new Error("เกมที่เลือกเปลี่ยนแล้ว — ยังไม่บันทึก เพื่อไม่ให้พรีเซ็ตผิดเกม กรุณาเลือกเกมเดิมอีกครั้ง");
+    }
     const res = await fetch("/api/keymap", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -8984,114 +9002,112 @@ async function saveEffectsKeymap() {
   }
 }
 
+function setGamePresetStatus(message, error = false) {
+  const el = document.getElementById("gamePresetStatus");
+  if (el) { el.textContent = message; el.classList.toggle("is-error", error); }
+}
+
 async function loadEffectsKeymapUI() {
+  const gameId = currentSelectedGame?.id || "none";
+  const revision = ++keymapLoadRevision;
   try {
     const res = await fetch("/api/keymap");
+    if (!res.ok) throw new Error("โหลดพรีเซ็ตไม่สำเร็จ");
     const cfg = await res.json();
+    if (revision !== keymapLoadRevision || gameId !== currentSelectedGame?.id) return;
     const rules = cfg.rules || cfg.Rules || [];
-    const events = Array.isArray(cfg.events) ? cfg.events
-      : (Array.isArray(cfg.Events) ? cfg.Events : []);
+    const events = cfg.events || cfg.Events || [];
     renderEffectsKeymapTable(rules, cfg.enabled !== false && cfg.Enabled !== false);
     renderEffectsEventsTable(events);
-  } catch {
-    renderEffectsKeymapTable([], true);
+    setGamePresetStatus(gameId === "none" ? "ยังไม่มีเกม — กดเพิ่มเกมเพื่อเริ่มตั้งค่า" : rules.length || events.length
+      ? `โหลดพรีเซ็ตของ ${currentSelectedGame.displayName} แล้ว · ${rules.length} แอคชัน · ${events.length} อีเวนต์`
+      : currentSelectedGame?.displayName === "Temple_Escape"
+        ? "Temple_Escape · ส่งของขวัญตรง — เกมจับคู่คำสั่งเอง ไม่ต้องตั้งพรีเซ็ต"
+        : currentSelectedGame?.displayName === "RunningGame"
+        ? "RunningGame · ส่งของขวัญตรงผ่าน WebSocket :15500 — เกมจับคู่คำสั่งเอง ไม่ต้องตั้งพรีเซ็ต"
+        : "เกมใหม่ยังไม่มีพรีเซ็ต — ตั้งค่าหรือนำเข้าครั้งแรก ระบบจะจำให้เกมนี้อัตโนมัติ");
+  } catch (error) {
+    if (revision !== keymapLoadRevision || gameId !== currentSelectedGame?.id) return;
+    renderEffectsKeymapTable([], false);
     renderEffectsEventsTable([]);
+    setGamePresetStatus(error.message || "โหลดพรีเซ็ตไม่สำเร็จ", true);
   }
 }
 
-async function saveSelectedGame(extra = {}) {
-  if (!gameSelect) return;
-  if (savingGame && !extra.force) return;
-  savingGame = true;
-  try {
-    const payload = {
-      id: extra.id || gameSelect.value || "temple-escape",
-      customProcess: customGameProcess?.value?.trim() || null,
-      customTitle: customGameTitle?.value?.trim() || null,
-      displayName: extra.displayName || null,
-    };
-    if (!payload.displayName) {
-      const opt = gameSelect.selectedOptions?.[0];
-      payload.displayName = opt?.textContent || payload.id;
-    }
-    const selectedId = (payload.id || "").toLowerCase();
-    if (selectedId !== "custom") {
-      payload.customProcess = null;
-      payload.customTitle = null;
-    }
-    localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(payload));
-    const res = await fetch("/api/games/selected", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    const label = cleanGameDisplayName(
-      payload.id,
-      data?.selected?.displayName || payload.displayName || payload.id
-    );
-    if (selectedGameLabel) selectedGameLabel.textContent = label;
-    const snap = {
-      id: payload.id,
-      displayName: label,
-    };
-    syncEffectsPanelForGame(snap);
-    broadcastSelectedGame(snap);
-    await syncRouletteConfigFromServer();
-    await fetchStatus();
-  } catch {
-    /* ignore */
-  } finally {
-    savingGame = false;
-  }
+function saveSelectedGame(extra = {}) {
+  if (!gameSelect) return Promise.resolve();
+  const id = extra.id || gameSelect.value || "none";
+  const payload = {
+    id,
+    displayName: extra.displayName || gameSelect.selectedOptions?.[0]?.textContent || id,
+    customProcess: id === "custom" ? customGameProcess?.value?.trim() || null : null,
+    customTitle: id === "custom" ? customGameTitle?.value?.trim() || null : null,
+  };
+  const revision = ++gameSelectionRevision;
+  keymapLoadRevision++;
+  setGamePresetStatus("กำลังโหลดเกมและพรีเซ็ต…");
+  const run = async () => {
+    savingGame = true;
+    try {
+      const res = await fetch("/api/games/selected", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "เลือกเกมไม่สำเร็จ");
+      if (revision !== gameSelectionRevision) return;
+      const selected = data.selected || payload;
+      localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(selected));
+      gameSelect.value = selected.id;
+      if (selectedGameLabel) selectedGameLabel.textContent = selected.displayName || selected.id;
+      await syncEffectsPanelForGame(selected);
+      broadcastSelectedGame(selected);
+      await syncRouletteConfigFromServer();
+      await fetchStatus();
+    } catch (error) {
+      if (revision === gameSelectionRevision) {
+        gameSelect.value = currentSelectedGame?.id || "none";
+        setGamePresetStatus(error.message || "เลือกเกมไม่สำเร็จ", true);
+      }
+    } finally { savingGame = false; }
+  };
+  gameSelectionQueue = gameSelectionQueue.then(run, run);
+  return gameSelectionQueue;
 }
 
 async function loadGames() {
   if (!gameSelect) return;
   try {
     const res = await fetch("/api/games");
+    if (!res.ok) throw new Error("โหลดรายการเกมไม่สำเร็จ");
     const data = await res.json();
     gameCatalog = Array.isArray(data.games) ? data.games : [];
     gameSelect.innerHTML = "";
-    for (const g of gameCatalog) {
+    if (!gameCatalog.length) {
       const opt = document.createElement("option");
-      opt.value = g.id;
-      opt.textContent = g.name;
+      opt.value = "none";
+      opt.textContent = "ยังไม่มีเกม — กดเพิ่มเกม";
       gameSelect.appendChild(opt);
     }
-    let selected = data.selected;
-    try {
-      const cached = JSON.parse(localStorage.getItem(GAME_STORAGE_KEY) || "null");
-      if (cached?.id) selected = cached;
-    } catch {
-      /* ignore */
+    for (const g of gameCatalog) {
+      const opt = document.createElement("option"); opt.value = g.id; opt.textContent = g.name;
+      gameSelect.appendChild(opt);
     }
-    if (selected?.id) {
-      selected.displayName = cleanGameDisplayName(selected.id, selected.displayName);
-      gameSelect.value = selected.id;
-      if (customGameProcess) customGameProcess.value = selected.customProcess || "";
-      if (customGameTitle) customGameTitle.value = selected.customTitle || "";
-      if (selectedGameLabel) {
-        selectedGameLabel.textContent = selected.displayName || selected.id;
-      }
+    // The saved server library is authoritative; deleted cached games must never reappear.
+    const selected = gameCatalog.some(g => g.id === data.selected?.id)
+      ? data.selected : { id: "none", displayName: "ยังไม่ได้เลือกเกม" };
+    if (selected.id === "none" && gameCatalog.length) {
+      const opt = document.createElement("option"); opt.value = "none"; opt.textContent = "เลือกเกม";
+      gameSelect.prepend(opt);
     }
+    gameSelect.value = selected.id;
+    localStorage.setItem(GAME_STORAGE_KEY, JSON.stringify(selected));
+    if (customGameProcess) customGameProcess.value = selected.customProcess || "";
+    if (customGameTitle) customGameTitle.value = selected.customTitle || "";
+    if (selectedGameLabel) selectedGameLabel.textContent = selected.displayName || selected.id;
     toggleCustomGameFields();
-    // sync server with UI (including localStorage preference)
-    await saveSelectedGame({
-      displayName: cleanGameDisplayName(
-        selected?.id || gameSelect.value,
-        selected?.displayName || gameSelect.selectedOptions?.[0]?.textContent
-      ),
-    });
-    syncEffectsPanelForGame(getSelectedGameSnapshot({
-      displayName: cleanGameDisplayName(
-        selected?.id || gameSelect.value,
-        selected?.displayName || gameSelect.selectedOptions?.[0]?.textContent
-      ),
-    }));
-  } catch {
-    gameSelect.innerHTML = '<option value="temple-escape">Temple Escape (神庙跑跑跑)</option>';
-    syncEffectsPanelForGame({ id: TEMPLE_GAME_ID, displayName: "Temple Escape (神庙跑跑跑)" });
+    await syncEffectsPanelForGame(selected);
+    await syncRouletteConfigFromServer();
+  } catch (error) {
+    gameSelect.innerHTML = '<option value="none">โหลดรายการเกมไม่สำเร็จ</option>';
+    setGamePresetStatus(error.message || "โหลดรายการเกมไม่สำเร็จ", true);
   }
 }
 

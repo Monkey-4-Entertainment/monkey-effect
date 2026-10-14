@@ -3028,3 +3028,9 @@ p.hint:not([id]),
 #panel-subathon .subathon-start-field { display: grid; gap: 7px; max-width: 330px; margin: 20px 0 15px; }
 #panel-subathon #subathonActivity { min-height: 22px; line-height: 1.6; }
 @media (max-width: 650px) { #panel-subathon .subathon-rule { align-items: start; flex-direction: column; } }
+
+/* Saved game library */
+#gameSelect { min-width: 0; flex: 1; width: 100%; padding: 12px 14px; border: 1px solid #34364c; border-radius: 12px; background: #101421; color: #e5e7f2; font: inherit; color-scheme: dark; }
+.game-select-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.game-preset-status { color: #a6dbc7; margin: 10px 0 16px; }
+.game-preset-status.is-error { color: #ff9fae; }
