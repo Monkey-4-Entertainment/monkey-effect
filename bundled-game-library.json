@@ -1,0 +1,3237 @@
+{
+  "revision": "1.3.1-library-1",
+  "games": [
+    {
+      "id": "beyond-retrun-6e24b0ac",
+      "name": "BEYOND RETRUN",
+      "processNames": [
+        "BEYOND RETRUN"
+      ],
+      "titleContains": [
+        "BEYOND RETRUN"
+      ],
+      "keyMapFile": "beyond-retrun-6e24b0ac-keymap.json"
+    },
+    {
+      "id": "dinorun-26a95d6a",
+      "name": "DinoRun",
+      "processNames": [
+        "DinoRunLocalTest"
+      ],
+      "titleContains": [
+        "DinoRun"
+      ],
+      "keyMapFile": "dinorun-26a95d6a-keymap.json"
+    },
+    {
+      "id": "farming-88a02729",
+      "name": "Farming",
+      "processNames": [
+        "Farming"
+      ],
+      "titleContains": [
+        "Farming"
+      ],
+      "keyMapFile": "farming-88a02729-keymap.json"
+    },
+    {
+      "id": "mekong-longtail-33ede6b3",
+      "name": "MEKONG-Longtail",
+      "processNames": [
+        "Mekong-Game"
+      ],
+      "titleContains": [
+        "MEKONG"
+      ],
+      "keyMapFile": "mekong-longtail-33ede6b3-keymap.json"
+    },
+    {
+      "id": "monkey-max4-34c2f22a",
+      "name": "Monkey-Max4",
+      "processNames": [
+        "Monkey-Max4-Game"
+      ],
+      "titleContains": [
+        "Monkey Max4"
+      ],
+      "keyMapFile": "monkey-max4-34c2f22a-keymap.json"
+    },
+    {
+      "id": "neon-front-4761db39",
+      "name": "NEON-FRONT",
+      "processNames": [
+        "NEON-FRONT-Game"
+      ],
+      "titleContains": [
+        "NEON FRONT"
+      ],
+      "keyMapFile": "neon-front-4761db39-keymap.json"
+    },
+    {
+      "id": "riverrush-72b04a24",
+      "name": "RiverRush",
+      "processNames": [
+        "RiverRush"
+      ],
+      "titleContains": [
+        "River Rush"
+      ],
+      "keyMapFile": "riverrush-72b04a24-keymap.json"
+    },
+    {
+      "id": "runninggame-e2003c39",
+      "name": "RunningGame",
+      "processNames": [
+        "RunningGame"
+      ],
+      "titleContains": [
+        "RunningGame"
+      ],
+      "keyMapFile": "runninggame-e2003c39-keymap.json"
+    },
+    {
+      "id": "shipbattle-61785d7e",
+      "name": "ShipBattle",
+      "processNames": [
+        "ShipBattle"
+      ],
+      "titleContains": [
+        "Ship Battle"
+      ],
+      "keyMapFile": "shipbattle-61785d7e-keymap.json"
+    },
+    {
+      "id": "tankbattle-502eef10",
+      "name": "TankBattle",
+      "processNames": [
+        "TankBattle"
+      ],
+      "titleContains": [
+        "Tank Battle"
+      ],
+      "keyMapFile": "tankbattle-502eef10-keymap.json"
+    },
+    {
+      "id": "temple-escape-6230a8d0",
+      "name": "Temple_Escape",
+      "processNames": [
+        "Temple_Escape-Win64-Shipping"
+      ],
+      "titleContains": [
+        "Temple_Escape"
+      ],
+      "keyMapFile": "temple-escape-6230a8d0-keymap.json"
+    },
+    {
+      "id": "the-rider-2c785236",
+      "name": "THE RIDER",
+      "processNames": [
+        "THE RIDER"
+      ],
+      "titleContains": [
+        "THE RIDER"
+      ],
+      "keyMapFile": "the-rider-2c785236-keymap.json"
+    }
+  ],
+  "presets": {
+    "beyond-retrun-6e24b0ac-keymap.json": {
+      "enabled": true,
+      "comment": "BEYOND RETRUN 1.8 · จาก สำหรับtikfinity.tfc · คำสั่งเกมตามต้นฉบับ; ไม่รวม media alerts เฉพาะ TikFinity",
+      "rules": [
+        {
+          "giftName": "Game Controller",
+          "key": "F1",
+          "vk": 112,
+          "label": "ผีกองกอย",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Paper Crane",
+          "key": "F3",
+          "vk": 114,
+          "label": "ผีปอบ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Hand Heart",
+          "key": "F2",
+          "vk": 113,
+          "label": "ผีนางรำ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Mishka Bear",
+          "key": "F5",
+          "vk": 116,
+          "label": "ผีเปตร",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Hat and Mustache",
+          "key": "F6",
+          "vk": 117,
+          "label": "ผีกระหัง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Confetti",
+          "key": "F7",
+          "vk": 118,
+          "label": "เสือสมิง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Rose",
+          "key": "1",
+          "vk": 49,
+          "label": "ตุ๊กแก",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Journey Pass",
+          "key": "2",
+          "vk": 50,
+          "label": "ผีจับขา",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Rosa",
+          "key": "3",
+          "vk": 51,
+          "label": "ปิดไฟ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Baby Hippo",
+          "key": "4",
+          "vk": 52,
+          "label": "สะกดวิญญาณ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Lots of Bread",
+          "key": "5",
+          "vk": 53,
+          "label": "บวก1วิน",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Night Star",
+          "key": "6",
+          "vk": 54,
+          "label": "ลบ 1วิน",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Doughnut",
+          "key": "R",
+          "vk": 82,
+          "label": "สุ่ม",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Finger Heart",
+          "key": "T",
+          "vk": 84,
+          "label": "วัวธนู",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Flower Garland",
+          "key": "H",
+          "vk": 72,
+          "label": "ใบ้ที่ซ่อน",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Heart Me",
+          "key": "g",
+          "vk": 71,
+          "label": "สุ่มผี",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Cap",
+          "key": "0",
+          "vk": 48,
+          "label": "กระสือ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        }
+      ],
+      "events": [
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Cap",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "กระสือ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Game Controller",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ผีกองกอย"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Confetti",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "เสือสมิง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hand Heart",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ผีนางรำ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hat and Mustache",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ผีกระหัง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Mishka Bear",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ผีเปตร"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Paper Crane",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ผีปอบ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Lots of Bread",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "บวก1วิน"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Night Star",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ลบ 1วิน"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Doughnut",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "สุ่ม"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Flower Garland",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ใบ้ที่ซ่อน"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Baby Hippo",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "สะกดวิญญาณ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Journey Pass",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ผีจับขา"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rosa",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ปิดไฟ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Finger Heart",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "วัวธนู"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Heart Me",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "สุ่มผี"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rose",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ตุ๊กแก"
+        },
+        {
+          "enabled": true,
+          "trigger": "like",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 100,
+          "action": "ตุ๊กแก"
+        },
+        {
+          "enabled": true,
+          "trigger": "follow",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "วัวธนู"
+        }
+      ]
+    },
+    "dinorun-26a95d6a-keymap.json": {
+      "enabled": true,
+      "comment": "DinoRun balanced 2026-09-22: ใช้คู่กับตัวช่วยในชุดนี้; G.O.A.T. Busker=Mammoth; Heart Me=Random ค่าเดิม ไม่สุ่มเพิ่ม/ลดวิน; +2/-2 Win; ส่งคอมโบทุกชิ้นผ่าน /event/.",
+      "rules": [
+        {
+          "giftName": "TikTok",
+          "key": "",
+          "vk": 0,
+          "label": "Helper: Boar",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/1?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Rosa",
+          "key": "",
+          "vk": 0,
+          "label": "Helper: Crocodile",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/2?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Perfume",
+          "key": "",
+          "vk": 0,
+          "label": "Helper: Stego",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/3?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Hand Heart",
+          "key": "",
+          "vk": 0,
+          "label": "Helper: Gigalacertus",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/4?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Corgi",
+          "key": "",
+          "vk": 0,
+          "label": "Helper: หมัดสีทอง",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/5?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Finger Heart",
+          "key": "",
+          "vk": 0,
+          "label": "Helper: Dragon",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/16?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Rose",
+          "key": "",
+          "vk": 0,
+          "label": "Enemy: Deer",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/6?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Journey Pass",
+          "key": "",
+          "vk": 0,
+          "label": "Enemy: Lion",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/7?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "G.O.A.T. Busker",
+          "key": "",
+          "vk": 0,
+          "label": "Enemy: Mammoth",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/8?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Confetti",
+          "key": "",
+          "vk": 0,
+          "label": "Enemy: Meteo",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/9?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Fruit Friends",
+          "key": "",
+          "vk": 0,
+          "label": "Enemy: ฝ่ามือสีทอง",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/10?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "Enemy: Bird",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/11?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "GG",
+          "key": "",
+          "vk": 0,
+          "label": "Enemy: Rock",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/12?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Spinning Soccer",
+          "key": "",
+          "vk": 0,
+          "label": "Enemy: Tornado",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/17?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Money Gun",
+          "key": "",
+          "vk": 0,
+          "label": "Reset",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/13?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Watermelon Love",
+          "key": "",
+          "vk": 0,
+          "label": "Helper: + Win",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/14?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Galaxy",
+          "key": "",
+          "vk": 0,
+          "label": "Enemy: - Win",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/15?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Heart Me",
+          "key": "",
+          "vk": 0,
+          "label": "Random",
+          "holdMs": 100,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18903/dinorun/event/18?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        }
+      ],
+      "events": [
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "TikTok",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Helper: Boar"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rosa",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Helper: Crocodile"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Perfume",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Helper: Stego"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hand Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Helper: Gigalacertus"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Corgi",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Helper: หมัดสีทอง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Finger Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Helper: Dragon"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rose",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Enemy: Deer"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Journey Pass",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Enemy: Lion"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "G.O.A.T. Busker",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Enemy: Mammoth"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Confetti",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Enemy: Meteo"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Fruit Friends",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Enemy: ฝ่ามือสีทอง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "GG",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Enemy: Rock"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Spinning Soccer",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Enemy: Tornado"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Money Gun",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Reset"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Watermelon Love",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Helper: + Win"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Galaxy",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Enemy: - Win"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Heart Me",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Random"
+        },
+        {
+          "enabled": true,
+          "trigger": "like",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 100,
+          "action": "Helper: Boar"
+        },
+        {
+          "enabled": true,
+          "trigger": "follow",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Enemy: Deer"
+        }
+      ]
+    },
+    "farming-88a02729-keymap.json": {
+      "enabled": true,
+      "comment": "Preset v13 for FARM Local v12: 17 gift mappings matching screenshot; Events and Actions synchronized. Corgi=Kunpeng whale; Night Star=dinosaurs; Twinkling Star=lion. Non-gift events preserved.",
+      "rules": [
+        {
+          "giftName": "Rose",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกหมู",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_2",
+          "enabled": true
+        },
+        {
+          "giftName": "Perfume",
+          "key": "",
+          "vk": 0,
+          "label": "สุ่มแมงป่อง / แมงมุม",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_3",
+          "enabled": true
+        },
+        {
+          "giftName": "Doughnut",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกแรด",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_4",
+          "enabled": true
+        },
+        {
+          "giftName": "Corgi",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกคุนเผิง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_5",
+          "enabled": true
+        },
+        {
+          "giftName": "Night Star",
+          "key": "",
+          "vk": 0,
+          "label": "สุ่มไดโนเสาร์",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_6",
+          "enabled": true
+        },
+        {
+          "giftName": "Money Gun",
+          "key": "",
+          "vk": 0,
+          "label": "สุ่มอากาศรุนแรง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_7",
+          "enabled": true
+        },
+        {
+          "giftName": "Slow motion",
+          "key": "",
+          "vk": 0,
+          "label": "สุ่มวัว / ม้า",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_8",
+          "enabled": true
+        },
+        {
+          "giftName": "Hand Heart",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกรถไถ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_9",
+          "enabled": true
+        },
+        {
+          "giftName": "Twinkling Star",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกสิงโต",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/spawn/lion",
+          "enabled": true
+        },
+        {
+          "giftName": "Fruit Friends",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกช้างราชา",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/spawn/elephant",
+          "enabled": true
+        },
+        {
+          "giftName": "Flower Garland",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกกวาง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_10?animal=deer",
+          "enabled": true
+        },
+        {
+          "giftName": "Cap",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกหมี",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_10?animal=bear",
+          "enabled": true
+        },
+        {
+          "giftName": "Hat and Mustache",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกจระเข้",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_10?animal=crocodile",
+          "enabled": true
+        },
+        {
+          "giftName": "GG",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกไก่",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_10?animal=chicken",
+          "enabled": true
+        },
+        {
+          "giftName": "Journey Pass",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกเป็ด",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_10?animal=duck",
+          "enabled": true
+        },
+        {
+          "giftName": "G.O.A.T. Busker",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกสุนัข",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_10?animal=dog",
+          "enabled": true
+        },
+        {
+          "giftName": "Finger Heart",
+          "key": "",
+          "vk": 0,
+          "label": "เรียกแพะ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:18908/game_trigger_10?animal=goat",
+          "enabled": true
+        }
+      ],
+      "events": [
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rose",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกหมู"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Perfume",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "สุ่มแมงป่อง / แมงมุม"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Doughnut",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกแรด"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Corgi",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกคุนเผิง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Night Star",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "สุ่มไดโนเสาร์"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Money Gun",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "สุ่มอากาศรุนแรง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Slow motion",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "สุ่มวัว / ม้า"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hand Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกรถไถ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Twinkling Star",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกสิงโต"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Fruit Friends",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกช้างราชา"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Flower Garland",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกกวาง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Cap",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกหมี"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hat and Mustache",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกจระเข้"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "GG",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกไก่"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Journey Pass",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกเป็ด"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "G.O.A.T. Busker",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกสุนัข"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Finger Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เรียกแพะ"
+        },
+        {
+          "enabled": true,
+          "trigger": "like",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 100,
+          "action": "เรียกหมู"
+        },
+        {
+          "enabled": true,
+          "trigger": "share",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "สุ่มแมงป่อง / แมงมุม"
+        }
+      ]
+    },
+    "mekong-longtail-33ede6b3-keymap.json": {
+      "enabled": true,
+      "comment": "ใช้ตัวเชื่อม MEKONG Combo-Fix ที่แถมใน ZIP ก่อนนำเข้า; นับยอดสะสมตามรหัสคอมโบ ไม่ใช้ตัวแบ่ง 200 ชิ้นเดิม; พิมพ์ A–E เลือกเรือเองได้; ยังไม่มีทีม ส่งของขวัญหรือติดตามจะลงเรือคนน้อยสุดอัตโนมัติ (ไม่เกิน 10 คน/ลำ); ไลก์ minCount=1 เพราะเกมสะสมแยกผู้ชมครบ 50 จึงเร่ง 1 ครั้ง; ติดตาม/แชร์ = เร่ง 1 ครั้ง; Heart Me = ไนตรัส 1 ชิ้น; ตัวเชื่อม Combo-Fix รับ Share จากตัวอ่าน TikTok ที่อัปเดตแล้ว; times=1 ห้ามคูณซ้ำ; ใช้คู่กับ ZIP นี้; Test ไม่บันทึกอันดับโลก",
+      "rules": [
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "ลงเรือ A",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/join-A?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "ลงเรือ B",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/join-B?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "ลงเรือ C",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/join-C?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "ลงเรือ D",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/join-D?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "ลงเรือ E",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/join-E?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Rose",
+          "key": "",
+          "vk": 0,
+          "label": "เร่งเครื่อง · 1 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/speed?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Finger Heart",
+          "key": "",
+          "vk": 0,
+          "label": "พลังเต็มสูบ · 5 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/power?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Flower Garland",
+          "key": "",
+          "vk": 0,
+          "label": "ไนตรัส · 15 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/nitro?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Perfume",
+          "key": "",
+          "vk": 0,
+          "label": "ชะลอคู่แข่ง · 20 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/slow?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Doughnut",
+          "key": "",
+          "vk": 0,
+          "label": "แช่แข็งคู่แข่ง · 30 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/freeze?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Hand Heart",
+          "key": "",
+          "vk": 0,
+          "label": "อัปเลเวลเรือ · 100 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/hand-heart?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Like",
+          "key": "",
+          "vk": 0,
+          "label": "เคาะใจ 50 · เร่งเครื่อง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/like?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Follow",
+          "key": "",
+          "vk": 0,
+          "label": "ติดตาม · เร่งเครื่อง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/follow?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Share",
+          "key": "",
+          "vk": 0,
+          "label": "แชร์ · เร่งเครื่อง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/share?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Heart Me",
+          "key": "",
+          "vk": 0,
+          "label": "ใจส้ม · ไนตรัส",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4319/monkey/combo/heart-me?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        }
+      ],
+      "events": [
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "A",
+          "chatCmd": "A",
+          "minCount": 1,
+          "action": "ลงเรือ A"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "B",
+          "chatCmd": "B",
+          "minCount": 1,
+          "action": "ลงเรือ B"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "C",
+          "chatCmd": "C",
+          "minCount": 1,
+          "action": "ลงเรือ C"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "D",
+          "chatCmd": "D",
+          "minCount": 1,
+          "action": "ลงเรือ D"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "E",
+          "chatCmd": "E",
+          "minCount": 1,
+          "action": "ลงเรือ E"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rose",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เร่งเครื่อง · 1 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Finger Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "พลังเต็มสูบ · 5 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Flower Garland",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "ไนตรัส · 15 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Perfume",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "ชะลอคู่แข่ง · 20 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Doughnut",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "แช่แข็งคู่แข่ง · 30 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hand Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "อัปเลเวลเรือ · 100 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "like",
+          "giftName": "Like",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เคาะใจ 50 · เร่งเครื่อง"
+        },
+        {
+          "enabled": true,
+          "trigger": "follow",
+          "giftName": "Follow",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "ติดตาม · เร่งเครื่อง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Share",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "แชร์ · เร่งเครื่อง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Heart Me",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "ใจส้ม · ไนตรัส"
+        }
+      ]
+    },
+    "monkey-max4-34c2f22a-keymap.json": {
+      "enabled": true,
+      "comment": "Monkey Max4 ฉบับสมบูรณ์ 21 กฎ; เลือกโปรไฟล์ Monkey Max4 ใน MonkeyEffect แล้วนำเข้าไฟล์นี้หลังเปิด EXE เพื่อใช้พอร์ตและคีย์ของเครื่องนี้; ของขวัญครบ 18 ชิ้น รวม ±1/±2/±4/±10 วิน; ตัวรับคอมโบรุ่นรวม 0.40.1; minCount=1, times=1; เกมสะสม 50 หัวใจต่อผู้ชมเอง; รูปและคอมโบส่งผ่าน webhook",
+      "rules": [
+        {
+          "giftName": "Rose",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · มิชลินวิ่งดัน",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/magnet?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "I love you",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · ล้อยักษ์เร่งเครื่อง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/boost?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Perfume",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · ผู้พิทักษ์คริสตัล",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/shield?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Hand Heart",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · โดรนกู้ภัยลายไทย",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/rescue?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Twinkling Star",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · พญาฟีนิกซ์",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/flight?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "DJ Glasses",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · ฟีนิกซ์มงกุฎสุริยะ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/winPlus?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Watermelon Love",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · กระทิงทองคำ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/watermelonLove?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Cooper Flies Home",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · มังกรเมฆามรกต",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/cooperHome?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Flying Jets",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · พญาครุฑจักรพรรดิสุริยะ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/jetPlane?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "TikTok",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · ฟักทองฮาโลวีน",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/wind?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Journey Pass",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · หมัดยักษ์น้ำแข็ง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/ice?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "G.O.A.T. Busker",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · ดาวเคราะห์ถล่ม",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/meteor?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Confetti",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · ค้อนเทพสายฟ้า",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/lightning?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Night Star",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · อสูรหลุมดำ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/blackhole?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Money Gun",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · อสูรพิพากษาทมิฬ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/winMinus?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Galaxy",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · แมงป่องจักรกล",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/galaxy?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Cooper Picnic",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · ยักษ์ลาวา",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/cooperPicnic?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Diamond Gun",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · เทพอสูรผ่ามิติ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/diamondGun?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Follow",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · ติดตาม · วิบากขวางทาง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/follow?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Share",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · แชร์ · วิบากขวางทาง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/share?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Like",
+          "key": "",
+          "vk": 0,
+          "label": "Monkey Max4 · 50 หัวใจ · ระเบิดถอยหลัง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4327/monkey/combo/like?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        }
+      ],
+      "events": [
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rose",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · มิชลินวิ่งดัน"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "I love you",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · ล้อยักษ์เร่งเครื่อง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Perfume",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · ผู้พิทักษ์คริสตัล"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hand Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · โดรนกู้ภัยลายไทย"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Twinkling Star",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · พญาฟีนิกซ์"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "DJ Glasses",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · ฟีนิกซ์มงกุฎสุริยะ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Watermelon Love",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · กระทิงทองคำ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Cooper Flies Home",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · มังกรเมฆามรกต"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Flying Jets",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · พญาครุฑจักรพรรดิสุริยะ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "TikTok",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · ฟักทองฮาโลวีน"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Journey Pass",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · หมัดยักษ์น้ำแข็ง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "G.O.A.T. Busker",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · ดาวเคราะห์ถล่ม"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Confetti",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · ค้อนเทพสายฟ้า"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Night Star",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · อสูรหลุมดำ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Money Gun",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · อสูรพิพากษาทมิฬ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Galaxy",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · แมงป่องจักรกล"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Cooper Picnic",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · ยักษ์ลาวา"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Diamond Gun",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · เทพอสูรผ่ามิติ"
+        },
+        {
+          "enabled": true,
+          "trigger": "follow",
+          "giftName": "Follow",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · ติดตาม · วิบากขวางทาง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Share",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · แชร์ · วิบากขวางทาง"
+        },
+        {
+          "enabled": true,
+          "trigger": "like",
+          "giftName": "Like",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Monkey Max4 · 50 หัวใจ · ระเบิดถอยหลัง"
+        }
+      ]
+    },
+    "neon-front-4761db39-keymap.json": {
+      "enabled": true,
+      "comment": "พิมพ์ A/B เลือกหรือเปลี่ยนทีม ของขวัญหนึ่งชิ้นต่อ webhook ให้ MonkeyEffect แยกคอมโบ ไม่คูณจำนวนซ้ำ ยังไม่เลือกทีมให้ใช้ทีมล่าสุดหรือฝ่ายยูนิตน้อยกว่า เคาะใจ 50 ครั้ง / แชร์ 1 ครั้ง = WISP 5 คัน ติดตาม = PHANTOM 8 ลำ",
+      "rules": [
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "เลือกฝ่าย A",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/join-a?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "เลือกฝ่าย B",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/join-b?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Rose",
+          "key": "",
+          "vk": 0,
+          "label": "1 เหรียญ · WISP",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-1?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Finger Heart",
+          "key": "",
+          "vk": 0,
+          "label": "5 เหรียญ · RAPTOR",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-2?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Rosa",
+          "key": "",
+          "vk": 0,
+          "label": "10 เหรียญ · BASTION",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-3?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Perfume",
+          "key": "",
+          "vk": 0,
+          "label": "20 เหรียญ · LANCER",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-4?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Doughnut",
+          "key": "",
+          "vk": 0,
+          "label": "30 เหรียญ · TEMPEST",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-5?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Hand Heart",
+          "key": "",
+          "vk": 0,
+          "label": "100 เหรียญ · COLOSSUS",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-6?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Twinkling Star",
+          "key": "",
+          "vk": 0,
+          "label": "199 เหรียญ · ION STORM",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-7?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Corgi",
+          "key": "",
+          "vk": 0,
+          "label": "299 เหรียญ · NUCLEAR DAWN",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-8?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Money Gun",
+          "key": "",
+          "vk": 0,
+          "label": "500 เหรียญ · OMEGA IMPACT",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-9?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "G.O.A.T. Busker",
+          "key": "",
+          "vk": 0,
+          "label": "20 เหรียญ · PHANTOM",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-10?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Hat and Mustache",
+          "key": "",
+          "vk": 0,
+          "label": "99 เหรียญ · AETHER",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/tier-11?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "เคาะใจครบ 50 ครั้ง · WISP ×5 · 1 ชุด",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/like-50?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Share",
+          "key": "",
+          "vk": 0,
+          "label": "แชร์ · WISP ×5 · 1 ชุด",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/share?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "ติดตาม · PHANTOM ×8 · 1 ชุด",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4317/monkey/event/follow?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        }
+      ],
+      "events": [
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "A",
+          "chatCmd": "A",
+          "minCount": 1,
+          "action": "เลือกฝ่าย A"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "B",
+          "chatCmd": "B",
+          "minCount": 1,
+          "action": "เลือกฝ่าย B"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rose",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "1 เหรียญ · WISP"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Finger Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "5 เหรียญ · RAPTOR"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rosa",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "10 เหรียญ · BASTION"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Perfume",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "20 เหรียญ · LANCER"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Doughnut",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "30 เหรียญ · TEMPEST"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hand Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "100 เหรียญ · COLOSSUS"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Twinkling Star",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "199 เหรียญ · ION STORM"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Corgi",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "299 เหรียญ · NUCLEAR DAWN"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Money Gun",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "500 เหรียญ · OMEGA IMPACT"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "G.O.A.T. Busker",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "20 เหรียญ · PHANTOM"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hat and Mustache",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "99 เหรียญ · AETHER"
+        },
+        {
+          "enabled": true,
+          "trigger": "like",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 50,
+          "action": "เคาะใจครบ 50 ครั้ง · WISP ×5 · 1 ชุด"
+        },
+        {
+          "enabled": true,
+          "trigger": "share",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "แชร์ · WISP ×5 · 1 ชุด"
+        },
+        {
+          "enabled": true,
+          "trigger": "follow",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "ติดตาม · PHANTOM ×8 · 1 ชุด"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Share",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "แชร์ · WISP ×5 · 1 ชุด"
+        }
+      ]
+    },
+    "riverrush-72b04a24-keymap.json": {
+      "enabled": true,
+      "comment": "พิมพ์ 1 หรือส่งของขวัญลงเรืออัตโนมัติก่อนเริ่มแข่ง เคาะใจ 50 ต่อยูส = เร่งเครื่อง 1 ติดตาม = อัดเทอร์โบ แชร์ = เร่งเครื่อง เกมสะสมใจเอง: คง minCount=1 และ times=1 ทุกกฎ",
+      "rules": [
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "ลงเรือซิ่ง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/join?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Rose",
+          "key": "",
+          "vk": 0,
+          "label": "เร่งเครื่อง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/speed?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Finger Heart",
+          "key": "",
+          "vk": 0,
+          "label": "อัดเทอร์โบ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/power?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Flower Garland",
+          "key": "",
+          "vk": 0,
+          "label": "ไนตรัส",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/nitro?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Perfume",
+          "key": "",
+          "vk": 0,
+          "label": "สาหร่ายพันใบพัด",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/weed?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "G.O.A.T. Busker",
+          "key": "",
+          "vk": 0,
+          "label": "คลื่นกระแทก",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/wave?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Headphone TikTok",
+          "key": "",
+          "vk": 0,
+          "label": "เครื่องเย็นจัด",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/freeze?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Doughnut",
+          "key": "",
+          "vk": 0,
+          "label": "โล่กันชน",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/shield?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Hand Heart",
+          "key": "",
+          "vk": 0,
+          "label": "อัปเครื่องยนต์",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/upgrade?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Like",
+          "key": "",
+          "vk": 0,
+          "label": "เคาะใจ 50 → เร่งเครื่อง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/like?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Follow",
+          "key": "",
+          "vk": 0,
+          "label": "ติดตาม → อัดเทอร์โบ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/follow?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Share",
+          "key": "",
+          "vk": 0,
+          "label": "แชร์ → เร่งเครื่อง",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4320/monkey/exact/share?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        }
+      ],
+      "events": [
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "1",
+          "chatCmd": "1",
+          "minCount": 1,
+          "action": "ลงเรือซิ่ง"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "JOIN",
+          "chatCmd": "JOIN",
+          "minCount": 1,
+          "action": "ลงเรือซิ่ง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rose",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เร่งเครื่อง"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Finger Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "อัดเทอร์โบ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Flower Garland",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "ไนตรัส"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Perfume",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "สาหร่ายพันใบพัด"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "G.O.A.T. Busker",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "คลื่นกระแทก"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Headphone TikTok",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เครื่องเย็นจัด"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Doughnut",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "โล่กันชน"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hand Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "อัปเครื่องยนต์"
+        },
+        {
+          "enabled": true,
+          "trigger": "like",
+          "giftName": "Like",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เคาะใจ 50 → เร่งเครื่อง"
+        },
+        {
+          "enabled": true,
+          "trigger": "follow",
+          "giftName": "Follow",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "ติดตาม → อัดเทอร์โบ"
+        },
+        {
+          "enabled": true,
+          "trigger": "share",
+          "giftName": "Share",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "แชร์ → เร่งเครื่อง"
+        }
+      ]
+    },
+    "runninggame-e2003c39-keymap.json": {
+      "enabled": true,
+      "comment": "RunningGame รับของขวัญตรงผ่าน WebSocket :15500 และจับคู่คำสั่งในเกมเอง ไม่ต้องตั้งพรีเซ็ตใน Monkeyeffect",
+      "rules": [],
+      "events": []
+    },
+    "shipbattle-61785d7e-keymap.json": {
+      "enabled": true,
+      "comment": "Ship Battle: พิมพ์ A/a หรือ 1 หรือ !join เข้าเล่น; พิมพ์ B/b หรือ 2 ให้เรือของผู้พิมพ์เน้นโจมตีอันดับ 1; Monkey Effect 1.2.2 จับคู่แชตโดยไม่แยกตัวเล็ก/ใหญ่ จึงใช้แถว A และ B อย่างละแถว; TikTok เพิ่มเกราะ 20; Ice Cream Cone ซ่อม HP 50 ไม่จำกัด; GG อัปเลเวล 15/25/35/45/55 สูงสุด Lv6 ดาเมจ +3% ต่อเลเวล สูงสุด +15%; ครบ 50 ไลค์ใช้จรวด Lv.1; ส่งของขวัญลงสนามอัตโนมัติ; เรือจมแล้วส่งของขวัญใหม่กลับเข้า Lv.1; ของขวัญส่งถึงเรือผู้ให้พร้อมชื่อและรูป; /event/ จำเป็นสำหรับคอมโบ 1 ชิ้นต่อคำสั่งใน Monkey Effect 1.2.2; times=1; เข้าสู่ระบบและเปิดสนามก่อนเริ่มไลฟ์",
+      "rules": [
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "เข้าเล่น / กลับเข้าสนาม",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/join?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Rose",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.1 · จรวดขึ้นฟ้า · 1 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/ciws?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Finger Heart",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.2 · มิสไซล์นำวิถี · 5 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/missile?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Slow motion",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.3 · โดรนโจมตี · 10 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/drone?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Perfume",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.4 · ตอร์ปิโด · 20 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/torpedo?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Doughnut",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.5 · เลเซอร์ · 30 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/laser?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Confetti",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.6 · จรวดนิวเคลียร์ · 100 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/railgun?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Night Star",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.7 · โจมตีวงโคจร · 199 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/orbital?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Corgi",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.8 · แอนติแมตเตอร์ · 299 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/antimatter?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Money Gun",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.9 · F-35 นิวเคลียร์ · 500 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/worldnuke?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "โจมตีอันดับ 1",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/target-leader?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "GG",
+          "key": "",
+          "vk": 0,
+          "label": "สะสม GG อัปเลเวล · 1 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/upgrade?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "TikTok",
+          "key": "",
+          "vk": 0,
+          "label": "เสริมเกราะ +20 ไม่จำกัด · 1 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/armor?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Ice Cream Cone",
+          "key": "",
+          "vk": 0,
+          "label": "ซ่อม HP +50 ไม่จำกัด · 1 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:4318/monkey/event/heal?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        }
+      ],
+      "events": [
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "A",
+          "chatCmd": "A",
+          "minCount": 1,
+          "action": "เข้าเล่น / กลับเข้าสนาม"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "B",
+          "chatCmd": "B",
+          "minCount": 1,
+          "action": "โจมตีอันดับ 1"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "1",
+          "chatCmd": "1",
+          "minCount": 1,
+          "action": "เข้าเล่น / กลับเข้าสนาม"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "!join",
+          "chatCmd": "!join",
+          "minCount": 1,
+          "action": "เข้าเล่น / กลับเข้าสนาม"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "2",
+          "chatCmd": "2",
+          "minCount": 1,
+          "action": "โจมตีอันดับ 1"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rose",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.1 · จรวดขึ้นฟ้า · 1 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Finger Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.2 · มิสไซล์นำวิถี · 5 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Slow motion",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.3 · โดรนโจมตี · 10 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Perfume",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.4 · ตอร์ปิโด · 20 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Doughnut",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.5 · เลเซอร์ · 30 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Confetti",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.6 · จรวดนิวเคลียร์ · 100 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Night Star",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.7 · โจมตีวงโคจร · 199 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Corgi",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.8 · แอนติแมตเตอร์ · 299 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Money Gun",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.9 · F-35 นิวเคลียร์ · 500 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "GG",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "สะสม GG อัปเลเวล · 1 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "TikTok",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เสริมเกราะ +20 ไม่จำกัด · 1 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Ice Cream Cone",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "ซ่อม HP +50 ไม่จำกัด · 1 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "like",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 50,
+          "action": "Lv.1 · จรวดขึ้นฟ้า · 1 เหรียญ"
+        }
+      ]
+    },
+    "tankbattle-502eef10-keymap.json": {
+      "enabled": true,
+      "comment": "Tank Battle: พิมพ์ A/a หรือ 1 หรือ !join เข้าเล่น; พิมพ์ B/b หรือ 2 ให้รถถังของผู้พิมพ์เน้นโจมตีอันดับ 1; Monkey Effect 1.2.2 จับคู่แชตโดยไม่แยกตัวเล็ก/ใหญ่ จึงใช้แถว A และ B อย่างละแถว; TikTok เพิ่มเกราะ 20; Ice Cream Cone ซ่อม HP 50 ไม่จำกัด; GG อัปเลเวล 15/25/35/45/55 สูงสุด Lv6 ดาเมจ +3% ต่อเลเวล สูงสุด +15%; ครบ 50 ไลค์ใช้กระสุนพิเศษชุดที่ 1; ส่งของขวัญลงสนามอัตโนมัติ; รถถังจมแล้วส่งของขวัญใหม่กลับเข้า Lv.1; ของขวัญส่งถึงรถถังผู้ให้พร้อมชื่อและรูป; /event/ จำเป็นสำหรับคอมโบ 1 ชิ้นต่อคำสั่งใน Monkey Effect 1.2.2; times=1; เปิดสนามก่อนเริ่มไลฟ์",
+      "rules": [
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "เข้าเล่น / กลับเข้าสนาม",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/join?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Rose",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.1 · ปืนแม่เหล็ก Gauss · 1 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/ciws?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Finger Heart",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.2 · ปืนใหญ่พลาสมา · 5 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/missile?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Slow motion",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.3 · ปืนไอออนสายฟ้า · 10 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/drone?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Perfume",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.4 · Railgun เจาะเกราะ · 20 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/torpedo?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Doughnut",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.5 · เลเซอร์พิฆาต · 30 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/laser?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Confetti",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.6 · กระสุนฝูงนำวิถี · 100 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/railgun?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Night Star",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.7 · ปืนแรงโน้มถ่วง · 199 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/orbital?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Corgi",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.8 · ปืนใหญ่ปฏิสสาร · 299 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/antimatter?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Money Gun",
+          "key": "",
+          "vk": 0,
+          "label": "Lv.9 · โอเมก้า · นิวเคลียร์ถล่มโลก · 500 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/worldnuke?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "",
+          "key": "",
+          "vk": 0,
+          "label": "โจมตีอันดับ 1",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/target-leader?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "GG",
+          "key": "",
+          "vk": 0,
+          "label": "สะสม GG อัปเลเวล · 1 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/upgrade?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "TikTok",
+          "key": "",
+          "vk": 0,
+          "label": "เสริมเกราะ +20 ไม่จำกัด · 1 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/armor?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        },
+        {
+          "giftName": "Ice Cream Cone",
+          "key": "",
+          "vk": 0,
+          "label": "ซ่อม HP +50 ไม่จำกัด · 1 เหรียญ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": "http://127.0.0.1:8877/monkey/event/heal?key=__LOCAL_CONNECTOR_KEY__",
+          "enabled": true
+        }
+      ],
+      "events": [
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "A",
+          "chatCmd": "A",
+          "minCount": 1,
+          "action": "เข้าเล่น / กลับเข้าสนาม"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "B",
+          "chatCmd": "B",
+          "minCount": 1,
+          "action": "โจมตีอันดับ 1"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "1",
+          "chatCmd": "1",
+          "minCount": 1,
+          "action": "เข้าเล่น / กลับเข้าสนาม"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "!join",
+          "chatCmd": "!join",
+          "minCount": 1,
+          "action": "เข้าเล่น / กลับเข้าสนาม"
+        },
+        {
+          "enabled": true,
+          "trigger": "chat",
+          "giftName": "2",
+          "chatCmd": "2",
+          "minCount": 1,
+          "action": "โจมตีอันดับ 1"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rose",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.1 · ปืนแม่เหล็ก Gauss · 1 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Finger Heart",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.2 · ปืนใหญ่พลาสมา · 5 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Slow motion",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.3 · ปืนไอออนสายฟ้า · 10 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Perfume",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.4 · Railgun เจาะเกราะ · 20 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Doughnut",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.5 · เลเซอร์พิฆาต · 30 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Confetti",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.6 · กระสุนฝูงนำวิถี · 100 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Night Star",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.7 · ปืนแรงโน้มถ่วง · 199 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Corgi",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.8 · ปืนใหญ่ปฏิสสาร · 299 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Money Gun",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "Lv.9 · โอเมก้า · นิวเคลียร์ถล่มโลก · 500 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "GG",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "สะสม GG อัปเลเวล · 1 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "TikTok",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "เสริมเกราะ +20 ไม่จำกัด · 1 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Ice Cream Cone",
+          "chatCmd": "",
+          "minCount": 1,
+          "action": "ซ่อม HP +50 ไม่จำกัด · 1 เหรียญ"
+        },
+        {
+          "enabled": true,
+          "trigger": "like",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 50,
+          "action": "Lv.1 · ปืนแม่เหล็ก Gauss · 1 เหรียญ"
+        }
+      ]
+    },
+    "temple-escape-6230a8d0-keymap.json": {
+      "enabled": true,
+      "comment": "Temple_Escape รับของขวัญตรงผ่านช่องทางเกมเดิมและจับคู่คำสั่งในเกมเอง ไม่ต้องตั้งพรีเซ็ตใน Monkeyeffect",
+      "rules": [],
+      "events": []
+    },
+    "the-rider-2c785236-keymap.json": {
+      "enabled": true,
+      "comment": "THE RIDER 1.2 · แปลงจาก tikfinity 1.2.tfc · ตรวจปุ่มและการจับคู่อีเวนต์ครบตามต้นฉบับ",
+      "rules": [
+        {
+          "giftName": "Ice Cream Cone",
+          "key": "J",
+          "vk": 74,
+          "label": "-เงิน",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "GG",
+          "key": "N",
+          "vk": 78,
+          "label": "+เงิน",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Rosa",
+          "key": "Q",
+          "vk": 81,
+          "label": "ไนตรัส",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Lots of Bread",
+          "key": "L",
+          "vk": 76,
+          "label": "-1",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Night Star",
+          "key": "O",
+          "vk": 79,
+          "label": "+1",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Bravo!",
+          "key": "I",
+          "vk": 73,
+          "label": "อมตะ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Baby Hippo",
+          "key": "V",
+          "vk": 86,
+          "label": "ผีซ้อนท้าย",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Heart Me",
+          "key": "P",
+          "vk": 80,
+          "label": "สุ่ม",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Perfume",
+          "key": "T",
+          "vk": 84,
+          "label": "พายุ",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Flower Garland",
+          "key": "B",
+          "vk": 66,
+          "label": "ยายสปีด",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Finger Heart",
+          "key": "C",
+          "vk": 67,
+          "label": "ควาย",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Rose",
+          "key": "G",
+          "vk": 71,
+          "label": "หมา",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Mishka Bear",
+          "key": "X",
+          "vk": 88,
+          "label": "ลบทั้งหมด",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Hand Heart",
+          "key": "H",
+          "vk": 72,
+          "label": "กีกี้",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        },
+        {
+          "giftName": "Doughnut",
+          "key": "Y",
+          "vk": 89,
+          "label": "ถนนลื่น",
+          "holdMs": 80,
+          "times": 1,
+          "webhookUrl": null,
+          "enabled": true
+        }
+      ],
+      "events": [
+        {
+          "enabled": true,
+          "trigger": "like",
+          "giftName": "",
+          "chatCmd": "",
+          "minCount": 100,
+          "action": "หมา"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Bravo!",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "อมตะ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Mishka Bear",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ลบทั้งหมด"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Finger Heart",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ควาย"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Hand Heart",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "กีกี้"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Lots of Bread",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "-1"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rosa",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ไนตรัส"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Night Star",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "+1"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Baby Hippo",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ผีซ้อนท้าย"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Ice Cream Cone",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "-เงิน"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "GG",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "+เงิน"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Friendship Necklace",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "-เงิน"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Perfume",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "พายุ"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Doughnut",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ถนนลื่น"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Flower Garland",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "ยายสปีด"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "The Lucky 9",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "+เงิน"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Heart Me",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "สุ่ม"
+        },
+        {
+          "enabled": true,
+          "trigger": "gift",
+          "giftName": "Rose",
+          "chatCmd": "",
+          "minCount": 0,
+          "action": "หมา"
+        }
+      ]
+    }
+  }
+}

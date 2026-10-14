@@ -1,8 +1,8 @@
 {
-  "version": "1.3.1",
-  "notes": "Monkeyeffect 1.3.1 - ปรับการบันทึกและโหลดพรีเซ็ตแยกตามเกม ป้องกันบันทึกผิดเกม แสดงโหมดส่งตรงสำหรับ RunningGame และ Temple_Escape แก้ชื่อ Monkey-Max4 ในข้อความตัวเชื่อม และล้างข้อผิดพลาดเก่าหลังนำเข้าพรีเซ็ตสำเร็จ รวมการแก้ AI อ่านเสียง Subathon วิดีโอ และสุลต่านจากรุ่นก่อน",
-  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.1-update.zip",
-  "sha256": "bf3b00699d3e164a52adb84a26ca248c98c80470f8fe4c54644aaeec4d773736",
+  "version": "1.3.1.1",
+  "notes": "Monkeyeffect 1.3.1 ชุดรวมเกม (บิลด์ 1.3.1.1) - แทนรายการเกมและพรีเซ็ตเก่าด้วย 12 เกมที่จัดใหม่ พร้อมสำรองชุดเก่าใน userdata/library-backups ทำครั้งเดียวหลังอัปเดต เลือกเกมแล้วโหลดพรีเซ็ตอัตโนมัติ RunningGame และ Temple_Escape ส่งตรงไม่ต้องตั้งกฎ อ่านคีย์จากเกมบนเครื่องผู้ใช้ ไม่มีคีย์ส่วนตัวในแพ็กเกจ รวมการแก้ชื่อ Monkey-Max4 และข้อผิดพลาดค้าง",
+  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.1.1-update.zip",
+  "sha256": "c4415d003907bf722c88335c2cdc644b1ae8125a0efdcb86573bbec04f86ed97",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

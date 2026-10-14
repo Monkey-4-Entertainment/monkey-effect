@@ -1,16 +1,13 @@
-Monkeyeffect online update v1.3.1
+Monkeyeffect 1.3.1 game-library edition, build 1.3.1.1
 
 Feed: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json
-ZIP: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.1-update.zip
-SHA256: bf3b00699d3e164a52adb84a26ca248c98c80470f8fe4c54644aaeec4d773736
+ZIP: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.1.1-update.zip
+SHA256: c4415d003907bf722c88335c2cdc644b1ae8125a0efdcb86573bbec04f86ed97
 
-Changes:
-- Preserve game-specific preset selection and prevent saving a stale editor into another game.
-- Show direct forwarding for RunningGame and Temple_Escape without requiring gift rules.
-- Identify Monkey-Max4 and MEKONG-Longtail correctly in shared connector results.
-- Clear stale delivery errors after a successful preset import.
-- Include previous TTS, Subathon, video and Sultan fixes.
+This update replaces the previous game catalog and presets once, after backing them up in userdata/library-backups/1.3.1-library-1. Later edits are retained on subsequent starts.
+Includes BEYOND RETRUN, DinoRun, Farming, MEKONG-Longtail, Monkey-Max4 (0.16.0 preset), NEON-FRONT, RiverRush, RunningGame, ShipBattle, TankBattle, Temple_Escape and THE RIDER.
+RunningGame and Temple_Escape use direct forwarding with no gift rules.
+Presets load automatically on game selection. Machine-specific connector keys are resolved locally from the game files when the game is open; no private keys are included in this download.
+Includes the 1.3.1 connector-name fix and earlier TTS, Subathon, video and Sultan fixes.
 
-Validation: 49 isolated native checks passed. Installed Monkey-Max4 connector accepted the local key; the non-effect validation reported the correct game name. Existing 12 game configurations remained intact. ZIP extraction and every file hash verified.
-
-Contains application files only. User settings, personal presets, logs and connector keys are excluded. Live TikTok delivery was not exercised.
+Validation: 74 isolated checks passed, including fresh installation, one-time replacement, backup recovery availability and preservation of later edits. Local key discovery passed for all seven keyed game types. All 12 installed presets matched the bundle. ZIP extraction and all file hashes verified. Live TikTok/gameplay was not exercised.
