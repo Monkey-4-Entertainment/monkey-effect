@@ -1,2 +1,2 @@
-b9f13efee349de0e6b9254a872a62ce71ad4052bef95ddabf7a8be39fadafdc0  Monkey-Max4-AutoUpdate-0.17.1.zip
-55c312bc900a183248b2a8e0c7aea6bffee884d1f40417cc2ba9736f1453120d  Monkey-Max4-Update-0.16.x-to-0.17.1.zip
+6e42e8329c1c00ca47f3fe983c2b37055b09c63e2664a17c5b3751c6bcc3d9ef  Monkey-Max4-AutoUpdate-0.20.0.zip
+3786a4c5b69df79c918a3588d1c70bb85df4e5ad46b4ebacddae1391e02ae393  Monkey-Max4-Update-0.16.x-to-0.20.0.zip

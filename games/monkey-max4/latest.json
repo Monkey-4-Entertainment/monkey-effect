@@ -1,31 +1,32 @@
 {
   "schemaVersion": 1,
   "product": "monkey-max4",
-  "version": "0.17.1",
+  "version": "0.20.0",
   "notes": [
-    "เพิ่มปุ่มตรวจและติดตั้งอัปเดต Monkey Max4 ที่หน้าเข้าสู่ระบบ ใช้งานได้ก่อนล็อกอิน",
-    "ดาวน์โหลดจากโฟลเดอร์ games/monkey-max4 บนเซิร์ฟเวอร์ร่วม แยกจากระบบอัปเดต MonkeyEffect",
-    "ตรวจขนาดไฟล์และ SHA256 ก่อนติดตั้ง เก็บข้อมูลสมาชิก วิน การตั้งค่า และตัวเชื่อมเดิมไว้",
-    "เมื่อติดตั้งอัตโนมัติสำเร็จ เกมจะเปิดใหม่ พร้อมรถแม่มด เสียงบิน และเอฟเฟกต์ที่เล่นต่อเนื่องกับเกม"
+    "เพิ่มซานต้าเลื่อนกวาง รวม 9 โมเดล กวางวิ่ง 8 จังหวะ ของช่วย 10 เหรียญขยายเฉพาะกวาง 2 เท่าและเร่งบิน 10 วินาทีต่อชิ้น",
+    "ลดความเร็วทุกโมเดลลง 20% ทั้งการขับปกติและตอนบัฟ พร้อมปรับซานต้าให้เห็นชัดขึ้น ลดแสงฟุ้งและการกะพริบจางตอนบัฟ",
+    "ของช่วย 10 เหรียญของแม่มดขยายหัวแปรงไม้กวาด 3.5 เท่าจากปกติ ใหญ่กว่าตอนบัฟเดิม 2 เท่า ตัวแม่มดขนาดเดิม",
+    "อัปเดตจาก 0.17.1 ได้ในหน้าเข้าสู่ระบบ เก็บสมาชิก วิน การตั้งค่า คีย์ตัวเชื่อม และพรีเซ็ต MonkeyEffect เดิมไว้"
   ],
   "package": {
     "kind": "runtime-overlay",
-    "url": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/games/monkey-max4/Monkey-Max4-AutoUpdate-0.17.1.zip",
-    "sha256": "b9f13efee349de0e6b9254a872a62ce71ad4052bef95ddabf7a8be39fadafdc0",
-    "bytes": 38406416,
+    "url": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/games/monkey-max4/Monkey-Max4-AutoUpdate-0.20.0.zip",
+    "sha256": "6e42e8329c1c00ca47f3fe983c2b37055b09c63e2664a17c5b3751c6bcc3d9ef",
+    "bytes": 42625366,
     "fromVersions": [
       "0.16.0",
       "0.16.1",
       "0.16.2",
       "0.16.3",
       "0.16.4",
-      "0.17.0"
+      "0.17.0",
+      "0.17.1"
     ]
   },
   "manual": {
-    "url": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/games/monkey-max4/Monkey-Max4-Update-0.16.x-to-0.17.1.zip",
-    "sha256": "55c312bc900a183248b2a8e0c7aea6bffee884d1f40417cc2ba9736f1453120d",
-    "bytes": 38956216
+    "url": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/games/monkey-max4/Monkey-Max4-Update-0.16.x-to-0.20.0.zip",
+    "sha256": "3786a4c5b69df79c918a3588d1c70bb85df4e5ad46b4ebacddae1391e02ae393",
+    "bytes": 43175322
   },
-  "publishedAt": "2026-10-16T02:35:39Z"
+  "publishedAt": "2026-10-16T17:32:33Z"
 }
