@@ -190,7 +190,8 @@
           <div id="scanGamesPanel" class="scan-games-panel hidden">
             <label for="scannedWindowSelect">เลือกจากหน้าต่างที่เปิดอยู่</label>
             <select id="scannedWindowSelect"></select>
-            <button id="useScannedGameBtn" class="btn secondary small" type="button">เพิ่มเป็นเกมนี้</button>
+            <button id="useScannedGameBtn" class="btn secondary small" type="button">ใช้หน้าต่างนี้</button>
+            <p class="hint">เกมที่บันทึกไว้จะจับอัตโนมัติ ใช้ชื่อและพรีเซ็ตเดิม — เพิ่มรายการเฉพาะเกมใหม่ที่ยังไม่เคยบันทึก</p>
           </div>
           <div id="addGamePanel" class="scan-games-panel hidden">
             <label for="addGameName">ชื่อเกมใหม่</label>
@@ -574,10 +575,13 @@
             <div>
               <label for="musicNowPlaying">กำลังเล่น</label>
               <div id="musicNowPlaying" class="now-playing">—</div>
+              <p id="musicQueueStatus" class="hint">รอเล่น 0 เพลง</p>
+              <p id="musicFeedStatus" class="hint">กำลังเชื่อมต่อคำสั่งเพลง…</p>
             </div>
           </div>
           <div class="actions tight">
             <button id="musicStopBtn" class="btn ghost" type="button">หยุดเพลง</button>
+            <button id="musicRetryBtn" class="btn secondary hidden" type="button" hidden>ลองเพลงที่ไม่สำเร็จอีกครั้ง</button>
             <button id="musicRestoreDefaultsBtn" class="btn secondary" type="button">ใช้ตั้งค่าเริ่มต้น</button>
           </div>
           <p class="hint">กด «ใช้ตั้งค่าเริ่มต้น» เพื่อโหลดกฎของขวัญ→เพลงที่มากับโปรแกรม (เช่น Confetti, Galaxy, …)</p>
@@ -1696,6 +1700,8 @@ Facebook Fanpage</textarea>
     <script src="/subathon-rules.js?v=subathon-unlimited1"></script>
     <script src="/studio.js?v=subathon-unlimited1"></script>
     <script src="/members.js?v=m13-login"></script>
+
+
     <script src="/farm-preset-editor.js?v=10"></script>
   </body>
 </html>

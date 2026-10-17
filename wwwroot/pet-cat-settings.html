@@ -1,0 +1,18 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/pet-cat.css?v=magic6"><style>html,body{height:auto!important;overflow:auto!important;background:#171426!important}#catSettings{position:static;width:100%;max-height:none;border:0;box-shadow:none;padding:12px;background:transparent}#catSettings header{display:none}</style></head><body>  <aside id="catSettings">
+    <header><div><small>ORANGE CAT · 9:16</small><h1>แมวนักเวท</h1></div></header>
+    <p id="catConnection" role="status">กำลังเชื่อมต่อ…</p>
+    <label>ชื่อแมว<input id="cfgName" type="text" maxlength="30"></label>
+    <label>ขนาดแมว <output id="catScaleValue"></output><input id="cfgCatScale" type="range" min="20" max="80" step="1"></label>
+    <label>ขนาดอันดับสุลต่าน <output id="rankScaleValue"></output><input id="cfgRankScale" type="range" min="20" max="75" step="1"></label>
+    <div class="check-grid">
+      <label><input id="cfgEnabled" type="checkbox">รับของขวัญจริง</label><label><input id="cfgLocked" type="checkbox">ล็อกการลาก</label>
+      <label><input id="cfgShowName" type="checkbox">ชื่อแมว</label><label><input id="cfgShowProgress" type="checkbox">เลเวลเหนือหัว</label>
+      <label><input id="cfgShowGifts" type="checkbox">กองของขวัญ</label><label><input id="cfgShowRanks" type="checkbox">อันดับสุลต่าน 1–3</label>
+    </div>
+    <div class="settings-actions"><button id="cfgSave" class="primary">บันทึก</button><button id="cfgResetPosition">คืนตำแหน่งเริ่มต้น</button></div>
+    <p class="hint">ลากตัวแมว อันดับ 1–3 แยกทีละอัน หรือของขวัญตั้งแต่ 100 Coins ได้เลย · ตำแหน่งแมวและอันดับบันทึกอัตโนมัติ</p>
+    <details><summary>ทดลองท่าและพัฒนาการ</summary><div id="catStages"></div><div class="test-buttons"><button id="testSmall">1 Coin ×10</button><button id="testBig">100 Coins</button><button id="testEvolution">อัปเลเวล</button><button id="testRanks">ตัวอย่างสุลต่าน</button><button id="testEnd">กลับไลฟ์จริง</button></div><p class="hint">ยอดทดสอบสะสมเพื่อแปลงร่าง 0 / 10 / 100 / 1,000 / 5,000 Coins · กดกลับไลฟ์จริงเพื่อล้างยอดทดสอบ</p></details>
+    <div class="settings-actions"><button id="copyCatUrl">คัดลอกลิงก์ OBS</button><button id="openCatWindow">เปิดหน้าต่าง Widget</button></div>
+    <p class="hint">Browser Source 720 × 1280 · พื้นหลังโปร่งใส · เปิด Overlay ก่อนกดทดลองท่า</p>
+    <p id="catSaveStatus" role="status" aria-live="polite"></p>
+  </aside><script src="/pet-cat-settings.js?v=magic6"></script></body></html>

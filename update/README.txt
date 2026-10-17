@@ -1,13 +1,13 @@
-Monkeyeffect 1.3.1 game-library edition, build 1.3.1.1
+Monkeyeffect 1.3.2
 
 Feed: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/latest.json
-ZIP: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.1.1-update.zip
-SHA256: c4415d003907bf722c88335c2cdc644b1ae8125a0efdcb86573bbec04f86ed97
+Update ZIP: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.2-update.zip
+SHA256: 6a6aaf5ad0a2aa633f6ea23dede22b3219754c60d455302242ff044f6fd3046f
 
-This update replaces the previous game catalog and presets once, after backing them up in userdata/library-backups/1.3.1-library-1. Later edits are retained on subsequent starts.
-Includes BEYOND RETRUN, DinoRun, Farming, MEKONG-Longtail, Monkey-Max4 (0.16.0 preset), NEON-FRONT, RiverRush, RunningGame, ShipBattle, TankBattle, Temple_Escape and THE RIDER.
-RunningGame and Temple_Escape use direct forwarding with no gift rules.
-Presets load automatically on game selection. Machine-specific connector keys are resolved locally from the game files when the game is open; no private keys are included in this download.
-Includes the 1.3.1 connector-name fix and earlier TTS, Subathon, video and Sultan fixes.
+Adds the five-stage orange-cat live widget with settings in the Widget gallery, smooth multi-view evolution, fireworks and centered donor thanks. Cat, premium gifts and all three guardian ranks can be positioned independently.
+Premium gift combos display their cumulative quantity while adding only newly received gift units. Donors and combo identities stay separate, including updates during the thank-you animation.
+Includes music responsiveness and delivery fixes, automatic reacquisition of existing games without duplicate catalog entries, and the twelve-game default library.
+BEYOND RETRUN changes Baby Hippo to Little Hippo once for existing presets, retaining other settings and backing up the original under userdata/library-backups/1.3.2-little-hippo. The existing library migration revision remains unchanged.
 
-Validation: 74 isolated checks passed, including fresh installation, one-time replacement, backup recovery availability and preservation of later edits. Local key discovery passed for all seven keyed game types. All 12 installed presets matched the bundle. ZIP extraction and all file hashes verified. Live TikTok/gameplay was not exercised.
+Validation: 95 isolated library/migration checks, 40 packaged-widget browser checks, and the preceding 49 pet/backend plus 13 combo-browser checks passed. ZIP extraction and all 232 file hashes verified. Live TikTok delivery was not exercised.
+This is an update package for an existing Monkeyeffect installation. It excludes private user settings, personal media, logs and connector keys.

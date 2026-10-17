@@ -647,7 +647,7 @@ async function saveAudioBlob(id, blob, name, mime) {
 async function putAudioCacheToDisk(id, blob, name, mime) {
   if (!id || !blob) return false;
   try {
-    await fetch(`/api/audio-cache/${encodeURIComponent(id)}`, {
+    const cached = await fetch(`/api/audio-cache/${encodeURIComponent(id)}`, {
       method: "PUT",
       headers: {
         "Content-Type": mime || blob.type || "audio/mpeg",
@@ -655,7 +655,7 @@ async function putAudioCacheToDisk(id, blob, name, mime) {
       },
       body: blob,
     });
-    return true;
+    return cached.ok;
   } catch {
     return false;
   }
@@ -664,7 +664,7 @@ async function putAudioCacheToDisk(id, blob, name, mime) {
 async function ensureAudioOnDisk(id) {
   if (!id) return false;
   try {
-    const exists = await fetch(`/api/audio-file/${encodeURIComponent(id)}`, { method: "GET" });
+    const exists = await fetch(`/api/audio-file/${encodeURIComponent(id)}`, { method: "HEAD" });
     if (exists.ok) return true;
   } catch {
     /* mirror from IDB */
@@ -1710,25 +1710,10 @@ let musicHookTimer = null;
 let musicPlayGen = 0;
 let musicDraining = false;
 let musicHostWaitResolve = null;
-const musicComboCredit = new Map();
-const MUSIC_COMBO_CREDIT_TTL_MS = 120000;
+let musicRequest = null;
+let musicStopPending = Promise.resolve();
+let musicFailedSong = null;
 const musicLiveAudios = new Set();
-
-function waitForHostSong(song, token) {
-  const start = Math.max(0, Number(song.hookStart) || 0);
-  const length = resolveHookDuration(song) ?? Math.max(0, (Number(song.duration) || 0) - start);
-  if (!length) return Promise.resolve();
-  return new Promise((resolve) => {
-    const finish = () => {
-      clearMusicHookTimer();
-      musicHostWaitResolve = null;
-      resolve();
-    };
-    musicHostWaitResolve = finish;
-    if (token !== musicPlayGen) return finish();
-    musicHookTimer = setTimeout(finish, length * 1000);
-  });
-}
 
 function clearMusicHookTimer() {
   if (musicHookTimer) {
@@ -1757,12 +1742,15 @@ function hardStopAudio(audio) {
 function stopMusic(opts = {}) {
   musicPlayGen += 1;
   musicQueue = [];
+  musicFailedSong = null;
+  musicRequest?.abort();
+  renderMusicQueueStatus();
   if (musicHostWaitResolve) musicHostWaitResolve();
   clearMusicHookTimer();
   // Stop host-side player (minimized-safe path).
   // Skip when about to play — PlayAsync already kills; a late stop races and cancels the new song.
   if (!opts.skipHostStop) {
-    fetch("/api/media/stop", { method: "POST" }).catch(() => {});
+    musicStopPending = fetch("/api/media/stop", { method: "POST" }).catch(() => {});
   }
   for (const audio of [...musicLiveAudios]) {
     hardStopAudio(audio);
@@ -1774,231 +1762,143 @@ function stopMusic(opts = {}) {
   if (!opts.silentUi) setNowPlaying("—");
 }
 
-async function playSongViaHost(song, token) {
-  if (token !== musicPlayGen) return false;
-  await ensureAudioOnDisk(song.id);
-  if (token !== musicPlayGen) return true;
-  const startSec = Math.max(0, Number(song.hookStart) || 0);
-  const hookDur = resolveHookDuration(song);
-  const volume = musicConfig.volume ?? 0.8;
-  const hookText = formatHookLabel(song);
-  setNowPlaying(`${song.name} · ${hookText}`);
+async function playSongById(song, token) {
+  await musicStopPending;
+  if (token !== musicPlayGen) return;
+  const ready = await ensureAudioOnDisk(song.id);
+  if (token !== musicPlayGen) return;
+  if (!ready) throw new Error(`ไม่พบไฟล์เพลง: ${song.name}`);
+  const controller = new AbortController();
+  musicRequest = controller;
+  setNowPlaying(`${song.name} · ${formatHookLabel(song)}`);
   try {
     const res = await fetch("/api/media/play", {
-      method: "POST",
+      method: "POST", signal: controller.signal,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: song.id,
-        startSec,
-        durationSec: hookDur != null && hookDur > 0 ? hookDur : undefined,
-        volume,
-      }),
+      body: JSON.stringify({ id: song.id, startSec: Math.max(0, Number(song.hookStart) || 0), durationSec: resolveHookDuration(song) || undefined, volume: musicConfig.volume ?? 0.8 }),
     });
-    // Stale generation: do NOT call /api/media/stop — a newer song may already be playing.
-    if (token !== musicPlayGen) return true;
-    const data = await res.json().catch(() => ({}));
-    // Cancelled while still current → race/failure, not success (allow Web Audio fallback).
-    if (data?.cancelled || data?.error === "cancelled") return false;
-    return !!(res.ok && data.ok !== false && data.played !== false);
-  } catch {
-    return false;
+    const data = await res.json();
+    if (token !== musicPlayGen) return;
+    if (!res.ok || !data.ok || !data.played) throw new Error(data.error || "เล่นเพลงไม่สำเร็จ");
+    // The response means playback FINISHED. Never wait for its duration a second time.
+  } finally {
+    if (musicRequest === controller) musicRequest = null;
   }
 }
 
-async function playSongById(song, token) {
-  if (token !== musicPlayGen) return;
-  // Prefer host MediaPlayer — keeps playing while main window is minimized.
-  const hostOk = await playSongViaHost(song, token);
-  if (token !== musicPlayGen) return;
-  if (hostOk) {
-    await waitForHostSong(song, token);
-    return;
+function renderMusicQueueStatus() {
+  const pending = musicQueue.reduce((n, job) => n + (job.mode === "all" ? job.remaining * job.songs.length - job.offset : job.remaining), 0) + (musicFailedSong ? 1 : 0);
+  const el = document.getElementById("musicQueueStatus");
+  if (el) el.textContent = `รอเล่น ${pending} เพลง${musicFailedSong ? " · คิวพักอยู่ กดลองเพลงที่ไม่สำเร็จอีกครั้ง" : ""}`;
+  const retry = document.getElementById("musicRetryBtn");
+  if (retry) { retry.hidden = !musicFailedSong; retry.classList.toggle("hidden", !musicFailedSong); }
+}
+
+function nextMusicSong() {
+  const job = musicQueue[0];
+  if (!job) return null;
+  let song;
+  if (job.mode === "all") {
+    song = job.songs[job.offset++];
+    if (job.offset === job.songs.length) { job.offset = 0; job.remaining--; }
+  } else {
+    const index = job.mode === "sequence" ? (musicSeqIndex[job.ruleId] || 0) : Math.floor(Math.random() * job.songs.length);
+    song = job.songs[index % job.songs.length];
+    if (job.mode === "sequence") musicSeqIndex[job.ruleId] = index + 1;
+    job.remaining--;
   }
-  // Fallback: in-page Audio (foreground only).
-  const row = await getAudioBlobCached(song.id);
-  if (token !== musicPlayGen) return;
-  if (!row?.blob) throw new Error(`ไม่พบไฟล์ ${song.name}`);
-  const url = URL.createObjectURL(row.blob);
-  const startSec = Math.max(0, Number(song.hookStart) || 0);
-  const hookDur = resolveHookDuration(song);
-
-  return new Promise((resolve, reject) => {
-    if (token !== musicPlayGen) {
-      URL.revokeObjectURL(url);
-      resolve();
-      return;
-    }
-    clearMusicHookTimer();
-    for (const live of [...musicLiveAudios]) {
-      hardStopAudio(live);
-    }
-    currentAudio = null;
-
-    const audio = new Audio();
-    audio.preload = "auto";
-    audio._blobUrl = url;
-    audio.src = url;
-    musicLiveAudios.add(audio);
-    currentAudio = audio;
-    audio.volume = musicConfig.volume ?? 0.8;
-    const hookText = formatHookLabel(song);
-    setNowPlaying(`${song.name} · ${hookText}`);
-
-    let settled = false;
-    const finish = (ok = true, err = null) => {
-      if (settled) return;
-      settled = true;
-      clearMusicHookTimer();
-      hardStopAudio(audio);
-      if (currentAudio === audio) currentAudio = null;
-      if (ok) resolve();
-      else reject(err || new Error(`เล่นไม่ได้: ${song.name}`));
-    };
-
-    audio.onended = () => finish(true);
-    audio.onerror = () => finish(false, new Error(`เล่นไม่ได้: ${song.name}`));
-
-    const armHookTimer = () => {
-      if (token !== musicPlayGen) {
-        finish(true);
-        return;
-      }
-      if (hookDur != null && hookDur > 0) {
-        clearMusicHookTimer();
-        musicHookTimer = setTimeout(() => {
-          try {
-            audio.pause();
-          } catch {
-            /* ignore */
-          }
-          finish(true);
-        }, hookDur * 1000);
-      }
-    };
-
-    const applyStartThenPlay = () => {
-      if (token !== musicPlayGen) {
-        finish(true);
-        return;
-      }
-      const run = () => {
-        if (token !== musicPlayGen) {
-          finish(true);
-          return;
-        }
-        try {
-          if (startSec > 0 && Number.isFinite(audio.duration) && startSec < audio.duration) {
-            audio.currentTime = startSec;
-          }
-        } catch {
-          /* ignore */
-        }
-        audio
-          .play()
-          .then(() => {
-            if (token !== musicPlayGen) {
-              finish(true);
-              return;
-            }
-            armHookTimer();
-          })
-          .catch((err) => {
-            if (token !== musicPlayGen) finish(true);
-            else finish(false, err);
-          });
-      };
-
-      if (startSec <= 0) run();
-      else if (audio.readyState >= 1) run();
-      else audio.addEventListener("loadedmetadata", run, { once: true });
-    };
-
-    applyStartThenPlay();
-  });
+  if (job.remaining <= 0) musicQueue.shift();
+  renderMusicQueueStatus();
+  return song;
 }
 
 async function drainMusicQueue(token) {
-  while (musicQueue.length && token === musicPlayGen) {
-    const song = musicQueue.shift();
-    try {
-      await playSongById(song, token);
-    } catch (err) {
+  while (musicQueue.length && token === musicPlayGen && !musicFailedSong) {
+    const song = nextMusicSong();
+    try { await playSongById(song, token); }
+    catch (err) {
       if (token !== musicPlayGen) return;
-      console.warn(err);
-      setNowPlaying(err.message || "เล่นไม่สำเร็จ");
+      // Retain the failed song. A timeout is ambiguous: automatically replaying it can duplicate audio.
+      musicFailedSong = song;
+      setNowPlaying(`${song.name}: ${err.message || "เล่นไม่สำเร็จ"}`);
+      renderMusicQueueStatus();
+      return;
     }
   }
-  if (token === musicPlayGen && !musicQueue.length && !currentAudio) setNowPlaying("—");
+  if (token === musicPlayGen && !musicQueue.length && !musicFailedSong) setNowPlaying("—");
 }
 
 async function playMusicForGift(ruleIdOrGiftName, byId = false, times = 1) {
   if (!musicConfig.enabled && !byId) return;
-  const rule = byId
-    ? musicConfig.rules.find((r) => r.id === ruleIdOrGiftName)
-    : musicConfig.rules.find(
-        (r) =>
-          r.enabled !== false &&
-          r.giftName.toLowerCase() === String(ruleIdOrGiftName).toLowerCase()
-      );
-  if (!rule || !rule.songs?.length) return;
-  if (rule.enabled === false && !byId) return;
-
-  let songs = [];
-  for (let i = 0; i < Math.max(1, Math.min(200, Number(times) || 1)); i++) {
-    if (rule.playMode === "all") {
-      songs.push(...rule.songs);
-    } else if (rule.playMode === "sequence") {
-      const idx = musicSeqIndex[rule.id] || 0;
-      songs.push(rule.songs[idx % rule.songs.length]);
-      musicSeqIndex[rule.id] = idx + 1;
-    } else {
-      songs.push(rule.songs[Math.floor(Math.random() * rule.songs.length)]);
-    }
-  }
-
+  const rule = musicConfig.rules.find(r => byId ? r.id === ruleIdOrGiftName : r.enabled !== false && String(r.giftName || "").trim().toLowerCase() === String(ruleIdOrGiftName).trim().toLowerCase());
+  if (!rule?.songs?.length || (rule.enabled === false && !byId)) return;
+  const count = Number(times);
+  if (!Number.isSafeInteger(count) || count < 1) throw new Error("จำนวนเพลงไม่ถูกต้อง");
   if (byId) stopMusic({ silentUi: true, skipHostStop: true });
-  musicQueue.push(...songs);
-  for (const s of songs) {
-    if (s?.id) getAudioBlobCached(s.id).catch(() => {});
-  }
-  if (musicDraining) return;
-  musicDraining = true;
-  try {
-    await drainMusicQueue(musicPlayGen);
-  } finally {
-    musicDraining = false;
-    if (musicQueue.length) playMusicForGiftQueue();
-  }
+  // Keep a compact counted job; large combos are never silently cut to 200 units.
+  musicQueue.push({ ruleId: rule.id, mode: rule.playMode, songs: rule.songs.map(s => ({ ...s })), remaining: count, offset: 0 });
+  renderMusicQueueStatus();
+  return playMusicForGiftQueue();
 }
 
 async function playMusicForGiftQueue() {
-  if (musicDraining || !musicQueue.length) return;
+  if (musicDraining || !musicQueue.length || musicFailedSong) return;
   musicDraining = true;
-  try {
-    await drainMusicQueue(musicPlayGen);
-  } finally {
+  try { await drainMusicQueue(musicPlayGen); }
+  finally {
     musicDraining = false;
-    if (musicQueue.length) playMusicForGiftQueue();
+    if (musicQueue.length && !musicFailedSong) playMusicForGiftQueue();
   }
 }
 
-function handleGiftForMusic(parsed) {
-  if (!musicConfig.enabled) return;
-  if (parsed.kind !== "gift" && parsed.kind !== "like" && parsed.kind !== "follow") return;
-  if (!parsed.giftName) return;
-  const key = parsed.comboKey || `${parsed.kind}|${String(parsed.sender || "").toLowerCase()}|${String(parsed.giftName).toLowerCase()}`;
-  const count = Math.max(1, Number(parsed.count) || 1);
-  const now = Date.now();
-  for (const [k, credit] of musicComboCredit) {
-    if (now - credit.at > MUSIC_COMBO_CREDIT_TTL_MS) musicComboCredit.delete(k);
+function retryFailedMusic() {
+  if (!musicFailedSong) return;
+  musicQueue.unshift({ ruleId: "retry", mode: "all", songs: [musicFailedSong], remaining: 1, offset: 0 });
+  musicFailedSong = null;
+  renderMusicQueueStatus();
+  playMusicForGiftQueue();
+}
+
+let musicEventCursor = null;
+let musicEventEpoch = "";
+let musicEventPumpRunning = false;
+let musicEventGap = false;
+function setMusicFeedStatus(text) {
+  const el = document.getElementById("musicFeedStatus");
+  if (el) el.textContent = text;
+}
+function consumeMusicEventBatch(data) {
+  if (!data || typeof data.epoch !== "string" || !Number.isSafeInteger(data.cursor) || !Array.isArray(data.events)) throw new Error("invalid music event batch");
+  for (const event of data.events) {
+    if (!Number.isSafeInteger(event.seq) || !Number.isSafeInteger(event.count) || event.count < 1 || typeof event.giftName !== "string") throw new Error("invalid music receipt");
   }
-  const already = musicComboCredit.get(key)?.n || 0;
-  const fire = parsed.phase === "game" ? Math.max(0, count - already) : count;
-  if (parsed.phase === "game") musicComboCredit.delete(key);
-  else musicComboCredit.set(key, { n: already + count, at: now });
-  if (!fire) return;
-  devLog("music", "trigger", { gift: parsed.giftName, kind: parsed.kind, count, fire, phase: parsed.phase || "ui" });
-  playMusicForGift(parsed.giftName, false, fire);
+  if (data.epoch !== musicEventEpoch) { musicEventEpoch = data.epoch; musicEventCursor = null; }
+  musicEventGap ||= !!data.gap;
+  setMusicFeedStatus(musicEventGap ? "การรับเพลงขาดช่วง กรุณาตรวจคิวเพลง" : "รับคำสั่งเพลงทันที · เชื่อมต่อแล้ว");
+  for (const event of data.events) {
+    if (musicEventCursor != null && event.seq <= musicEventCursor) continue;
+    playMusicForGift(event.giftName, false, event.count).catch(err => console.warn("music queue", err));
+    musicEventCursor = event.seq;
+  }
+  musicEventCursor = Math.max(musicEventCursor ?? 0, data.cursor);
+}
+async function startMusicEventPump() {
+  if (musicEventPumpRunning) return;
+  musicEventPumpRunning = true;
+  try {
+    while (true) {
+      try {
+        const query = musicEventCursor == null ? "" : `?after=${musicEventCursor}&epoch=${encodeURIComponent(musicEventEpoch)}`;
+        const res = await fetch("/api/music/events" + query, { cache: "no-store", signal: AbortSignal.timeout(30000) });
+        if (!res.ok) throw new Error("event feed unavailable");
+        const data = await res.json();
+        consumeMusicEventBatch(data);
+      } catch (err) {
+        setMusicFeedStatus("กำลังเชื่อมต่อคำสั่งเพลงใหม่ — เก็บตำแหน่งรับล่าสุดไว้แล้ว");
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+  } finally { musicEventPumpRunning = false; }
 }
 
 /* ========== Video effects (transparent overlay) ========== */
@@ -7728,13 +7628,11 @@ function fanOutUiFunctions(parsed) {
   // Video starts on UI, then game finalize queues remaining combo units (never drop / never cut).
   if (parsed.phase === "game") {
     if (claimUiFeature("interrupt", parsed)) handleGiftForInterrupt(parsed);
-    if (claimUiFeature("music", parsed)) handleGiftForMusic(parsed);
     if (claimUiFeature("video", parsed)) handleGiftForVideo(parsed);
     return;
   }
   if (parsed.kind === "roulette") {
     const triggerParsed = { ...parsed, kind: "gift" };
-    if (claimUiFeature("music", triggerParsed)) handleGiftForMusic(triggerParsed);
     if (claimUiFeature("video", triggerParsed)) handleGiftForVideo(triggerParsed);
     if (claimUiFeature("win", triggerParsed)) handleGiftForWin(triggerParsed);
     if (claimUiFeature("tts", triggerParsed)) handleGiftForTts(triggerParsed);
@@ -7746,7 +7644,6 @@ function fanOutUiFunctions(parsed) {
     return;
   }
   // Early ui: realtime for everything except interrupt
-  if (claimUiFeature("music", parsed)) handleGiftForMusic(parsed);
   if (claimUiFeature("video", parsed)) handleGiftForVideo(parsed);
   if (claimUiFeature("win", parsed)) handleGiftForWin(parsed);
   if (claimUiFeature("tts", parsed)) handleGiftForTts(parsed);
@@ -9165,11 +9062,12 @@ async function addUserGame(payload) {
     customTitle: payload.windowTitle || "",
     force: true,
   });
-  return data.game;
+  return { ...data.game, reusedExisting: !!data.reusedExisting };
 }
 
 async function useScannedWindow() {
-  if (!scannedWindowSelect?.value) return;
+  if (!scannedWindowSelect?.value || useScannedGameBtn?.disabled) return;
+  if (useScannedGameBtn) useScannedGameBtn.disabled = true;
   try {
     const picked = JSON.parse(scannedWindowSelect.value);
     const game = await addUserGame({
@@ -9178,9 +9076,13 @@ async function useScannedWindow() {
       windowTitle: picked.windowTitle,
     });
     if (scanGamesPanel) scanGamesPanel.classList.add("hidden");
-    alert(`เพิ่มเกม ${game?.name || picked.windowTitle} แล้ว — นำเข้าพรีเซ็ตได้เลย`);
+    alert(game.reusedExisting
+      ? `ใช้เกมเดิม ${game.name} แล้ว — โหลดพรีเซ็ตที่บันทึกไว้ให้แล้ว`
+      : `เพิ่มเกม ${game?.name || picked.windowTitle} แล้ว — นำเข้าพรีเซ็ตได้เลย`);
   } catch (err) {
     alert(err.message || "เพิ่มเกมจากหน้าต่างไม่สำเร็จ");
+  } finally {
+    if (useScannedGameBtn) useScannedGameBtn.disabled = false;
   }
 }
 
@@ -9243,6 +9145,7 @@ document.getElementById("musicSaveRuleBtn")?.addEventListener("click", () => {
 });
 document.getElementById("musicCancelEditBtn")?.addEventListener("click", resetMusicEditor);
 document.getElementById("musicStopBtn")?.addEventListener("click", stopMusic);
+document.getElementById("musicRetryBtn")?.addEventListener("click", retryFailedMusic);
 document.getElementById("musicRestoreDefaultsBtn")?.addEventListener("click", () => {
   restoreDefaultMusicPackFromButton();
 });
@@ -9653,6 +9556,8 @@ document.querySelector('.nav-btn[data-panel="photoprint"]')?.addEventListener("c
 });
 
 renderMusicUiState();
+renderMusicQueueStatus();
+startMusicEventPump();
 prefetchMusicBlobs();
 renderVideoUiState();
 renderWinUiState();
@@ -9873,6 +9778,7 @@ const OVERLAY_SETTINGS = {
   "glass-jar": { fields: ["glassJarControls"], hint: "โหลแก้วฟิสิกส์พร้อม URL และสีของตัวเอง · พื้นหลังโปร่งใส" },
   "pirate-ship": { fields: ["pirateShipControls"], hint: "เรือโจรสลัดพร้อม URL แยก · ปรับขนาดเรือและลูกโป่งสุลต่านได้" },
   "dragon-hoard": { fields: ["dragonControls"], hint: "ของขวัญจริงตกกองตามมูลค่า · มังกรวิวัฒนาการและตอบสนองต่อของขวัญราคาแพงด้วยไฟสีสมจริง" },
+  "orange-cat": { hint: "แมวนักเวท 5 ระดับ · ตั้งค่าจากการ์ดนี้ · ลากย้ายแมวและของขวัญได้ทั่ว Overlay" },
   roulette: { hint: "รายการของรางวัลและกฎสุ่มตั้งที่หน้ากล่องสุ่ม", panel: "roulette", panelLabel: "เปิดหน้ากล่องสุ่ม" },
   points: { hint: "แต้มผู้ชมตั้งที่หน้าแต้ม", panel: "points", panelLabel: "เปิดหน้าแต้มผู้ชม" },
   topgifters: { fields: ["lbReset"], hint: "วงแหวนแยก 3 อันดับสูงสุด · รีเซ็ตอันดับไลฟ์นี้ได้" },
@@ -9969,6 +9875,7 @@ const OVERLAY_GALLERY = [
   { id: "glass-jar", name: "โหลแก้วฟิสิกส์", desc: "ของขวัญตกและกองตัวแบบฟิสิกส์ · ปรับสีโหลได้อิสระ", cat: "Widgets", w: 720, h: 1280, widget: "glass" },
   { id: "pirate-ship", name: "เรือโจรสลัด", desc: "เรือเป็ดโจรสลัดพร้อมลูกโป่งสุลต่าน · จัดวางแนวตั้ง 9:16", cat: "Widgets", w: 720, h: 1280, widget: "pirate" },
   { id: "dragon-hoard", name: "Dragon Hoard", desc: "มังกรเฝ้ากองของขวัญ · ขนาดตาม Coin · วิวัฒนาการและพ่นไฟสมจริง", cat: "Widgets", w: 720, h: 1280, play: 1, url: "http://127.0.0.1:3847/dragon-overlay.html" },
+  { id: "orange-cat", name: "แมวส้มนักเวท", desc: "5 ระดับ · ร่ายเวทรวมของขวัญ · ดอกไม้ไฟและสุลต่าน · ปรับขนาดและตั้งค่าได้ที่นี่", cat: "Widgets", w: 720, h: 1280, url: "http://127.0.0.1:3847/pet-cat-overlay.html" },
   { id: "roulette", name: "กล่องสุ่มเกม", desc: "หมุนสุ่มผลแล้วค่อยส่งเข้าเกม", cat: "พิเศษ", w: 720, h: 720, url: "http://127.0.0.1:3847/roulette-overlay.html" },
 ];
 
@@ -10177,6 +10084,7 @@ function jarWidgetTestControls(widget) {
 }
 
 function overlaySettingsPop(item) {
+  if(item.id === "orange-cat") return `<div class="og-pop" hidden><div class="og-pop-head"><strong>ตั้งค่า แมวส้มนักเวท</strong><button type="button" class="og-pop-close" aria-label="ปิด">×</button></div><iframe title="ตั้งค่าแมวส้ม" src="/pet-cat-settings.html?v=magic5" loading="lazy" style="display:block;width:100%;height:680px;border:0;background:transparent"></iframe></div>`;
   const spec = OVERLAY_SETTINGS[item.id] || { hint: "วิดเจ็ตนี้ดึงข้อมูลจากไลฟ์โดยตรง ไม่มีค่าเฉพาะ" };
   const fieldKinds = spec.fields || [];
   const fields = fieldKinds.map(overlayPopFieldHtml).join("");

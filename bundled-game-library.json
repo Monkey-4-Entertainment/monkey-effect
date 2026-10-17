@@ -230,7 +230,7 @@
           "enabled": true
         },
         {
-          "giftName": "Baby Hippo",
+          "giftName": "Little Hippo",
           "key": "4",
           "vk": 52,
           "label": "สะกดวิญญาณ",
@@ -402,7 +402,7 @@
         {
           "enabled": true,
           "trigger": "gift",
-          "giftName": "Baby Hippo",
+          "giftName": "Little Hippo",
           "chatCmd": "",
           "minCount": 0,
           "action": "สะกดวิญญาณ"

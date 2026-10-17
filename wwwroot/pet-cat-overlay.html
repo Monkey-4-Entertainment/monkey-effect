@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>แมวส้ม · Monkeyeffect</title><link rel="stylesheet" href="/pet-cat.css?v=magic8"></head>
+<body><main id="catScene">
+  <canvas id="catGifts" aria-label="กองของขวัญ ลากของขวัญตั้งแต่ 100 Coins ได้"></canvas>
+  <section id="catActor" class="draggable" aria-label="ลากเพื่อย้ายแมว" tabindex="0">
+    <div id="catBubble" aria-live="polite"></div>
+    <div id="catMotion" data-stage="0"><svg preserveAspectRatio="none" id="catTurn" viewBox="0 0 229 200" aria-hidden="true"><image href="/assets/pets/orange-cat-turn.png" width="1374" height="1145"/></svg><svg id="catTurnNext" viewBox="0 0 229 200" preserveAspectRatio="none" aria-hidden="true"><image href="/assets/pets/orange-cat-turn.png" width="1374" height="1145"/></svg><i class="evolution-orbit back"></i><i class="evolution-orbit front"></i><div id="catSprite" data-atlas="0" role="img" aria-label="ลูกแมว"></div><i class="spell-ring"></i><i class="paw-orb"></i></div>
+    <div class="cat-idle-fx" aria-hidden="true"><span>z</span><span>z</span><span>✦</span></div>
+    <div class="cat-caption"><strong id="catName">เจ้าส้ม</strong><div id="catStats"><span id="catLevel">LV 1</span> <span id="catStageName">ลูกแมว</span><div class="cat-track"><i id="catFill"></i></div><small id="catCoins">0 / 10 Coins</small></div></div>
+  </section>
+  <section id="catRanks" class="draggable" aria-label="อันดับสุลต่าน ลากย้ายได้แยกทั้ง 3 อันดับ" tabindex="0"><h2>♛ ผู้พิทักษ์ประจำไลฟ์</h2><div id="catRankRows"></div></section>
+  <canvas id="catFx" aria-hidden="true"></canvas>
+  <div id="catThanks" hidden role="status"><span class="thanks-kicker">✦ ขอบคุณสำหรับของขวัญ ✦</span><div class="thanks-person"><img id="thanksAvatar" alt="" referrerpolicy="no-referrer"><span id="thanksInitial"></span><strong id="thanksName"></strong></div><small id="thanksGift"></small></div>
+  <div id="catEvolution" hidden><span>✧ EVOLUTION ✧</span><strong id="evolveName"></strong></div>
+  <div id="catDemo" hidden>ตัวอย่าง · ไม่เพิ่ม Coins จริง</div>
+  <span id="catConnection" hidden></span><span id="catSaveStatus" hidden></span>
+</main><script src="/pet-cat-drag.js?v=magic8"></script><script src="/pet-cat-gifts.js?v=magic8"></script><script src="/pet-cat-overlay.js?v=magic8"></script></body></html>
+
+
+
