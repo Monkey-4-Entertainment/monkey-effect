@@ -1,8 +1,8 @@
 {
-  "version": "1.3.2",
-  "notes": "Monkeyeffect 1.3.2 - เพิ่ม Widget แมวส้ม 5 ระดับ พร้อมตั้งค่าใน Widget หมุนแปลงร่างลื่นขึ้น ดอกไม้ไฟและข้อความขอบคุณกลางจอ แสดงคอมโบของขวัญ 100 เหรียญขึ้นไปเป็นยอดสะสม ×จำนวนถูกต้อง แยกผู้ส่งและป้องกันนับซ้ำ ลากแมว ของขวัญ และอันดับทั้ง 3 ได้อิสระ รวมการแก้เพลงตอบสนองเร็วและป้องกันเกมซ้ำ เปลี่ยน Baby Hippo เป็น Little Hippo ใน BEYOND RETRUN พร้อมสำรองพรีเซ็ตเดิม",
-  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.2-update.zip",
-  "sha256": "6a6aaf5ad0a2aa633f6ea23dede22b3219754c60d455302242ff044f6fd3046f",
+  "version": "1.3.2.1",
+  "notes": "Monkeyeffect 1.3.2.1 - แก้ตัวติดตั้งอัปเดตให้รองรับชื่อโฟลเดอร์ภาษาไทย ตรวจไฟล์และสำรองก่อนทับ หากล้มเหลวย้อนคืนไฟล์เดิมพร้อมบันทึกสาเหตุ เพิ่ม EXE และไฟล์เริ่มโปรแกรมในแพ็กเกจอัปเดต เครื่องที่เปิดไม่ได้ใช้ Setup แบบครบชุดติดตั้งทับโฟลเดอร์เดิม โดยเก็บ userdata และพรีเซ็ตไว้",
+  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.2.1-update.zip",
+  "sha256": "a5c33240b8b4355832f4caebcdec9aa6a239a7d7fc0456d7ef3d3dcfdd5cd083",
   "mandatory": true,
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
