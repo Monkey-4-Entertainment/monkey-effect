@@ -1,8 +1,9 @@
 {
-  "version": "1.3.2.1",
-  "notes": "Monkeyeffect 1.3.2.1 - แก้ตัวติดตั้งอัปเดตให้รองรับชื่อโฟลเดอร์ภาษาไทย ตรวจไฟล์และสำรองก่อนทับ หากล้มเหลวย้อนคืนไฟล์เดิมพร้อมบันทึกสาเหตุ เพิ่ม EXE และไฟล์เริ่มโปรแกรมในแพ็กเกจอัปเดต เครื่องที่เปิดไม่ได้ใช้ Setup แบบครบชุดติดตั้งทับโฟลเดอร์เดิม โดยเก็บ userdata และพรีเซ็ตไว้",
-  "zipUrl": "https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.2.1-update.zip",
-  "sha256": "a5c33240b8b4355832f4caebcdec9aa6a239a7d7fc0456d7ef3d3dcfdd5cd083",
-  "mandatory": true,
+  "version": "1.4.0",
+  "notes": "Monkeyeffect 1.4.0 — เปลี่ยนเป็นโปรแกรม Windows พร้อม Overlay/Widget แบบ Native, UI ใหม่ 21 หน้า, แก้คอมโบ UEBS2 ส่งขาด และย้ายการตั้งค่า/ไฟล์สื่อจาก WebView เดิมอัตโนมัติเมื่อเปิดครั้งแรก โดยเก็บข้อมูลต้นฉบับไว้ รุ่นเก่าที่อัปเดตไม่ได้ให้ใช้ Setup 1.4.0 ติดตั้งทับโฟลเดอร์เดิม",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.0/Monkeyeffect-1.4.0-update.zip",
+  "sha256": "3d54e8f62bd379c201ed31642862b0f79b8a16e8b9bee61d5524f6c958a730c3",
+  "mandatory": false,
+  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.0/Monkeyeffect-Setup-1.4.0.exe",
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

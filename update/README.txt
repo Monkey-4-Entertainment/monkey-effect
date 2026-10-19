@@ -1,10 +1,18 @@
-Monkeyeffect 1.3.2.1 - update installation repair
+Monkeyeffect 1.4.0 — Windows
 
-Update ZIP: https://raw.githubusercontent.com/Monkey-4-Entertainment/monkey-effect/main/update/Monkeyeffect-1.3.2.1-update.zip
-SHA256: a5c33240b8b4355832f4caebcdec9aa6a239a7d7fc0456d7ef3d3dcfdd5cd083
+- เปลี่ยนหน้าหลักและหน้าต่าง Overlay/Widget เป็นโปรแกรม Windows Native
+- UI โทนกรม–ม่วง–ชมพู พร้อมพื้นหลังใหม่แตกต่างกันครบ 21 หน้า
+- Widget ปรับขนาดและตำแหน่ง เชื่อมกับภาพในลิงก์ OBS
+- ปรับผู้พิทักษ์ตามธีม Widget และแก้คอมโบของขวัญ UEBS2 ส่งขาด
+- เปิดใช้งานการตรวจและติดตั้งอัปเดตจากหน้าโปรแกรม Windows
+- ย้ายการตั้งค่าและไฟล์สื่อจาก WebView เดิมครั้งแรก พร้อมตรวจไฟล์ก่อนใช้งานและเก็บข้อมูลต้นฉบับไว้
 
-Includes TempleGiftRelay.exe, its dependency/runtime manifests, and the 1.3.2 features. The updater now preserves Unicode paths, verifies copied files, backs up changed files, restores files after a failed copy, and retains a useful failure log. It stops only the application process that requested the update.
-The previous updater could continue after a copy failure and wrote installation paths using ASCII. These defects are fixed; they do not establish the reason for every reported missing EXE.
+**ติดตั้งใหม่หรือซ่อมโปรแกรม:** ใช้ `Monkeyeffect-Setup-1.4.0.exe` เป็นตัวติดตั้งครบชุด รวม .NET, FFmpeg, Whisper และโมเดลเสียงแล้ว
 
-Existing installations can use the update. Machines that cannot launch must run a full Setup into their existing installation folder. An update ZIP is not a full installation and does not replace the Windows runtime bundle. User settings and media are excluded from this update.
-Validation: 12 isolated updater checks passed, including Unicode paths, missing EXE recovery, copy failure rollback and process identity. Full Setup installation, file hashes and preservation of user files verified separately. ZIP extraction and all 235 file hashes verified.
+**อัปเดตจากโปรแกรมเดิม:** กดตรวจสอบและติดตั้งอัปเดต โปรแกรมจะเปลี่ยนเป็น Windows 1.4.0 หลังเปิดใหม่ เกม พรีเซ็ต และ userdata เดิมถูกเก็บไว้ ทดสอบเส้นทางอัปเกรดจาก 1.3.2.1 แล้ว หากรุ่นเก่าอัปเดตไม่สำเร็จ ให้ใช้ Setup ติดตั้งทับโฟลเดอร์เดิม
+
+การทำงานปกติของรุ่น Windows ไม่ใช้ WebView2 ตัวช่วยย้ายข้อมูลเดิมใช้ WebView2 ที่มีอยู่เฉพาะตอนย้ายครั้งแรก การติดตั้งใหม่ที่ไม่มีข้อมูล WebView เดิมไม่ต้องใช้ WebView2
+
+ตัว `update.zip` ใช้กับโปรแกรมที่ติดตั้งอยู่แล้ว ไม่ใช่ชุดสำหรับแตกไฟล์แล้วเปิดโดยลำพัง
+
+ตรวจอัตโนมัติผ่าน 899 รายการ พร้อมการทดสอบย้ายข้อมูล 10 รายการ ตรวจไฟล์ติดตั้งและอัปเกรด 2,649 ไฟล์ รวมทดสอบชื่อโฟลเดอร์ภาษาไทย การตรวจนี้ไม่ได้แทนการทดสอบ LIVE และอุปกรณ์จริงทุกเครื่อง

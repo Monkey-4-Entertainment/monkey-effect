@@ -1,0 +1,29 @@
+{
+  "version": "1.4.0",
+  "nativeScreens": 21,
+  "nativeOverlayFamilies": 13,
+  "automatedAssertions": 899,
+  "migrationAssertions": 10,
+  "existingWebViewSettingsVerified": 63,
+  "existingMediaFilesVerified": 39,
+  "upgradeVerifiedFrom": "1.3.2.1",
+  "installedFilesVerified": 2649,
+  "fullLiveParityOnAllMachines": false,
+  "nativeAssemblySHA256": "f9cfbf53c9313836d89ba49bb93f28b62d4cee5996db4307abeda94e3cae5849",
+  "package": {
+    "Version": "1.4.0",
+    "Files": 86,
+    "Bytes": 290887906,
+    "SHA256": "3d54e8f62bd379c201ed31642862b0f79b8a16e8b9bee61d5524f6c958a730c3"
+  },
+  "setup": {
+    "version": "1.4.0",
+    "filesVerified": 2649,
+    "existingDataPreserved": true,
+    "installPassed": true,
+    "nativeSelfCheck": true,
+    "bytes": 555172405,
+    "sha256": "b72aad2b01a62ce78c58bddef55af0c08c24461975873493247c8fac4d14e98b"
+  },
+  "personalDataIncluded": false
+}
