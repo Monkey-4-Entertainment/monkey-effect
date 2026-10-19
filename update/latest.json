@@ -1,9 +1,9 @@
 {
-  "version": "1.4.1",
-  "notes": "Monkeyeffect 1.4.1 — แก้ผู้พิทักษ์ 3 อันดับใน Widget ทั้ง 5 ธีม อัปเดตอันดับทันทีเมื่อรับของขวัญ แก้ตำแหน่งและขนาด Overlay ให้ตรงกับลิงก์ OBS พร้อมหน้าต่าง 9:16 และภาพเต็มพื้นที่โดยไม่ย่อซ้ำ เก็บการตั้งค่าและพรีเซ็ตเดิม",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.1/Monkeyeffect-1.4.1-update.zip",
-  "sha256": "21cd28aeb77d5ad1714dd1298d336b72acf4edaf7bb879231fb7bd2eca423968",
+  "version": "1.4.1.1",
+  "notes": "Monkeyeffect 1.4.1.1 — แก้แถบด้านข้างและหน้าอัปเดตแสดงเลขรุ่นเก่า ทุกจุดใช้เลขรุ่นจริงจากโปรแกรม ป้องกันการแจ้งติดตั้งซ้ำ พร้อมตัวแก้ผู้พิทักษ์และ OBS 9:16 ครบ ติดตั้งทับรุ่นเดิมโดยเก็บพรีเซ็ตและการตั้งค่า",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.1.1/Monkeyeffect-1.4.1.1-update.zip",
+  "sha256": "d580604fb8d09d79ee9447bad0ec9abb0e9966b3b0e80f2ba1f66367d8f12b80",
   "mandatory": false,
-  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.1/Monkeyeffect-Setup-1.4.1.exe",
+  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.1.1/Monkeyeffect-Setup-1.4.1.1.exe",
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

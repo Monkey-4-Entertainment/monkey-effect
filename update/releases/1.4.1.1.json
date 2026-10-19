@@ -1,0 +1,38 @@
+{
+  "version": "1.4.1.1",
+  "nativeAssemblySHA256": "734f07a59760ac3c96bd3e656d1ea3bca49c302d23d7ad8710f0fb82f0a204a0",
+  "package": {
+    "bytes": 290928323,
+    "sha256": "d580604fb8d09d79ee9447bad0ec9abb0e9966b3b0e80f2ba1f66367d8f12b80",
+    "files": 87
+  },
+  "setup": {
+    "version": "1.4.1.1",
+    "installPassed": true,
+    "existingDataPreserved": true,
+    "filesVerified": 2650,
+    "bytes": 555178074,
+    "sha256": "dffa8a35a7409b0ad0fdf4a75ecf2494bc9ac0d5e33b81d28ca864a48a8441c6"
+  },
+  "upgrade": {
+    "nativeSelfCheck": true,
+    "versionMetadataVerified": true,
+    "userSettingsPreserved": true,
+    "to": "1.4.1.1",
+    "filesVerified": 2650,
+    "from": "1.4.1"
+  },
+  "regressionChecks": {
+    "versionReporting": 8,
+    "nativeViewport": 68,
+    "nativeFrames": 99,
+    "nativeIntegration": 216,
+    "guardianLiveFixture": 43,
+    "browserObserver": 10,
+    "browserPortrait": 6,
+    "installedLocalEndpoints": 45
+  },
+  "actualObsApplicationTested": false,
+  "actualLiveGiftTested": false,
+  "personalDataIncluded": false
+}
