@@ -1,0 +1,39 @@
+{
+  "version": "1.4.2",
+  "nativeAssemblySHA256": "f75385a1f932b2ad2878fc311451e0ea161c58a3e949e13814d221577d6f36df",
+  "package": {
+    "bytes": 594148256,
+    "sha256": "18482eb7b02b18020b702e339dd4500d25b260e429a0d87c1e1916bc618cc4ad",
+    "files": 2572
+  },
+  "setup": {
+    "existingDataPreserved": true,
+    "version": "1.4.2",
+    "filesVerified": 2713,
+    "nativeSelfCheck": true,
+    "installPassed": true,
+    "bytes": 556031006,
+    "sha256": "9e189db6205adc56eba0a059213b377a525c168123861922399417c53057767f"
+  },
+  "upgrade": {
+    "filesVerified": 2713,
+    "nativeSelfCheck": true,
+    "userSettingsPreserved": true,
+    "from": "1.4.1.1",
+    "versionMetadataVerified": true,
+    "to": "1.4.2"
+  },
+  "regressionChecks": {
+    "nativeCore": 130,
+    "versionReporting": 8,
+    "nativeOverlays": 629,
+    "musicUi": true,
+    "videoUi": true,
+    "interruptUi": true,
+    "rouletteUi": true,
+    "thumbnailConcurrency": true
+  },
+  "actualObsApplicationTested": false,
+  "actualLiveGiftTested": false,
+  "personalDataIncluded": false
+}

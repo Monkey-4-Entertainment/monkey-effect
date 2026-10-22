@@ -1,9 +1,9 @@
 {
-  "version": "1.4.1.1",
-  "notes": "Monkeyeffect 1.4.1.1 — แก้แถบด้านข้างและหน้าอัปเดตแสดงเลขรุ่นเก่า ทุกจุดใช้เลขรุ่นจริงจากโปรแกรม ป้องกันการแจ้งติดตั้งซ้ำ พร้อมตัวแก้ผู้พิทักษ์และ OBS 9:16 ครบ ติดตั้งทับรุ่นเดิมโดยเก็บพรีเซ็ตและการตั้งค่า",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.1.1/Monkeyeffect-1.4.1.1-update.zip",
-  "sha256": "d580604fb8d09d79ee9447bad0ec9abb0e9966b3b0e80f2ba1f66367d8f12b80",
+  "version": "1.4.2",
+  "notes": "Monkeyeffect 1.4.2 — กล่องสุ่มรางวัลมีมิติและเอฟเฟกต์วิทยาศาสตร์ พร้อมข้อความผลรางวัล ลดค้างตอนเปิดเมนู ปรับเพลง วิดีโอ ขัดจังหวะจอ และ Overlay/Widget พร้อมตัวทดสอบกรอบต้อนรับ อัปเดตทับโดยเก็บพรีเซ็ตและการตั้งค่า",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.2/Monkeyeffect-1.4.2-update.zip",
+  "sha256": "18482eb7b02b18020b702e339dd4500d25b260e429a0d87c1e1916bc618cc4ad",
   "mandatory": false,
-  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.1.1/Monkeyeffect-Setup-1.4.1.1.exe",
+  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.2/Monkeyeffect-Setup-1.4.2.exe",
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
