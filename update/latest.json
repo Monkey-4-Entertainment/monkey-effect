@@ -1,9 +1,9 @@
 {
-  "version": "1.4.2",
-  "notes": "Monkeyeffect 1.4.2 — กล่องสุ่มรางวัลมีมิติและเอฟเฟกต์วิทยาศาสตร์ พร้อมข้อความผลรางวัล ลดค้างตอนเปิดเมนู ปรับเพลง วิดีโอ ขัดจังหวะจอ และ Overlay/Widget พร้อมตัวทดสอบกรอบต้อนรับ อัปเดตทับโดยเก็บพรีเซ็ตและการตั้งค่า",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.2/Monkeyeffect-1.4.2-update.zip",
-  "sha256": "18482eb7b02b18020b702e339dd4500d25b260e429a0d87c1e1916bc618cc4ad",
+  "version": "1.4.2.1",
+  "notes": "Monkeyeffect 1.4.2.1 — แก้อัปเดตแล้วกลับรุ่นเดิม ข้ามไฟล์ระบบที่ไม่เปลี่ยน รอไฟล์คลายล็อกก่อนทับ เก็บพรีเซ็ตและค่าตั้งค่าเดิม",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.2.1/Monkeyeffect-1.4.2.1-update.zip",
+  "sha256": "4ff80dd3ecc12c58cb3f0d580be35cc5ee330cb23a4a55cac6c5b6219ce878c5",
   "mandatory": false,
-  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.2/Monkeyeffect-Setup-1.4.2.exe",
+  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.2.1/Monkeyeffect-Setup-1.4.2.1.exe",
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

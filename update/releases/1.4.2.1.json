@@ -1,0 +1,43 @@
+{
+  "version": "1.4.2.1",
+  "nativeAssemblySHA256": "6b7c0fb0bb19a10eff4f4d3bf8aacea38119981314782efdf193d1b4edf8394d",
+  "package": {
+    "bytes": 35015886,
+    "sha256": "4ff80dd3ecc12c58cb3f0d580be35cc5ee330cb23a4a55cac6c5b6219ce878c5",
+    "files": 126
+  },
+  "setup": {
+    "installPassed": true,
+    "filesVerified": 2713,
+    "version": "1.4.2.1",
+    "existingDataPreserved": true,
+    "nativeSelfCheck": true,
+    "bytes": 556043132,
+    "sha256": "6c6057e3b44d88f1fa6be534d851a7417fbfcd268f5e517b4470c28fe0498816"
+  },
+  "upgrade": {
+    "filesVerified": 2713,
+    "versionMetadataVerified": true,
+    "nativeSelfCheck": true,
+    "to": "1.4.2.1",
+    "userSettingsPreserved": true,
+    "from": "1.4.1.1"
+  },
+  "regressionChecks": {
+    "nativeCore": 130,
+    "versionReporting": 8,
+    "nativeOverlays": 629,
+    "musicUi": true,
+    "videoUi": true,
+    "interruptUi": true,
+    "rouletteUi": true,
+    "thumbnailConcurrency": true,
+    "lockedUnchangedRuntimeSkipped": true,
+    "lockedChangedFileRetry": true,
+    "legacyUpdaterWithLockedRuntime": true,
+    "installedUpgradeVerified": true
+  },
+  "actualObsApplicationTested": false,
+  "actualLiveGiftTested": false,
+  "personalDataIncluded": false
+}
