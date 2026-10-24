@@ -1,0 +1,46 @@
+{
+  "version": "1.4.3",
+  "nativeAssemblySHA256": "a80fed5394fc6f8947545be1745e3e46c53fb372de65303376c48740e892aab6",
+  "package": {
+    "bytes": 650794579,
+    "sha256": "48590fafacd92f039b4a34d9ed7287ac38912904588bc5a45a18916668bd7db4",
+    "files": 3004
+  },
+  "setup": {
+    "existingDataPreserved": true,
+    "nativeSelfCheck": true,
+    "filesVerified": 3004,
+    "version": "1.4.3",
+    "installPassed": true,
+    "bytes": 561644072,
+    "sha256": "8486f43e110f8acd790dc464113bbc8b93d02b45bae91a5f4ed4ea21f0f4ddf4"
+  },
+  "upgrade": {
+    "versionMetadataVerified": true,
+    "nativeSelfCheck": true,
+    "to": "1.4.3",
+    "filesVerified": 3004,
+    "from": "1.4.1.1",
+    "userSettingsPreserved": true
+  },
+  "regressionChecks": {
+    "nativeCore": 152,
+    "versionReporting": 8,
+    "nativeOverlays": 647,
+    "musicUi": true,
+    "videoUi": true,
+    "interruptUi": true,
+    "rouletteUi": true,
+    "thumbnailConcurrency": true,
+    "lockedUnchangedRuntimeSkipped": true,
+    "lockedChangedFileRetry": true,
+    "sharedGiftCatalog": 1837,
+    "inlineGiftPicker": true,
+    "giftCoinPrices": true,
+    "perEventTest": true,
+    "widgetResetIsolation": true
+  },
+  "actualObsApplicationTested": false,
+  "actualLiveGiftTested": false,
+  "personalDataIncluded": false
+}

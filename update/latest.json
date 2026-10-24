@@ -1,9 +1,9 @@
 {
-  "version": "1.4.2.1",
-  "notes": "Monkeyeffect 1.4.2.1 — แก้อัปเดตแล้วกลับรุ่นเดิม ข้ามไฟล์ระบบที่ไม่เปลี่ยน รอไฟล์คลายล็อกก่อนทับ เก็บพรีเซ็ตและค่าตั้งค่าเดิม",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.2.1/Monkeyeffect-1.4.2.1-update.zip",
-  "sha256": "4ff80dd3ecc12c58cb3f0d580be35cc5ee330cb23a4a55cac6c5b6219ce878c5",
+  "version": "1.4.3",
+  "notes": "Monkeyeffect 1.4.3 — รูปและราคาเหรียญในพรีเซ็ต เลือกของขวัญในแถว ทดลองเหตุการณ์เข้าเกม และรีเซ็ต Widget พร้อมอันดับแยกกัน เก็บพรีเซ็ตและค่าตั้งค่าเดิม",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.3/Monkeyeffect-1.4.3-update.zip",
+  "sha256": "48590fafacd92f039b4a34d9ed7287ac38912904588bc5a45a18916668bd7db4",
   "mandatory": false,
-  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.2.1/Monkeyeffect-Setup-1.4.2.1.exe",
+  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.3/Monkeyeffect-Setup-1.4.3.exe",
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
