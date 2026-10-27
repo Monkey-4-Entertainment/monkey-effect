@@ -1,0 +1,93 @@
+{
+  "version": "1.4.4",
+  "nativeAssemblySHA256": "6e89dd8a5de3f89ef9e4cb64d01fd592b9c365ff1d9f454a517e270920488b2e",
+  "package": {
+    "bytes": 650775650,
+    "sha256": "0ef129afe753cff695b60a4d166e47a39405aee458542416bc77a323de1ba924",
+    "files": 3004
+  },
+  "setup": {
+    "filesVerified": 3004,
+    "forcedCloseVerified": true,
+    "oldApplicationRunning": true,
+    "version": "1.4.4",
+    "nativeSelfCheck": true,
+    "installPassed": true,
+    "existingDataPreserved": true,
+    "bytes": 561624536,
+    "sha256": "519ea720992329e0b68a8911bd841caca7e6051287d73029bb17c8fb528828bc"
+  },
+  "upgrade": {
+    "filesVerified": 3004,
+    "to": "1.4.4",
+    "userSettingsPreserved": true,
+    "oldApplicationRunning": true,
+    "forcedCloseVerified": true,
+    "from": "1.4.2.1",
+    "nativeSelfCheck": true
+  },
+  "regressionChecks": {
+    "nativeCore": 152,
+    "versionReporting": 8,
+    "nativeOverlays": 647,
+    "musicUi": true,
+    "videoUi": true,
+    "interruptUi": true,
+    "rouletteUi": true,
+    "thumbnailConcurrency": true,
+    "lockedUnchangedRuntimeSkipped": true,
+    "lockedChangedFileRetry": true,
+    "sharedGiftCatalog": 1837,
+    "inlineGiftPicker": true,
+    "giftCoinPrices": true,
+    "perEventTest": true,
+    "widgetResetIsolation": true,
+    "multiFeatureBurst": true,
+    "fullBacklogStop": true,
+    "profileRankIsolation": true,
+    "multipleInstanceForceClose": true,
+    "bundledHelperForceClose": true,
+    "photoPrintingRemoved": true,
+    "presetRoundTripFiles": 16,
+    "directPresetTests": true,
+    "webhookRejectionReported": true,
+    "presetMultiAction": true,
+    "actualLoopbackBurstRequests": 250,
+    "disabledEventFallbackBlocked": true,
+    "subtitleOverloadRecovery": true,
+    "teamRouteAndAuthenticationPreserved": true
+  },
+  "actualObsApplicationTested": false,
+  "actualLiveGiftTested": false,
+  "personalDataIncluded": false,
+  "buttonUpdateTests": [
+    {
+      "sameInstallPath": true,
+      "reopenedVersion": "1.4.4",
+      "actualOldUpdater": true,
+      "from": "1.4.2.1",
+      "originalProcessExited": true,
+      "filesVerified": 3004,
+      "userDataPreserved": true,
+      "to": "1.4.4",
+      "sameButtonApi": true
+    },
+    {
+      "sameInstallPath": true,
+      "reopenedVersion": "1.4.4",
+      "actualOldUpdater": true,
+      "from": "1.4.3",
+      "originalProcessExited": true,
+      "filesVerified": 3004,
+      "userDataPreserved": true,
+      "to": "1.4.4",
+      "sameButtonApi": true
+    }
+  ],
+  "operatingLimits": {
+    "commandsPerEvent": 1000,
+    "keyDurationSeconds": 120,
+    "actionMultiplier": 20,
+    "oversizeRejectedBeforeDelivery": true
+  }
+}
