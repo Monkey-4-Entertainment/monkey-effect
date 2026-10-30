@@ -1,67 +1,73 @@
 {
   "version": "1.4.5",
-  "nativeAssemblySHA256": "ad062284aa653551cdd4ebd807b73c12704da08ea21fbdd02446c6e371a729be",
+  "nativeAssemblySHA256": "3e9756894968fbf2f6a2c43e00306553a92e5f2e81f3d5b419ff272379d75a39",
   "package": {
-    "bytes": 650776529,
-    "sha256": "0b11e830b0f8b3fc44a397182329cbfba48880198a28f69b43b5cc391ef7e4e4",
+    "bytes": 650777500,
+    "sha256": "e4281a717c568690bfbccccbfe69cf40a1e4092de90ea60b9b089187cd3e3a61",
     "files": 3004
   },
   "setup": {
+    "forcedCloseVerified": true,
+    "filesVerified": 3004,
     "oldApplicationRunning": true,
     "version": "1.4.5",
-    "nativeSelfCheck": true,
-    "filesVerified": 3004,
     "existingDataPreserved": true,
-    "forcedCloseVerified": true,
+    "nativeSelfCheck": true,
     "installPassed": true,
-    "bytes": 561630069,
-    "sha256": "89d910037454f91fd0c0ba54cfbb23f47f5d7aca11bd340ec7251a9430661a1c"
+    "bytes": 561629831,
+    "sha256": "019de100d697b3a8c20b3d08e29f093b1b3f2ace8cbea485a65c8f4b0fa921d1"
   },
   "upgrade": {
-    "forcedCloseVerified": true,
-    "to": "1.4.5",
-    "from": "1.4.2.1",
-    "nativeSelfCheck": true,
-    "oldApplicationRunning": true,
     "userSettingsPreserved": true,
-    "filesVerified": 3004
+    "oldApplicationRunning": true,
+    "nativeSelfCheck": true,
+    "filesVerified": 3004,
+    "from": "1.4.2.1",
+    "forcedCloseVerified": true,
+    "to": "1.4.5"
   },
   "actualObsApplicationTested": false,
   "actualLiveGiftTested": false,
   "personalDataIncluded": false,
   "buttonUpdateTests": [
     {
-      "to": "1.4.5",
       "actualOldUpdater": true,
-      "sameInstallPath": true,
       "filesVerified": 3004,
-      "userDataPreserved": true,
-      "from": "1.4.2.1",
       "originalProcessExited": true,
+      "reopenedVersion": "1.4.5",
+      "userDataPreserved": true,
+      "duplicateActivationPassed": true,
+      "sameInstallPath": true,
       "sameButtonApi": true,
-      "reopenedVersion": "1.4.5"
+      "to": "1.4.5",
+      "restartWindowVisible": true,
+      "from": "1.4.2.1"
     },
     {
-      "to": "1.4.5",
       "actualOldUpdater": true,
-      "sameInstallPath": true,
       "filesVerified": 3004,
-      "userDataPreserved": true,
-      "from": "1.4.3",
       "originalProcessExited": true,
+      "reopenedVersion": "1.4.5",
+      "userDataPreserved": true,
+      "duplicateActivationPassed": true,
+      "sameInstallPath": true,
       "sameButtonApi": true,
-      "reopenedVersion": "1.4.5"
+      "to": "1.4.5",
+      "restartWindowVisible": true,
+      "from": "1.4.3"
     },
     {
-      "to": "1.4.5",
       "actualOldUpdater": true,
-      "sameInstallPath": true,
       "filesVerified": 3004,
-      "userDataPreserved": true,
-      "from": "1.4.4",
       "originalProcessExited": true,
+      "reopenedVersion": "1.4.5",
+      "userDataPreserved": true,
+      "duplicateActivationPassed": true,
+      "sameInstallPath": true,
       "sameButtonApi": true,
-      "reopenedVersion": "1.4.5"
+      "to": "1.4.5",
+      "restartWindowVisible": true,
+      "from": "1.4.4"
     }
   ],
   "operatingLimits": {
@@ -106,6 +112,9 @@
     "versionReporting": 8,
     "forcedCloseAndLockedHelperReplacement": true,
     "unrelatedProcessesPreserved": true,
-    "lockedFilePreflight": true
+    "lockedFilePreflight": true,
+    "visibleRestart": true,
+    "restoreHiddenExistingWindow": true,
+    "restoreMinimizedExistingWindow": true
   }
 }

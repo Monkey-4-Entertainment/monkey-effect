@@ -6,7 +6,10 @@ Monkeyeffect 1.4.5 — Windows
 
 เครื่องที่ตัวอัปเดตรุ่นเก่าติดข้อผิดพลาดไฟล์ถูกใช้งาน ให้ใช้ Setup รุ่นนี้ติดตั้งทับตำแหน่งเดิม ตัวแก้ในรุ่นใหม่จะใช้งานได้หลังติดตั้งสำเร็จ
 
+ปรับชุดติดตั้ง 1.4.5: แก้เปิดหลังอัปเดตแล้วซ่อนหน้าต่าง และกดเปิดซ้ำให้เรียกหน้าต่างเดิมกลับมา
+ผู้ที่ติดตั้ง 1.4.5 ชุดก่อนแล้ว ให้ดาวน์โหลด Setup นี้ติดตั้งทับ เนื่องจากเลขเวอร์ชันยังเป็น 1.4.5
+
 
 Update: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.5/Monkeyeffect-1.4.5-update.zip
-SHA256: 0b11e830b0f8b3fc44a397182329cbfba48880198a28f69b43b5cc391ef7e4e4
+SHA256: e4281a717c568690bfbccccbfe69cf40a1e4092de90ea60b9b089187cd3e3a61
 Setup: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.5/Monkeyeffect-Setup-1.4.5.exe
