@@ -1,0 +1,111 @@
+{
+  "version": "1.4.5",
+  "nativeAssemblySHA256": "ad062284aa653551cdd4ebd807b73c12704da08ea21fbdd02446c6e371a729be",
+  "package": {
+    "bytes": 650776529,
+    "sha256": "0b11e830b0f8b3fc44a397182329cbfba48880198a28f69b43b5cc391ef7e4e4",
+    "files": 3004
+  },
+  "setup": {
+    "oldApplicationRunning": true,
+    "version": "1.4.5",
+    "nativeSelfCheck": true,
+    "filesVerified": 3004,
+    "existingDataPreserved": true,
+    "forcedCloseVerified": true,
+    "installPassed": true,
+    "bytes": 561630069,
+    "sha256": "89d910037454f91fd0c0ba54cfbb23f47f5d7aca11bd340ec7251a9430661a1c"
+  },
+  "upgrade": {
+    "forcedCloseVerified": true,
+    "to": "1.4.5",
+    "from": "1.4.2.1",
+    "nativeSelfCheck": true,
+    "oldApplicationRunning": true,
+    "userSettingsPreserved": true,
+    "filesVerified": 3004
+  },
+  "actualObsApplicationTested": false,
+  "actualLiveGiftTested": false,
+  "personalDataIncluded": false,
+  "buttonUpdateTests": [
+    {
+      "to": "1.4.5",
+      "actualOldUpdater": true,
+      "sameInstallPath": true,
+      "filesVerified": 3004,
+      "userDataPreserved": true,
+      "from": "1.4.2.1",
+      "originalProcessExited": true,
+      "sameButtonApi": true,
+      "reopenedVersion": "1.4.5"
+    },
+    {
+      "to": "1.4.5",
+      "actualOldUpdater": true,
+      "sameInstallPath": true,
+      "filesVerified": 3004,
+      "userDataPreserved": true,
+      "from": "1.4.3",
+      "originalProcessExited": true,
+      "sameButtonApi": true,
+      "reopenedVersion": "1.4.5"
+    },
+    {
+      "to": "1.4.5",
+      "actualOldUpdater": true,
+      "sameInstallPath": true,
+      "filesVerified": 3004,
+      "userDataPreserved": true,
+      "from": "1.4.4",
+      "originalProcessExited": true,
+      "sameButtonApi": true,
+      "reopenedVersion": "1.4.5"
+    }
+  ],
+  "operatingLimits": {
+    "commandsPerEvent": 1000,
+    "keyDurationSeconds": 120,
+    "actionMultiplier": 20,
+    "oversizeRejectedBeforeDelivery": true
+  },
+  "baselineRegressionVersion": "1.4.4",
+  "baselineRegressionChecks": {
+    "nativeCore": 152,
+    "versionReporting": 8,
+    "nativeOverlays": 647,
+    "musicUi": true,
+    "videoUi": true,
+    "interruptUi": true,
+    "rouletteUi": true,
+    "thumbnailConcurrency": true,
+    "lockedUnchangedRuntimeSkipped": true,
+    "lockedChangedFileRetry": true,
+    "sharedGiftCatalog": 1837,
+    "inlineGiftPicker": true,
+    "giftCoinPrices": true,
+    "perEventTest": true,
+    "widgetResetIsolation": true,
+    "multiFeatureBurst": true,
+    "fullBacklogStop": true,
+    "profileRankIsolation": true,
+    "multipleInstanceForceClose": true,
+    "bundledHelperForceClose": true,
+    "photoPrintingRemoved": true,
+    "presetRoundTripFiles": 16,
+    "directPresetTests": true,
+    "webhookRejectionReported": true,
+    "presetMultiAction": true,
+    "actualLoopbackBurstRequests": 250,
+    "disabledEventFallbackBlocked": true,
+    "subtitleOverloadRecovery": true,
+    "teamRouteAndAuthenticationPreserved": true
+  },
+  "currentReleaseChecks": {
+    "versionReporting": 8,
+    "forcedCloseAndLockedHelperReplacement": true,
+    "unrelatedProcessesPreserved": true,
+    "lockedFilePreflight": true
+  }
+}

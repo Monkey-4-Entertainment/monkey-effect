@@ -1,9 +1,9 @@
 {
-  "version": "1.4.4",
-  "notes": "Monkeyeffect 1.4.4 — แก้อัปเดตทับรุ่นเดิม พรีเซ็ตหลายแอ็กชัน คอมโบถูกตัด คำสั่งเข้าทีม และซับเสียงหยุด พร้อมปรับคิวเพลง/เสียงและรีเซ็ต Widget",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.4/Monkeyeffect-1.4.4-update.zip",
-  "sha256": "0ef129afe753cff695b60a4d166e47a39405aee458542416bc77a323de1ba924",
+  "version": "1.4.5",
+  "notes": "Monkeyeffect 1.4.5 — แก้ตัวอัปเดตปิดโปรแกรมและตัวช่วยที่ค้าง รอไฟล์ปลดล็อกก่อนติดตั้งทับ พร้อมเก็บพรีเซ็ตเดิม",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.5/Monkeyeffect-1.4.5-update.zip",
+  "sha256": "0b11e830b0f8b3fc44a397182329cbfba48880198a28f69b43b5cc391ef7e4e4",
   "mandatory": false,
-  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.4/Monkeyeffect-Setup-1.4.4.exe",
+  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.5/Monkeyeffect-Setup-1.4.5.exe",
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
