@@ -1,9 +1,9 @@
 {
-  "version": "1.4.7",
-  "notes": "เพิ่มระบบเข้าสู่ระบบ บัญชี Monkeyeffect แยกจากเกม หน้าจัดการสมาชิกสำหรับมาสเตอร์ ปุ่มลงชื่อออก และตรวจสอบอัปเดตจากหน้าล็อกอิน ปรับช่องอีเมล/รหัสผ่านให้เห็นเต็ม พร้อมตรวจติดตั้งทับและเปิดหน้าล็อกอินอัตโนมัติ",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.7/Monkeyeffect-1.4.7-update.zip",
-  "sha256": "8365649ee9caa359535c9917d5c0258ddacc3bb41d552190d350fe86b3c4d001",
+  "version": "1.4.8",
+  "notes": "เพิ่มชื่อ User เหนืออีเมล มาสเตอร์แก้ชื่อสมาชิกได้ บัญชีที่ยังไม่มีชื่อตั้งเองได้ครั้งเดียว พร้อมป้องกันการแก้ซ้ำที่เซิร์ฟเวอร์ คงระบบลงชื่อออก อัปเดตจากหน้าล็อกอิน และติดตั้งทับโดยเก็บข้อมูลเดิม",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.8/Monkeyeffect-1.4.8-update.zip",
+  "sha256": "ca58ba3723e26b872116c7e2aeb00ea1783f4a3bd740c9386afb1187c901d4ab",
   "mandatory": false,
-  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.7/Monkeyeffect-Setup-1.4.7.exe",
+  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.8/Monkeyeffect-Setup-1.4.8.exe",
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

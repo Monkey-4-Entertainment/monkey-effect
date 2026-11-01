@@ -1,0 +1,34 @@
+{
+  "version": "1.4.8",
+  "package": {
+    "bytes": 652765358,
+    "sha256": "ca58ba3723e26b872116c7e2aeb00ea1783f4a3bd740c9386afb1187c901d4ab"
+  },
+  "setup": {
+    "filesVerified": 3004,
+    "nativeSelfCheck": true,
+    "installPassed": true,
+    "oldApplicationRunning": true,
+    "existingDataPreserved": true,
+    "version": "1.4.8",
+    "forcedCloseVerified": true,
+    "bytes": 563468316,
+    "sha256": "649dd73487d5e3729e2738a12f3bcb69ef9f3707738cc13752e0bdcf899029f9"
+  },
+  "upgrade": {
+    "from": "1.4.6",
+    "sameInstallPath": true,
+    "reopenStayedNewVersion": true,
+    "originalProcessExited": true,
+    "loginReopenedVisible": true,
+    "userDataPreserved": true,
+    "backendBlockedBeforeLogin": true,
+    "to": "1.4.8",
+    "duplicateActivationPassed": true,
+    "filesVerified": 3004
+  },
+  "loginTests": "mock authentication, member authorization, malformed response, pre-login update success/failure, form render",
+  "activationTests": "main hidden/minimized/startup and login; duplicate instance",
+  "updaterTests": "locked unchanged runtime, changed DLL retry, target processes only, preserved settings",
+  "personalDataIncluded": false
+}
