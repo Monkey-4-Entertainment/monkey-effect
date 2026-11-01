@@ -1,9 +1,9 @@
 {
-  "version": "1.4.6",
-  "notes": "เพิ่มชุมผีพร้อมพรีเซ็ต 26 ของขวัญและไลก์/ติดตาม แก้หยุดขัดขวางจอและคิวกล่องสุ่ม ทดสอบอัปเดตทับพร้อมปิดตัวเก่า เก็บข้อมูล และเปิดหน้าต่างรุ่นใหม่",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.6/Monkeyeffect-1.4.6-update.zip",
-  "sha256": "0540f5ef0b45411239676109623169431c6c59426621453401866a3615cf6ede",
+  "version": "1.4.7",
+  "notes": "เพิ่มระบบเข้าสู่ระบบ บัญชี Monkeyeffect แยกจากเกม หน้าจัดการสมาชิกสำหรับมาสเตอร์ ปุ่มลงชื่อออก และตรวจสอบอัปเดตจากหน้าล็อกอิน ปรับช่องอีเมล/รหัสผ่านให้เห็นเต็ม พร้อมตรวจติดตั้งทับและเปิดหน้าล็อกอินอัตโนมัติ",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.7/Monkeyeffect-1.4.7-update.zip",
+  "sha256": "8365649ee9caa359535c9917d5c0258ddacc3bb41d552190d350fe86b3c4d001",
   "mandatory": false,
-  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.6/Monkeyeffect-Setup-1.4.6.exe",
+  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.7/Monkeyeffect-Setup-1.4.7.exe",
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
