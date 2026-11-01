@@ -1,0 +1,92 @@
+{
+  "version": "1.4.6",
+  "package": {
+    "bytes": 650780538,
+    "sha256": "0540f5ef0b45411239676109623169431c6c59426621453401866a3615cf6ede"
+  },
+  "setup": {
+    "oldApplicationRunning": true,
+    "installPassed": true,
+    "existingDataPreserved": true,
+    "version": "1.4.6",
+    "nativeSelfCheck": true,
+    "filesVerified": 3004,
+    "forcedCloseVerified": true,
+    "bytes": 561637319,
+    "sha256": "24ca07614a2879a6c763e52fcab91d98d16cb1e69e3fcd1f52fd480cac37a99c"
+  },
+  "upgrade": {
+    "forcedCloseVerified": true,
+    "userSettingsPreserved": true,
+    "from": "1.4.2.1",
+    "nativeSelfCheck": true,
+    "filesVerified": 3004,
+    "oldApplicationRunning": true,
+    "to": "1.4.6"
+  },
+  "buttonUpdateTests": [
+    {
+      "duplicateActivationPassed": true,
+      "sameInstallPath": true,
+      "restartWindowVisible": true,
+      "reopenedVersion": "1.4.6",
+      "filesVerified": 3004,
+      "to": "1.4.6",
+      "userDataPreserved": true,
+      "from": "1.4.2.1",
+      "sameButtonApi": true,
+      "actualOldUpdater": true,
+      "originalProcessExited": true
+    },
+    {
+      "duplicateActivationPassed": true,
+      "sameInstallPath": true,
+      "restartWindowVisible": true,
+      "reopenedVersion": "1.4.6",
+      "filesVerified": 3004,
+      "to": "1.4.6",
+      "userDataPreserved": true,
+      "from": "1.4.3",
+      "sameButtonApi": true,
+      "actualOldUpdater": true,
+      "originalProcessExited": true
+    },
+    {
+      "duplicateActivationPassed": true,
+      "sameInstallPath": true,
+      "restartWindowVisible": true,
+      "reopenedVersion": "1.4.6",
+      "filesVerified": 3004,
+      "to": "1.4.6",
+      "userDataPreserved": true,
+      "from": "1.4.4",
+      "sameButtonApi": true,
+      "actualOldUpdater": true,
+      "originalProcessExited": true
+    },
+    {
+      "duplicateActivationPassed": true,
+      "sameInstallPath": true,
+      "restartWindowVisible": true,
+      "reopenedVersion": "1.4.6",
+      "filesVerified": 3004,
+      "to": "1.4.6",
+      "userDataPreserved": true,
+      "from": "1.4.5",
+      "sameButtonApi": true,
+      "actualOldUpdater": true,
+      "originalProcessExited": true
+    }
+  ],
+  "currentReleaseChecks": {
+    "nativeCore": 152,
+    "overlayLayout": 647,
+    "activation": 4,
+    "chumPheeGiftMappings": 26,
+    "chumPheeLikeFollowMappings": 2,
+    "rouletteCancellation": true,
+    "forcedCloseAndLockedHelperReplacement": true
+  },
+  "actualLiveGiftTested": false,
+  "actualChumPheeGameTested": false
+}

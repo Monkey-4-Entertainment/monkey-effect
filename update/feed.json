@@ -1,9 +1,9 @@
 {
-  "version": "1.4.5",
-  "notes": "Monkeyeffect 1.4.5 — แก้เปิดหน้าต่างหลังอัปเดตและเปิดซ้ำเรียกหน้าต่างเดิม พร้อมปิดตัวช่วยค้างก่อนติดตั้งทับ",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.5/Monkeyeffect-1.4.5-update.zip",
-  "sha256": "e4281a717c568690bfbccccbfe69cf40a1e4092de90ea60b9b089187cd3e3a61",
+  "version": "1.4.6",
+  "notes": "เพิ่มชุมผีพร้อมพรีเซ็ต 26 ของขวัญและไลก์/ติดตาม แก้หยุดขัดขวางจอและคิวกล่องสุ่ม ทดสอบอัปเดตทับพร้อมปิดตัวเก่า เก็บข้อมูล และเปิดหน้าต่างรุ่นใหม่",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.6/Monkeyeffect-1.4.6-update.zip",
+  "sha256": "0540f5ef0b45411239676109623169431c6c59426621453401866a3615cf6ede",
   "mandatory": false,
-  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.5/Monkeyeffect-Setup-1.4.5.exe",
+  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.6/Monkeyeffect-Setup-1.4.6.exe",
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }
