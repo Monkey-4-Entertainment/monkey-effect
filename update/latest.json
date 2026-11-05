@@ -1,9 +1,9 @@
 {
-  "version": "1.4.8",
-  "notes": "เพิ่มชื่อ User เหนืออีเมล มาสเตอร์แก้ชื่อสมาชิกได้ บัญชีที่ยังไม่มีชื่อตั้งเองได้ครั้งเดียว พร้อมป้องกันการแก้ซ้ำที่เซิร์ฟเวอร์ คงระบบลงชื่อออก อัปเดตจากหน้าล็อกอิน และติดตั้งทับโดยเก็บข้อมูลเดิม",
-  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.8/Monkeyeffect-1.4.8-update.zip",
-  "sha256": "ca58ba3723e26b872116c7e2aeb00ea1783f4a3bd740c9386afb1187c901d4ab",
+  "version": "1.4.9",
+  "notes": "Subathon Timer เพิ่มกฎของขวัญต่อกันได้ แก้ไขเฉพาะกฎที่เลือก และย้ายรายการกฎมาไว้เหนือปุ่มเปิด Overlay",
+  "zipUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.9/Monkeyeffect-1.4.9-update.zip",
+  "sha256": "23205838fb6721ce4985af1754d65bd11fb7651052c6a81ea5c50bb2ac65120e",
   "mandatory": false,
-  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.8/Monkeyeffect-Setup-1.4.8.exe",
+  "setupUrl": "https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.9/Monkeyeffect-Setup-1.4.9.exe",
   "repo": "https://github.com/Monkey-4-Entertainment/monkey-effect"
 }

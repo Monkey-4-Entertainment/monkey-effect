@@ -1,0 +1,33 @@
+{
+  "version": "1.4.9",
+  "package": {
+    "bytes": 652765725,
+    "sha256": "23205838fb6721ce4985af1754d65bd11fb7651052c6a81ea5c50bb2ac65120e"
+  },
+  "setup": {
+    "installPassed": true,
+    "existingDataPreserved": true,
+    "oldApplicationRunning": true,
+    "forcedCloseVerified": true,
+    "filesVerified": 3004,
+    "version": "1.4.9",
+    "nativeSelfCheck": true,
+    "bytes": 563478059,
+    "sha256": "8f52a7ee84d4fe6efd89efe359398fc5d279b02c9b50d48e75413a203ccbe02b"
+  },
+  "upgrade": {
+    "loginReopenedVisible": true,
+    "from": "1.4.6",
+    "sameInstallPath": true,
+    "originalProcessExited": true,
+    "userDataPreserved": true,
+    "to": "1.4.9",
+    "reopenStayedNewVersion": true,
+    "backendBlockedBeforeLogin": true,
+    "duplicateActivationPassed": true,
+    "filesVerified": 3004
+  },
+  "ruleTests": "consecutive adds, reload, multiple gift events, explicit edit",
+  "updaterTests": "target processes, locked files and preservation",
+  "personalDataIncluded": false
+}

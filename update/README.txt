@@ -1,17 +1,10 @@
-Monkeyeffect 1.4.8 · Windows
+Monkeyeffect 1.4.9 · Windows
 
-เพิ่มชื่อ User เหนืออีเมล มาสเตอร์แก้ชื่อสมาชิกได้ บัญชีที่ยังไม่มีชื่อตั้งเองได้ครั้งเดียว พร้อมป้องกันการแก้ซ้ำที่เซิร์ฟเวอร์ คงระบบลงชื่อออก อัปเดตจากหน้าล็อกอิน และติดตั้งทับโดยเก็บข้อมูลเดิม
+Subathon Timer เพิ่มกฎของขวัญต่อกันได้ แก้ไขเฉพาะกฎที่เลือก และย้ายรายการกฎมาไว้เหนือปุ่มเปิด Overlay
 
-- แสดงชื่อ User เหนืออีเมล
-- มาสเตอร์แก้ชื่อ User ได้ในหน้าจัดการสมาชิก
-- บัญชีไม่มีชื่อตั้งครั้งแรกได้ 1 ครั้ง บัญชีมีชื่อใช้ชื่อเดิม
-- จำกัดชื่อ 1–40 ตัวอักษร ตรวจสิทธิ์และป้องกันแก้ซ้ำบนเซิร์ฟเวอร์
-- คงปุ่มลงชื่อออกและอัปเดตที่หน้าล็อกอิน
-- ติดตั้งทับ: ปิดโปรแกรมเดิม เก็บข้อมูลและพรีเซ็ต แล้วเปิดหน้าล็อกอิน
-
-ตรวจจริงจาก 1.4.6 → 1.4.8 พร้อมตรวจไฟล์ทุกไฟล์และทดสอบเปิดซ้ำ
+อัปเดตทับในโฟลเดอร์เดิม เก็บข้อมูลและเปิดหน้าล็อกอินกลับอัตโนมัติ
 
 
-Update: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.8/Monkeyeffect-1.4.8-update.zip
-SHA256: ca58ba3723e26b872116c7e2aeb00ea1783f4a3bd740c9386afb1187c901d4ab
-Setup: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.8/Monkeyeffect-Setup-1.4.8.exe
+Update: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.9/Monkeyeffect-1.4.9-update.zip
+SHA256: 23205838fb6721ce4985af1754d65bd11fb7651052c6a81ea5c50bb2ac65120e
+Setup: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.9/Monkeyeffect-Setup-1.4.9.exe
