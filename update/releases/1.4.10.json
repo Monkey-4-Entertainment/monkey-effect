@@ -1,0 +1,33 @@
+{
+  "version": "1.4.10",
+  "package": {
+    "bytes": 652768094,
+    "sha256": "d575e4c991dd576a19486242c6438e08c924e1faaa8f641549758e8a99a42ec7"
+  },
+  "setup": {
+    "version": "1.4.10",
+    "filesVerified": 3004,
+    "existingDataPreserved": true,
+    "forcedCloseVerified": true,
+    "oldApplicationRunning": true,
+    "nativeSelfCheck": true,
+    "installPassed": true,
+    "bytes": 563475244,
+    "sha256": "095dfdc165cf6876194f1b8cc5942155007b552fc0ddd09d370921aa80143fac"
+  },
+  "upgrade": {
+    "from": "1.4.6",
+    "to": "1.4.10",
+    "filesVerified": 3004,
+    "userDataPreserved": true,
+    "duplicateActivationPassed": true,
+    "sameInstallPath": true,
+    "loginReopenedVisible": true,
+    "backendBlockedBeforeLogin": true,
+    "originalProcessExited": true,
+    "reopenStayedNewVersion": true
+  },
+  "connectionTests": "anonymous success, signing 429 fallback once, second 429 stops, offline does not use central signing; production signed protobuf decoded by bundled SDK using a temporary approved member, ticket replay rejected, unauthorized requests rejected",
+  "updaterTests": "target processes, locked files and preservation",
+  "personalDataIncluded": false
+}

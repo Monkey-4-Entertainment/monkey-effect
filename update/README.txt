@@ -1,10 +1,10 @@
-Monkeyeffect 1.4.9 · Windows
+Monkeyeffect 1.4.10 · Windows
 
-Subathon Timer เพิ่มกฎของขวัญต่อกันได้ แก้ไขเฉพาะกฎที่เลือก และย้ายรายการกฎมาไว้เหนือปุ่มเปิด Overlay
+เชื่อม TikTok LIVE โดยตรงตามเดิม เมื่อบริการเซ็นคำขอตอบ 429 จะลองผ่านคีย์กลางสำหรับสมาชิกหนึ่งครั้ง โดยไม่ต้องเปิด Chrome หรือกรอกคีย์
 
 อัปเดตทับในโฟลเดอร์เดิม เก็บข้อมูลและเปิดหน้าล็อกอินกลับอัตโนมัติ
 
 
-Update: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.9/Monkeyeffect-1.4.9-update.zip
-SHA256: 23205838fb6721ce4985af1754d65bd11fb7651052c6a81ea5c50bb2ac65120e
-Setup: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.9/Monkeyeffect-Setup-1.4.9.exe
+Update: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.10/Monkeyeffect-1.4.10-update.zip
+SHA256: d575e4c991dd576a19486242c6438e08c924e1faaa8f641549758e8a99a42ec7
+Setup: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.10/Monkeyeffect-Setup-1.4.10.exe
