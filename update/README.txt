@@ -1,10 +1,10 @@
-Monkeyeffect 1.4.10 · Windows
+Monkeyeffect 1.4.11 · Windows
 
-เชื่อม TikTok LIVE โดยตรงตามเดิม เมื่อบริการเซ็นคำขอตอบ 429 จะลองผ่านคีย์กลางสำหรับสมาชิกหนึ่งครั้ง โดยไม่ต้องเปิด Chrome หรือกรอกคีย์
+ตรวจจุดเริ่มก่อนบันทึกกฎวิดีโอและข้ามคลิปเสียไปเล่นคลิปถัดไปอัตโนมัติ · เสียงสิริฟรีโหมดชาย หญิง และสุ่มมีโทนต่างกันเมื่อใช้เสียงสำรอง และแถบ HTTP 403 หายเมื่อเกมเดิมกลับมารับคำสั่ง พร้อมแยกป้ายคิว /livemsg พอร์ต 12922 และแสดงชื่อตัวเลือกวิดีโอให้อ่านง่าย
 
 อัปเดตทับในโฟลเดอร์เดิม เก็บข้อมูลและเปิดหน้าล็อกอินกลับอัตโนมัติ
 
 
-Update: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.10/Monkeyeffect-1.4.10-update.zip
-SHA256: d575e4c991dd576a19486242c6438e08c924e1faaa8f641549758e8a99a42ec7
-Setup: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.10/Monkeyeffect-Setup-1.4.10.exe
+Update: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.11/Monkeyeffect-1.4.11-update.zip
+SHA256: 630e1424e2f60afb15f15eb046a4f3ac7c6415e519961c41c766369543de91b6
+Setup: https://github.com/Monkey-4-Entertainment/monkey-effect/releases/download/v1.4.11/Monkeyeffect-Setup-1.4.11.exe

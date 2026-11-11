@@ -1,0 +1,32 @@
+{
+  "version": "1.4.11",
+  "package": {
+    "bytes": 652770870,
+    "sha256": "630e1424e2f60afb15f15eb046a4f3ac7c6415e519961c41c766369543de91b6"
+  },
+  "setup": {
+    "existingDataPreserved": true,
+    "filesVerified": 3004,
+    "nativeSelfCheck": true,
+    "installPassed": true,
+    "forcedCloseVerified": true,
+    "oldApplicationRunning": true,
+    "version": "1.4.11",
+    "bytes": 563479247,
+    "sha256": "fcb4f67c034178357c6f7063826f5493be42f452628dd20aceb48d04c6941067"
+  },
+  "upgrade": {
+    "to": "1.4.11",
+    "loginReopenedVisible": true,
+    "sameInstallPath": true,
+    "filesVerified": 3004,
+    "reopenStayedNewVersion": true,
+    "from": "1.4.6",
+    "originalProcessExited": true,
+    "userDataPreserved": true,
+    "duplicateActivationPassed": true,
+    "backendBlockedBeforeLogin": true
+  },
+  "featureTests": "failed video skipped; MP4 and WebM preview and gift-triggered native window playback; game 403 then 200 clears banner; packaged TTS matches measured free voice profiles",
+  "personalDataIncluded": false
+}
